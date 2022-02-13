@@ -66,7 +66,7 @@ def interpol(x_sub,y_sub,subsample,shape,kind):
         return interp(points_new_stacked).reshape(shape)
     
     if(kind=='Splines'):
-        interp = interpolate.bisplrep(y_sub,x_sub,subsample,s=10*len(x_sub))
+        interp = interpolate.bisplrep(y_sub,x_sub,subsample,s=len(x_sub))
         
         # Create background from interpolation
         x_new = np.arange(0,shape[1],1)

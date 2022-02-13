@@ -6,17 +6,14 @@ Created on Sat Feb 12 10:01:31 2022
 """
 
 
-from PIL import Image
+
 import numpy as np
 from scipy import interpolate
 from scipy.ndimage import gaussian_filter
-import sklearn.gaussian_process
+from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import ConstantKernel,RBF
+from radialbasisinterpolation import RadialBasisInterpolation
 
-
-# Load image
-im = Image.open('M81.tiff')
-imarray = np.array(im)
 
 
 
@@ -57,7 +54,7 @@ def interpol(x_sub,y_sub,subsample,shape,kind):
     
     if(kind=='RBF'):
         points_stacked = np.stack([x_sub,y_sub],-1)
-        interp = interpolate.RBFInterpolator(points_stacked,subsample,kernel='thin_plate_spline')   
+        interp = RadialBasisInterpolation(points_stacked,subsample,kernel="thin_plate")   
     
         # Create background from interpolation
         x_new = np.arange(0,shape[1],1)
@@ -69,18 +66,18 @@ def interpol(x_sub,y_sub,subsample,shape,kind):
         return interp(points_new_stacked).reshape(shape)
     
     if(kind=='Splines'):
-        interp = interpolate.interp2d(x_sub,y_sub,subsample,kind='cubic')
+        interp = interpolate.bisplrep(y_sub,x_sub,subsample,s=10*len(x_sub))
         
         # Create background from interpolation
         x_new = np.arange(0,shape[1],1)
         y_new = np.arange(0,shape[0],1)
-        return interp(x_new,y_new)
+        return interpolate.bisplev(y_new,x_new,interp)
     
     if(kind=='Kriging'):
         points_stacked = np.stack([x_sub,y_sub],-1)
         
         kernel = ConstantKernel(1.0, constant_value_bounds=(1e-5,1e10)) * RBF(1.0, length_scale_bounds=(1e-5,1e10)) + ConstantKernel(1.0, constant_value_bounds=(1e-5,1e10))
-        gp = sklearn.gaussian_process.GaussianProcessRegressor(kernel=kernel)
+        gp = GaussianProcessRegressor(kernel=kernel)
         gp.fit(points_stacked, subsample)
     
         # Create background from interpolation

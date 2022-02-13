@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Feb 13 10:05:08 2022
-
 @author: steff
 """
 
 import tkinter as tk
-from tkinter import filedialog 
+from tkinter import filedialog
 from PIL import Image, ImageTk 
 import math                   
 import numpy as np            
 import os       
 import background_extraction       
-from skimage import io,exposure,img_as_uint, img_as_float
+from skimage import io,exposure,img_as_uint
 from skimage.util import img_as_ubyte
 
 class Application(tk.Frame):
@@ -23,21 +22,28 @@ class Application(tk.Frame):
  
         self.pil_image = None
         self.image_full = None
+        self.image_full_processed = None
+        self.background_model = None
+        
         self.my_title = "Background Extraction"
         self.master.title(self.my_title)
+        
+        self.interpol_type = 'RBF'
+        self.background_points = []
 
         self.create_menu()
         self.create_widget()
 
         self.reset_transform()
         
-        self.background_points = []
-        self.interpolation_type = 'RBF'
+        
+        
+        
 
     def menu_open_clicked(self, event=None):
 
         filename = tk.filedialog.askopenfilename(
-            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff") ], # ファイルフィルタ
+            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff") ],
             initialdir = os.getcwd()
             )
 
@@ -50,15 +56,18 @@ class Application(tk.Frame):
         
     def menu_intp_RBF_clicked(self):
         
-        self. interpolation_type = 'RBF'
+        self.interpol_type = 'RBF'
+        self.intp_type_text.configure(text="Method: " + self.interpol_type)
         
     def menu_intp_Splines_clicked(self):
         
-        self. interpolation_type = 'Splines'
+        self.interpol_type = 'Splines'
+        self.intp_type_text.configure(text="Method: " + self.interpol_type)
     
     def menu_intp_Kriging_clicked(self):
          
-         self. interpolation_type = 'Kriging'
+         self.interpol_type = 'Kriging'
+         self.intp_type_text.configure(text="Method: " + self.interpol_type)
          
 
     def create_menu(self):
@@ -82,10 +91,10 @@ class Application(tk.Frame):
         self.interpolation_menu.add_command(label="RBF", command = self.menu_intp_RBF_clicked)
         self.interpolation_menu.add_command(label="Splines", command = self.menu_intp_Splines_clicked)
         self.interpolation_menu.add_command(label="Kriging", command = self.menu_intp_Kriging_clicked)
-        
-        
+           
 
         self.master.config(menu=self.menu_bar)
+        
  
 
     def create_widget(self):
@@ -110,6 +119,47 @@ class Application(tk.Frame):
         self.master.bind("<MouseWheel>", self.mouse_wheel)                     # Mouse Wheel
         self.master.bind("<Return>", self.enter_key)                         # Enter Key
         
+        #Side buttons
+        
+        self.load_image_button = tk.Button(self.canvas, 
+                         text="Load", fg="green",
+                         command=self.menu_open_clicked,
+                         height=5,width=15)
+        self.load_image_button.place(x=10,y=10)
+        
+        self.save_background_button = tk.Button(self.canvas, 
+                         text="Reset Points", fg="green",
+                         command=self.reset_backgroundpts,
+                         height=5,width=15)
+        self.save_background_button.place(x=10,y=110)
+        
+
+        self.intp_type_text = tk.Message(self.canvas, text="Method: " + self.interpol_type)
+        self.intp_type_text.config(width=200,bg='lightgreen', font=('times', 18, 'normal'))
+        self.intp_type_text.place(x=10, y=240)
+        
+        self.save_background_button = tk.Button(self.canvas, 
+                         text="Calculate", fg="green",
+                         command=self.calculate,
+                         height=5,width=15)
+        self.save_background_button.place(x=10,y=310)
+        
+        self.save_background_button = tk.Button(self.canvas, 
+                         text="Save Background", fg="green",
+                         command=self.save_background_image,
+                         height=5,width=15)
+        self.save_background_button.place(x=10,y=410)
+        
+              
+        
+        self.save_button = tk.Button(self.canvas, 
+                         text="Save Picture", fg="green",
+                         command=self.save_image,
+                         height=5,width=15)
+        self.save_button.place(x=10,y=510)
+        
+        
+
 
     def set_image(self, filename):
 
@@ -130,21 +180,41 @@ class Application(tk.Frame):
 
         os.chdir(os.path.dirname(filename))
     
-    def enter_key(self,event):
+   
+    def save_image(self):
         
+       io.imsave("out.tiff", self.image_full_processed)
 
+       
+    def save_background_image(self):
+
+        io.imsave("background.tiff", self.background_model)
+    
+    def reset_backgroundpts(self):
+        
+        self.background_points = []
+        self.redraw_image()
+    
+    def calculate(self):
+        
         imarray = np.array(self.image_full)
 
-        background = background_extraction.extract_background(imarray,np.array(self.background_points),self.interpolation_type)
+        background = background_extraction.extract_background(imarray,np.array(self.background_points),self.interpol_type)
         
-        io.imsave("out.tiff", imarray)
+        self.image_full_processed = imarray
         
+      
         background = exposure.rescale_intensity(background, out_range='float')
-        background = img_as_uint(background)
-        io.imsave("background.tiff", background)
+        self.background_model = img_as_uint(background)
+
         self.pil_image = Image.fromarray(img_as_ubyte(imarray))
         self.redraw_image()
         return
+    
+    def enter_key(self,enter):
+        
+        self.calculate()
+        
     
     def mouse_down_right(self,event):
         
@@ -299,7 +369,7 @@ class Application(tk.Frame):
         return np.dot(self.mat_affine,(x,y,1.))
 
     def draw_image(self, pil_image):
-        
+
         if pil_image == None:
             return
 

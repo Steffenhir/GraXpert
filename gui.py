@@ -12,7 +12,7 @@ import math
 import numpy as np            
 import os       
 import background_extraction       
-from skimage import io
+from skimage import io,exposure,img_as_uint, img_as_float
 from skimage.util import img_as_ubyte
 
 class Application(tk.Frame):
@@ -55,7 +55,11 @@ class Application(tk.Frame):
     def menu_intp_Splines_clicked(self):
         
         self. interpolation_type = 'Splines'
-
+    
+    def menu_intp_Kriging_clicked(self):
+         
+         self. interpolation_type = 'Kriging'
+         
 
     def create_menu(self):
         self.menu_bar = tk.Menu(self)
@@ -77,6 +81,7 @@ class Application(tk.Frame):
         
         self.interpolation_menu.add_command(label="RBF", command = self.menu_intp_RBF_clicked)
         self.interpolation_menu.add_command(label="Splines", command = self.menu_intp_Splines_clicked)
+        self.interpolation_menu.add_command(label="Kriging", command = self.menu_intp_Kriging_clicked)
         
         
 
@@ -130,9 +135,13 @@ class Application(tk.Frame):
 
         imarray = np.array(self.image_full)
 
-        background_extraction.extract_background(imarray,np.array(self.background_points),self.interpolation_type)
+        background = background_extraction.extract_background(imarray,np.array(self.background_points),self.interpolation_type)
         
         io.imsave("out.tiff", imarray)
+        
+        background = exposure.rescale_intensity(background, out_range='float')
+        background = img_as_uint(background)
+        io.imsave("background.tiff", background)
         self.pil_image = Image.fromarray(img_as_ubyte(imarray))
         self.redraw_image()
         return

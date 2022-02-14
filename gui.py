@@ -29,7 +29,7 @@ class Application(tk.Frame):
         self.my_title = "Background Extraction"
         self.master.title(self.my_title)
         
-        self.interpol_type = 'RBF'
+        self.interpol_type = 'Splines'
         self.background_points = []
 
         self.create_menu()

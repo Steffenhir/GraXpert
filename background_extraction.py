@@ -44,7 +44,8 @@ def extract_background(imarray, background_points,interpolation_type):
 
         
         #Subtract background from image
-        imarray[:,:,c] = (imarray[:,:,c] - background[:,:,c] + np.std(background[:,:,c])).clip(min=0,max=np.max(imarray[:,:,c]))
+        mean = np.mean(imarray[:,:,c])
+        imarray[:,:,c] = (imarray[:,:,c] - background[:,:,c] + mean).clip(min=0,max=np.max(imarray[:,:,c]))
         
     return background
 

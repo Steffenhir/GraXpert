@@ -167,7 +167,7 @@ class Application(tk.Frame):
             return
 
         self.image_full = io.imread(filename)
-        print(self.image_full.dtype)
+
         self.pil_image = Image.fromarray(img_as_ubyte(self.image_full))
         
 

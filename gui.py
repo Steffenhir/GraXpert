@@ -118,7 +118,7 @@ class Application(tk.Frame):
         self.master.bind("<Motion>", self.mouse_move)                          # Mouse move
         self.master.bind("<Double-Button-1>", self.mouse_double_click_left)    # Left Button Double Click
         self.master.bind("<MouseWheel>", self.mouse_wheel)                     # Mouse Wheel
-        self.master.bind("<Return>", self.enter_key)                         # Enter Key
+        self.master.bind("<Return>", self.enter_key)                           # Enter Key
         
         #Side buttons
         
@@ -144,6 +144,7 @@ class Application(tk.Frame):
         self.smooth_text.place(x=10, y=240)
         
         self.smoothing = tk.DoubleVar()
+        self.smoothing.set(5.0)
         self.smoothing_slider = tk.Scale(self.canvas,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=20.0,resolution=0.1,var=self.smoothing,width=10)
         self.smoothing_slider.place(x=10,y=270)
         

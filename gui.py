@@ -166,8 +166,10 @@ class Application(tk.Frame):
         if not filename:
             return
 
-        self.pil_image = Image.open(filename)
         self.image_full = io.imread(filename)
+        print(self.image_full.dtype)
+        self.pil_image = Image.fromarray(img_as_ubyte(self.image_full))
+        
 
         self.zoom_fit(self.pil_image.width, self.pil_image.height)
 
@@ -203,9 +205,12 @@ class Application(tk.Frame):
         
         self.image_full_processed = imarray
         
-      
+
         background = exposure.rescale_intensity(background, out_range='float')
-        self.background_model = img_as_uint(background)
+        if(imarray.dtype == np.int16 or np.int8):
+            self.background_model = img_as_uint(background)
+        else:
+            self.background_model = background
 
         self.pil_image = Image.fromarray(img_as_ubyte(imarray))
         self.redraw_image()

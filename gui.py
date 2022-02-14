@@ -10,7 +10,8 @@ from PIL import Image, ImageTk
 import math                   
 import numpy as np            
 import os       
-import background_extraction       
+import background_extraction
+import stretch
 from skimage import io,exposure,img_as_uint
 from skimage.util import img_as_ubyte
 
@@ -143,7 +144,7 @@ class Application(tk.Frame):
         self.smooth_text.place(x=10, y=240)
         
         self.smoothing = tk.DoubleVar()
-        self.smoothing_slider = tk.Scale(self.canvas,orient=tk.HORIZONTAL,from_=0,to=1,tickinterval=1.0,resolution=0.01,var=self.smoothing,width=10)
+        self.smoothing_slider = tk.Scale(self.canvas,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=20.0,resolution=0.1,var=self.smoothing,width=10)
         self.smoothing_slider.place(x=10,y=270)
         
         self.save_background_button = tk.Button(self.canvas, 
@@ -166,8 +167,50 @@ class Application(tk.Frame):
                          height=5,width=15)
         self.save_button.place(x=10,y=530)
         
+        self.stretch_text = tk.Message(self.canvas, text="Stretch Options:")
+        self.stretch_text.config(width=200,bg='lightgreen', font=('times', 16, 'normal'))
+        self.stretch_text.place(x=10, y=630)
         
-
+        self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "30% Bg, 3 sigma"]
+        self.stretch_option_current = tk.StringVar()
+        self.stretch_option_current.set(self.stretch_options[0])
+        self.stretch_menu = tk.OptionMenu(self.canvas, self.stretch_option_current, *self.stretch_options,command=self.stretch)
+        self.stretch_menu.place(x=10,y=680)
+        
+    def stretch(self,event=None):
+        
+        if(self.image_full is None):
+            return
+        
+        if(self.stretch_option_current.get() == "10% Bg, 3 sigma"):
+                bg, sigma = (0.1,3)
+               
+        if(self.stretch_option_current.get() == "15% Bg, 3 sigma"):
+                bg, sigma = (0.15,3)
+                
+        if(self.stretch_option_current.get() == "20% Bg, 3 sigma"):
+                bg, sigma = (0.2,3)
+                
+        if(self.stretch_option_current.get() == "30% Bg, 3 sigma"):
+                bg, sigma = (0.3,3)
+        
+        
+        print(self.image_full)
+        
+        if(self.image_full_processed is None):
+            if(self.stretch_option_current.get() == "No Stretch"):
+                self.pil_image = Image.fromarray(img_as_ubyte(self.image_full))
+            else:
+                self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full,bg,sigma)))
+        
+        else:
+            if(self.stretch_option_current.get() == "No Stretch"):
+                self.pil_image = Image.fromarray(img_as_ubyte(self.image_full_processed))    
+            else:
+                self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full_processed,bg,sigma)))
+        
+        print(self.image_full)
+        self.redraw_image()
 
     def set_image(self, filename):
 
@@ -175,8 +218,7 @@ class Application(tk.Frame):
             return
 
         self.image_full = io.imread(filename)
-
-        self.pil_image = Image.fromarray(img_as_ubyte(self.image_full))
+        self.stretch()
         
 
         self.zoom_fit(self.pil_image.width, self.pil_image.height)
@@ -209,7 +251,7 @@ class Application(tk.Frame):
         
         imarray = np.array(self.image_full)
 
-        background = background_extraction.extract_background(imarray,np.array(self.background_points),self.interpol_type,self.smoothing.get())
+        background = background_extraction.extract_background(imarray,np.array(self.background_points),self.interpol_type,10**self.smoothing.get())
         
         self.image_full_processed = imarray
         
@@ -219,9 +261,9 @@ class Application(tk.Frame):
             self.background_model = img_as_uint(background)
         else:
             self.background_model = background
+        
 
-        self.pil_image = Image.fromarray(img_as_ubyte(imarray))
-        self.redraw_image()
+        self.stretch()
         return
     
     def enter_key(self,enter):

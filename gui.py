@@ -194,8 +194,7 @@ class Application(tk.Frame):
         if(self.stretch_option_current.get() == "30% Bg, 3 sigma"):
                 bg, sigma = (0.3,3)
         
-        
-        print(self.image_full)
+
         
         if(self.image_full_processed is None):
             if(self.stretch_option_current.get() == "No Stretch"):
@@ -209,7 +208,7 @@ class Application(tk.Frame):
             else:
                 self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full_processed,bg,sigma)))
         
-        print(self.image_full)
+
         self.redraw_image()
 
     def set_image(self, filename):

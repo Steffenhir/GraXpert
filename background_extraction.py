@@ -13,11 +13,13 @@ from scipy.ndimage import gaussian_filter
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import ConstantKernel,RBF
 from radialbasisinterpolation import RadialBasisInterpolation
+from scipy import linalg
 
 
 
 
-def extract_background(imarray, background_points,interpolation_type):
+
+def extract_background(imarray, background_points,interpolation_type,smoothing):
 
     num_colors = imarray.shape[2]
     x_size = imarray.shape[1]
@@ -40,7 +42,7 @@ def extract_background(imarray, background_points,interpolation_type):
         subsample=np.array(blur[y_sub,x_sub,c])
 
 
-        background[:,:,c] = interpol(x_sub,y_sub,subsample,(y_size,x_size),interpolation_type)
+        background[:,:,c] = interpol(x_sub,y_sub,subsample,(y_size,x_size),interpolation_type,smoothing)
 
         
         #Subtract background from image
@@ -51,11 +53,11 @@ def extract_background(imarray, background_points,interpolation_type):
 
     
 
-def interpol(x_sub,y_sub,subsample,shape,kind):
+def interpol(x_sub,y_sub,subsample,shape,kind,smoothing):
     
     if(kind=='RBF'):
         points_stacked = np.stack([x_sub,y_sub],-1)
-        interp = RadialBasisInterpolation(points_stacked,subsample,kernel="thin_plate")   
+        interp = RadialBasisInterpolation(points_stacked,subsample,kernel="thin_plate",smooth=smoothing*1e-10*linalg.norm(subsample)/np.sqrt(len(subsample)))   
     
         # Create background from interpolation
         x_new = np.arange(0,shape[1],1)
@@ -67,7 +69,7 @@ def interpol(x_sub,y_sub,subsample,shape,kind):
         return interp(points_new_stacked).reshape(shape)
     
     if(kind=='Splines'):
-        interp = interpolate.bisplrep(y_sub,x_sub,subsample,s=len(x_sub))
+        interp = interpolate.bisplrep(y_sub,x_sub,subsample,s=smoothing*np.sum(subsample**2)/100)
         
         # Create background from interpolation
         x_new = np.arange(0,shape[1],1)

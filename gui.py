@@ -135,20 +135,28 @@ class Application(tk.Frame):
         
 
         self.intp_type_text = tk.Message(self.canvas, text="Method: " + self.interpol_type)
-        self.intp_type_text.config(width=200,bg='lightgreen', font=('times', 18, 'normal'))
-        self.intp_type_text.place(x=10, y=240)
+        self.intp_type_text.config(width=200,bg='lightgreen', font=('times', 16, 'normal'))
+        self.intp_type_text.place(x=10, y=200)
+        
+        self.smooth_text = tk.Message(self.canvas, text="Smoothing ")
+        self.smooth_text.config(width=200,bg='lightgreen', font=('times', 12, 'normal'))
+        self.smooth_text.place(x=10, y=240)
+        
+        self.smoothing = tk.DoubleVar()
+        self.smoothing_slider = tk.Scale(self.canvas,orient=tk.HORIZONTAL,from_=0,to=1,tickinterval=1.0,resolution=0.01,var=self.smoothing,width=10)
+        self.smoothing_slider.place(x=10,y=270)
         
         self.save_background_button = tk.Button(self.canvas, 
                          text="Calculate", fg="green",
                          command=self.calculate,
                          height=5,width=15)
-        self.save_background_button.place(x=10,y=310)
+        self.save_background_button.place(x=10,y=330)
         
         self.save_background_button = tk.Button(self.canvas, 
                          text="Save Background", fg="green",
                          command=self.save_background_image,
                          height=5,width=15)
-        self.save_background_button.place(x=10,y=410)
+        self.save_background_button.place(x=10,y=430)
         
               
         
@@ -156,7 +164,7 @@ class Application(tk.Frame):
                          text="Save Picture", fg="green",
                          command=self.save_image,
                          height=5,width=15)
-        self.save_button.place(x=10,y=510)
+        self.save_button.place(x=10,y=530)
         
         
 
@@ -201,7 +209,7 @@ class Application(tk.Frame):
         
         imarray = np.array(self.image_full)
 
-        background = background_extraction.extract_background(imarray,np.array(self.background_points),self.interpol_type)
+        background = background_extraction.extract_background(imarray,np.array(self.background_points),self.interpol_type,self.smoothing.get())
         
         self.image_full_processed = imarray
         

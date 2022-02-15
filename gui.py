@@ -502,12 +502,15 @@ class Application(tk.Frame):
 
         self.image = im
         
+        self.canvas.delete("oval")
         ovalsize=10
         for point in self.background_points:
             canvas_point = self.to_canvas_point(point[0],point[1])
             x = canvas_point[0]
             y = canvas_point[1]
-            self.canvas.create_oval(x-ovalsize,y-ovalsize, x+ovalsize,y+ovalsize,outline="red")
+            self.canvas.create_oval(x-ovalsize,y-ovalsize, x+ovalsize,y+ovalsize,outline="red", tags="oval")
+            
+        return
 
     def redraw_image(self):
 

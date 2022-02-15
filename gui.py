@@ -11,6 +11,7 @@ import math
 import numpy as np            
 import os       
 import background_extraction
+import background_selection
 import stretch
 from skimage import io,exposure,img_as_uint
 from skimage.util import img_as_ubyte
@@ -178,6 +179,35 @@ class Application(tk.Frame):
         self.stretch_menu = tk.OptionMenu(self.canvas, self.stretch_option_current, *self.stretch_options,command=self.stretch)
         self.stretch_menu.place(x=10,y=680)
         
+        self.bg_selection_text = tk.Message(self.canvas, text="Automatic Background Selection")
+        self.bg_selection_text.config(width=300,bg='lightgreen', font=('times', 16, 'normal'))
+        self.bg_selection_text.place(x=10, y=780)
+        
+        self.bg_selection_text = tk.Message(self.canvas, text="# of Points")
+        self.bg_selection_text.config(width=300,bg='lightgreen', font=('times', 12, 'normal'))
+        self.bg_selection_text.place(x=10, y=820)
+        
+        self.bg_pts = tk.IntVar()
+        self.bg_pts.set(5.0)
+        self.bg_pts_slider = tk.Scale(self.canvas,orient=tk.HORIZONTAL,from_=0,to=100,tickinterval=20,resolution=1,var=self.bg_pts,width=10)
+        self.bg_pts_slider.place(x=10,y=850)
+        
+        self.bg_selection_button = tk.Button(self.canvas, 
+                         text="Select Background", fg="green",
+                         command=self.select_background,
+                         height=5,width=15)
+        self.bg_selection_button.place(x=10,y=920)
+        
+    
+    def select_background(self,event=None):
+        self.background_points = background_selection.background_selection(self.image_full,self.bg_pts.get())
+        for i in range(len(self.background_points)):
+            self.background_points[i] = np.array([self.background_points[i][1],self.background_points[i][0],1.0])
+        
+
+        self.redraw_image()
+        return
+        
     def stretch(self,event=None):
         
         if(self.image_full is None):
@@ -275,7 +305,7 @@ class Application(tk.Frame):
         
         if self.to_image_point(event.x,event.y) != []:
             self.background_points.append(self.to_image_point(event.x,event.y))
-        
+
         self.redraw_image()
         self.__old_event = event
         

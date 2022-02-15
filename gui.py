@@ -172,7 +172,7 @@ class Application(tk.Frame):
         self.stretch_text.config(width=200,bg='lightgreen', font=('times', 16, 'normal'))
         self.stretch_text.place(x=10, y=630)
         
-        self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "30% Bg, 3 sigma"]
+        self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
         self.stretch_option_current = tk.StringVar()
         self.stretch_option_current.set(self.stretch_options[0])
         self.stretch_menu = tk.OptionMenu(self.canvas, self.stretch_option_current, *self.stretch_options,command=self.stretch)
@@ -192,8 +192,8 @@ class Application(tk.Frame):
         if(self.stretch_option_current.get() == "20% Bg, 3 sigma"):
                 bg, sigma = (0.2,3)
                 
-        if(self.stretch_option_current.get() == "30% Bg, 3 sigma"):
-                bg, sigma = (0.3,3)
+        if(self.stretch_option_current.get() == "25% Bg, 1.25 sigma"):
+                bg, sigma = (0.25,1.25)
         
 
         

@@ -7,7 +7,7 @@ Created on Tue Feb 15 15:09:15 2022
 
 
 from skimage import color
-from skimage.transform import downscale_local_mean
+from skimage.transform import rescale
 import numpy as np
 import stretch
 
@@ -22,7 +22,7 @@ def background_selection(data, num_pts):
     
     # Normalize and downscale data
     data_norm = color.rgb2gray(data)
-    data_norm = downscale_local_mean(data_norm,(64,64))
+    data_norm = rescale(data_norm,1/64, mode="reflect")
     data_norm = stretch.stretch(data_norm,0.3,2)
     data_norm = data_norm + 0.1*np.max(data_norm)
     

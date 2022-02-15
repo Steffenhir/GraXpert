@@ -15,13 +15,15 @@ import background_selection
 import stretch
 from skimage import io,exposure,img_as_uint
 from skimage.util import img_as_ubyte
+from astropy.io import fits
 
 class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
 
         self.master.geometry("1920x1080") 
- 
+        
+        self.data_type = ""
         self.pil_image = None
         self.image_full = None
         self.image_full_processed = None
@@ -45,11 +47,11 @@ class Application(tk.Frame):
     def menu_open_clicked(self, event=None):
 
         filename = tk.filedialog.askopenfilename(
-            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff") ],
+            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fits"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fits")],
             initialdir = os.getcwd()
             )
 
-
+        self.data_type = os.path.splitext(filename)[1]
         self.set_image(filename)
 
     def menu_quit_clicked(self):
@@ -248,8 +250,14 @@ class Application(tk.Frame):
             return
         
         self.background_points = []
-        self.image_full_processed = None 
-        self.image_full = io.imread(filename)
+        self.image_full_processed = None
+        
+        
+        if self.data_type == ".fits":
+            self.image_full = np.moveaxis(fits.open(filename)[0].data,0,-1)           
+        else:
+            self.image_full = io.imread(filename)
+        
         self.stretch()
               
 

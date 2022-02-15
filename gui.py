@@ -246,10 +246,12 @@ class Application(tk.Frame):
 
         if not filename:
             return
-
+        
+        self.background_points = []
+        self.image_full_processed = None 
         self.image_full = io.imread(filename)
         self.stretch()
-        
+              
 
         self.zoom_fit(self.pil_image.width, self.pil_image.height)
 

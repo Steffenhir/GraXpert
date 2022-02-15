@@ -13,9 +13,11 @@ import os
 import background_extraction
 import background_selection
 import stretch
+from astropy.io import fits
 from skimage import io,exposure,img_as_uint
 from skimage.util import img_as_ubyte
-from astropy.io import fits
+
+
 
 class Application(tk.Frame):
     def __init__(self, master=None):

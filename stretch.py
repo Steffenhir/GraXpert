@@ -31,7 +31,7 @@ def stretch(data, bg, sigma):
     
     data = MTF(data, midtone)
     
-    np.clip(data,0,1)
+    data = np.clip(data,0,1)
     
     return data
     

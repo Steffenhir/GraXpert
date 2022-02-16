@@ -49,7 +49,7 @@ def background_selection(data, num_pts):
         pts_current += 1
     
     for i in range(len(background_pts)):
-        background_pts[i] = background_pts[i]*64
+        background_pts[i] = background_pts[i]*64 + 32
     
 
     return background_pts

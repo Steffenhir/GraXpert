@@ -315,11 +315,38 @@ class Application(tk.Frame):
     
     def mouse_down_right(self,event):
         
-        if self.to_image_point(event.x,event.y) != []:
+        if(not self.remove_pt(event) and self.to_image_point(event.x,event.y) != []):
             self.background_points.append(self.to_image_point(event.x,event.y))
 
         self.redraw_image()
         self.__old_event = event
+        
+    def remove_pt(self,event):
+        
+        min_idx = -1
+        min_dist = -1
+        
+        for i in range(len(self.background_points)):
+            x_im = self.background_points[i][0]
+            y_im = self.background_points[i][1]
+            
+            x = self.to_canvas_point(x_im, y_im)[0]
+            y = self.to_canvas_point(x_im, y_im)[1]
+            
+            dist = np.sqrt((x-event.x)**2 + (y-event.y)**2)
+            
+            if(min_idx == -1 or dist < min_dist):
+                min_dist = dist
+                min_idx = i
+        
+        
+        if(min_idx != -1 and min_dist <= 10):
+            self.background_points.pop(min_idx)
+            return True
+        
+        return False
+
+            
         
     def mouse_down_left(self, event):
 

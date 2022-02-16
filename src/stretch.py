@@ -17,7 +17,7 @@ def stretch(data, bg, sigma):
     shadow_clipping = np.clip(median - sigma*deviation_from_median, 0, 1.0)
     highlight_clipping = 1.0
 
-    midtone = MTF(median-shadow_clipping,bg)
+    midtone = MTF((median-shadow_clipping)/(highlight_clipping - shadow_clipping),bg)
 
 
     data[data <= shadow_clipping] = 0.0
@@ -46,3 +46,5 @@ def MTF(data, midtone):
     return data
 
 
+print(MTF(0.1,0.4))
+print(MTF(0.1,MTF(0.1,0.4)))

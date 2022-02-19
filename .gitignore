@@ -1,4 +1,5 @@
 *.tiff
 *.tif
 *.png
+*.fits
 __pycache__

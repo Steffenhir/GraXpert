@@ -46,7 +46,7 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
         background[:,:,c] = interpol(x_sub,y_sub,subsample,(y_size,x_size),interpolation_type,smoothing)
         
     if downscale_factor != 1:
-        background = resize(background, imarray.shape)
+        background = resize(background, imarray.shape, preserve_range=True)
     
     #Subtract background from image
     mean = np.mean(background)

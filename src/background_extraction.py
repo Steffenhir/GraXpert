@@ -10,11 +10,9 @@ Created on Sat Feb 12 10:01:31 2022
 import numpy as np
 from scipy import interpolate
 from scipy.ndimage import gaussian_filter
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import ConstantKernel,RBF
 from radialbasisinterpolation import RadialBasisInterpolation
 from scipy import linalg
-
+from pykrige.ok import OrdinaryKriging
 
 
 
@@ -77,16 +75,18 @@ def interpol(x_sub,y_sub,subsample,shape,kind,smoothing):
         return interpolate.bisplev(y_new,x_new,interp)
     
     if(kind=='Kriging'):
-        points_stacked = np.stack([x_sub,y_sub],-1)
-        
-        kernel = ConstantKernel(1.0, constant_value_bounds=(1e-5,1e10)) * RBF(1.0, length_scale_bounds=(1e-5,1e10)) + ConstantKernel(1.0, constant_value_bounds=(1e-5,1e10))
-        gp = GaussianProcessRegressor(kernel=kernel)
-        gp.fit(points_stacked, subsample)
+        OK = OrdinaryKriging(
+            x=x_sub,
+            y=y_sub,
+            z=subsample,
+            variogram_model="spherical",
+            verbose=False,
+            enable_plotting=False,
+        )
     
         # Create background from interpolation
-        x_new = np.arange(0,shape[1],1)
-        y_new = np.arange(0,shape[0],1)
-        xx, yy = np.meshgrid(x_new,y_new)
-        points_new_stacked = np.stack([xx.ravel(),yy.ravel()],-1)
-        
-        return gp.predict(points_new_stacked).reshape(shape)
+        x_new = np.arange(0,shape[1],1).astype("float64")
+        y_new = np.arange(0,shape[0],1).astype("float64")
+
+        result, var = OK.execute("grid", xpoints=x_new, ypoints=y_new, n_closest_points=16, backend="C")
+        return result

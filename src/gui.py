@@ -276,13 +276,34 @@ class Application(tk.Frame):
     
    
     def save_image(self):
+       
+       if(self.image_full_processed is None):
+           return
         
-       io.imsave("out.tiff", self.image_full_processed)
+       dir = tk.filedialog.asksaveasfilename(
+           initialfile = "out.tiff",
+           filetypes = [("Tiff", ".tiff")],
+           defaultextension = ".tiff",
+           initialdir = os.getcwd()
+           )
+       
+       io.imsave(dir, self.image_full_processed)
 
        
     def save_background_image(self):
 
-        io.imsave("background.tiff", self.background_model)
+        if(self.background_model is None):
+            return
+         
+        dir = tk.filedialog.asksaveasfilename(
+            initialfile = "background.tiff",
+            filetypes = [("Tiff", ".tiff")],
+            defaultextension = ".tiff",
+            initialdir = os.getcwd()
+            )
+
+        io.imsave(dir, self.background_model)
+        
     
     def reset_backgroundpts(self):
         

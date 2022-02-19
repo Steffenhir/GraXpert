@@ -93,7 +93,7 @@ def interpol(x_sub,y_sub,subsample,shape,kind,smoothing):
         x_new = np.arange(0,shape[1],1).astype("float64")
         y_new = np.arange(0,shape[0],1).astype("float64")
 
-        result, var = OK.execute("grid", xpoints=x_new, ypoints=y_new, n_closest_points=16, backend="C")
+        result, var = OK.execute("grid", xpoints=x_new, ypoints=y_new, backend="C")
         return result
 
     

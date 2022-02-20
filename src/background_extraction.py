@@ -33,7 +33,7 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
     
     blur = gaussian_filter(imarray_scaled,sigma=(s,s,0),truncate = t)
     
-    background = np.zeros((y_size,x_size,num_colors))
+    background = np.zeros((y_size,x_size,num_colors), dtype=np.float32)
     
     for c in range(num_colors):
         

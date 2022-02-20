@@ -1,5 +1,4 @@
 astropy
-gpytorch
 Pillow
 pykrige
 scikit-image

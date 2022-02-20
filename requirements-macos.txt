@@ -1,0 +1,5 @@
+astropy
+Pillow
+pykrige
+scikit-image
+scipy==1.7.3 # fixes PyInstaller build issue with github actions with scipy==1.8.0. TODO: fixme

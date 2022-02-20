@@ -5,6 +5,7 @@ Created on Sun Feb 13 10:05:08 2022
 """
 
 import tkinter as tk
+from tkinter import ttk
 from tkinter import filedialog
 from PIL import Image, ImageTk 
 import math                   
@@ -138,84 +139,123 @@ class Application(tk.Frame):
         self.master.bind("<MouseWheel>", self.mouse_wheel)                     # Mouse Wheel
         self.master.bind("<Return>", self.enter_key)                           # Enter Key
         
-        #Side buttons
+        #Side menu
         
-        self.load_image_button = tk.Button(self.canvas, 
-                         text="Load", fg="green",
+        self.side_menu = tk.Frame(self.canvas,bg="#765D69")
+        self.side_menu.columnconfigure(0, weight=1)
+        self.side_menu.columnconfigure(1, weight=1)
+        self.side_menu.pack(side=tk.LEFT, fill=tk.Y)
+        
+        #---Display---
+        
+        text = tk.Message(self.side_menu, text="1. Display")
+        text.config(width=200, font=('times', 20, 'normal'))
+        text.grid(column=0, row=0, pady=5, columnspan=2)
+        
+        self.load_image_button = tk.Button(self.side_menu, 
+                         text="Load", fg="black",
                          command=self.menu_open_clicked,
                          height=5,width=15)
-        self.load_image_button.place(x=10,y=10)
+        self.load_image_button.grid(column=0, row=1, pady=5, columnspan=2)
         
-        self.save_background_button = tk.Button(self.canvas, 
-                         text="Reset Points", fg="green",
-                         command=self.reset_backgroundpts,
-                         height=5,width=15)
-        self.save_background_button.place(x=10,y=110)
-        
-
-        self.intp_type_text = tk.Message(self.canvas, text="Method: " + self.interpol_type)
-        self.intp_type_text.config(width=200,bg='lightgreen', font=('times', 16, 'normal'))
-        self.intp_type_text.place(x=10, y=200)
-        
-        self.smooth_text = tk.Message(self.canvas, text="Smoothing ")
-        self.smooth_text.config(width=200,bg='lightgreen', font=('times', 12, 'normal'))
-        self.smooth_text.place(x=10, y=240)
-        
-        self.smoothing = tk.DoubleVar()
-        self.smoothing.set(5.0)
-        self.smoothing_slider = tk.Scale(self.canvas,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=20.0,resolution=0.1,var=self.smoothing,width=10)
-        self.smoothing_slider.place(x=10,y=270)
-        
-        self.save_background_button = tk.Button(self.canvas, 
-                         text="Calculate", fg="green",
-                         command=self.calculate,
-                         height=5,width=15)
-        self.save_background_button.place(x=10,y=330)
-        
-        self.save_background_button = tk.Button(self.canvas, 
-                         text="Save Background", fg="green",
-                         command=self.save_background_image,
-                         height=5,width=15)
-        self.save_background_button.place(x=10,y=430)
-        
-              
-        
-        self.save_button = tk.Button(self.canvas, 
-                         text="Save Picture", fg="green",
-                         command=self.save_image,
-                         height=5,width=15)
-        self.save_button.place(x=10,y=530)
-        
-        self.stretch_text = tk.Message(self.canvas, text="Stretch Options:")
-        self.stretch_text.config(width=200,bg='lightgreen', font=('times', 16, 'normal'))
-        self.stretch_text.place(x=10, y=630)
+        self.stretch_text = tk.Message(self.side_menu, text="Stretch Options:")
+        self.stretch_text.config(width=200)
+        self.stretch_text.grid(column=0, row=2, pady=5)
         
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
         self.stretch_option_current = tk.StringVar()
         self.stretch_option_current.set(self.stretch_options[0])
-        self.stretch_menu = tk.OptionMenu(self.canvas, self.stretch_option_current, *self.stretch_options,command=self.stretch)
-        self.stretch_menu.place(x=10,y=680)
+        self.stretch_menu = tk.OptionMenu(self.side_menu, self.stretch_option_current, *self.stretch_options,command=self.stretch)
+        self.stretch_menu.grid(column=1, row=2, pady=5)
         
-        self.bg_selection_text = tk.Message(self.canvas, text="Automatic Background Selection")
-        self.bg_selection_text.config(width=300,bg='lightgreen', font=('times', 16, 'normal'))
-        self.bg_selection_text.place(x=10, y=780)
+        sep = ttk.Separator(self.side_menu,orient="horizontal")
+        sep.grid(column=0, row=3, pady=5, columnspan=2, sticky="ew")
         
-        self.bg_selection_text = tk.Message(self.canvas, text="# of Points")
-        self.bg_selection_text.config(width=300,bg='lightgreen', font=('times', 12, 'normal'))
-        self.bg_selection_text.place(x=10, y=820)
+        #---Selection---
+        
+        text = tk.Message(self.side_menu, text="2. Selection")
+        text.config(width=200, font=('times', 20, 'normal'))
+        text.grid(column=0, row=4, pady=5, columnspan=2)
+        
+        self.save_background_button = tk.Button(self.side_menu, 
+                         text="Reset Points",
+                         command=self.reset_backgroundpts,
+                         height=5,width=15)
+        self.save_background_button.grid(column=0, row=5, pady=5, columnspan=2)
+        
+        self.bg_selection_text = tk.Message(self.side_menu, text="# of Points")
+        self.bg_selection_text.config(width=300, font=('times', 12, 'normal'))
+        self.bg_selection_text.grid(column=0, row=6, pady=5)
         
         self.bg_pts = tk.IntVar()
         self.bg_pts.set(5.0)
-        self.bg_pts_slider = tk.Scale(self.canvas,orient=tk.HORIZONTAL,from_=0,to=100,tickinterval=20,resolution=1,var=self.bg_pts,width=10)
-        self.bg_pts_slider.place(x=10,y=850)
+        self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=0,to=100,tickinterval=20,resolution=1,var=self.bg_pts,width=10)
+        self.bg_pts_slider.grid(column=1, row=6, pady=5)
         
-        self.bg_selection_button = tk.Button(self.canvas, 
-                         text="Select Background", fg="green",
+        self.bg_selection_button = tk.Button(self.side_menu, 
+                         text="Select Background",
                          command=self.select_background,
                          height=5,width=15)
-        self.bg_selection_button.place(x=10,y=920)
+        self.bg_selection_button.grid(column=0, row=7, pady=5, columnspan=2)
+
         
-    
+        sep = ttk.Separator(self.side_menu,orient="horizontal")
+        sep.grid(column=0, row=8, pady=5, columnspan=2, sticky="ew")
+        
+        #---Calculation---
+        
+        text = tk.Message(self.side_menu, text="3. Calculation")
+        text.config(width=200, font=('times', 20, 'normal'))
+        text.grid(column=0, row=9, pady=5, columnspan=2)
+        
+        self.intp_type_text = tk.Message(self.side_menu, text="Method: " + self.interpol_type)
+        self.intp_type_text.config(width=200, font=('times', 12, 'normal'))
+        self.intp_type_text.grid(column=0, row=10, pady=5, columnspan=2)
+        
+        self.smooth_text = tk.Message(self.side_menu, text="Smoothing ")
+        self.smooth_text.config(width=200, font=('times', 12, 'normal'))
+        self.smooth_text.grid(column=0, row=11, pady=5)
+        
+        self.smoothing = tk.DoubleVar()
+        self.smoothing.set(5.0)
+        self.smoothing_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=20.0,resolution=0.1,var=self.smoothing,width=8)
+        self.smoothing_slider.grid(column=1, row=11, pady=5)
+        
+        self.save_background_button = tk.Button(self.side_menu, 
+                         text="Calculate",
+                         command=self.calculate,
+                         height=5,width=15)
+        self.save_background_button.grid(column=0, row=12, pady=5, columnspan=2)
+        
+        sep = ttk.Separator(self.side_menu,orient="horizontal")
+        sep.grid(column=0, row=13, pady=5, columnspan=2, sticky="ew")
+        
+        #---Saving---
+        
+        text = tk.Message(self.side_menu, text="4. Saving")
+        text.config(width=200, font=('times', 20, 'normal'))
+        text.grid(column=0, row=14, pady=5, columnspan=2)
+        
+        
+        self.save_background_button = tk.Button(self.side_menu, 
+                         text="Save Background",
+                         command=self.save_background_image,
+                         height=5,width=15)
+        self.save_background_button.grid(column=0, row=15, pady=5, columnspan=2)
+        
+              
+        
+        self.save_button = tk.Button(self.side_menu, 
+                         text="Save Picture",
+                         command=self.save_image,
+                         height=5,width=15)
+        self.save_button.grid(column=0, row=16, pady=5, columnspan=2)
+        
+
+        sep = ttk.Separator(self.side_menu,orient="horizontal")
+        sep.grid(column=0, row=17, pady=5, columnspan=2, sticky="ew")
+
+
     def select_background(self,event=None):
         self.background_points = background_selection.background_selection(self.image_full,self.bg_pts.get())
         for i in range(len(self.background_points)):

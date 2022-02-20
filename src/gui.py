@@ -72,12 +72,20 @@ class Application(tk.Frame):
         
         self.interpol_type = 'Splines'
         self.intp_type_text.configure(text="Method: " + self.interpol_type)
+        self.downscale_factor = 1
     
     def menu_intp_Kriging_clicked(self):
          
          self.interpol_type = 'Kriging'
          self.intp_type_text.configure(text="Method: " + self.interpol_type)
          self.downscale_factor = 4
+
+    
+    def menu_intp_GPR_CUDA_clicked(self):
+         
+         self.interpol_type = 'GPR_CUDA'
+         self.intp_type_text.configure(text="Method: " + self.interpol_type)
+         self.downscale_factor = 1 
          
 
     def create_menu(self):
@@ -101,6 +109,7 @@ class Application(tk.Frame):
         self.interpolation_menu.add_command(label="RBF", command = self.menu_intp_RBF_clicked)
         self.interpolation_menu.add_command(label="Splines", command = self.menu_intp_Splines_clicked)
         self.interpolation_menu.add_command(label="Kriging", command = self.menu_intp_Kriging_clicked)
+        self.interpolation_menu.add_command(label="GPR-CUDA", command = self.menu_intp_GPR_CUDA_clicked)
            
 
         self.master.config(menu=self.menu_bar)

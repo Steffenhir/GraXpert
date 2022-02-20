@@ -15,6 +15,8 @@ from scipy import linalg
 from pykrige.ok import OrdinaryKriging
 from skimage.transform import resize
 from skimage import img_as_float32
+from gpr_cuda import GPRegression
+
 
 
 
@@ -93,6 +95,7 @@ def interpol(x_sub,y_sub,subsample,shape,kind,smoothing):
         x_new = np.arange(0,shape[1],1).astype("float64")
         y_new = np.arange(0,shape[0],1).astype("float64")
 
+
         result, var = OK.execute("grid", xpoints=x_new, ypoints=y_new, backend="C")
         return result
 
@@ -107,4 +110,17 @@ def downscale(imarray, background_points, downscale_factor):
         return imarray, background_points
     
 
+
+    
+    if(kind=='GPR_CUDA'):
+        # A likelihood in GPyTorch specifies the mapping from latent function values f(X) to observed labels y.
+        gpr = GPRegression(
+            x_sub=x_sub,
+            y_sub=y_sub,
+            subsample=subsample, 
+            shape=shape
+        )
+        result = gpr.run()
+        del gpr
+        return result
 

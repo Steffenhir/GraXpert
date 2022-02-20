@@ -99,7 +99,19 @@ def interpol(x_sub,y_sub,subsample,shape,kind,smoothing):
         result, var = OK.execute("grid", xpoints=x_new, ypoints=y_new, backend="C")
         return result
 
-    
+    if(kind=='GPR_CUDA'):
+        # A likelihood in GPyTorch specifies the mapping from latent function values f(X) to observed labels y.
+        gpr = GPRegression(
+            x_sub=x_sub,
+            y_sub=y_sub,
+            subsample=subsample, 
+            shape=shape
+        )
+        result = gpr.run()
+        del gpr
+        return result
+
+
 def downscale(imarray, background_points, downscale_factor):
     
     if downscale_factor == 1:
@@ -112,15 +124,5 @@ def downscale(imarray, background_points, downscale_factor):
 
 
     
-    if(kind=='GPR_CUDA'):
-        # A likelihood in GPyTorch specifies the mapping from latent function values f(X) to observed labels y.
-        gpr = GPRegression(
-            x_sub=x_sub,
-            y_sub=y_sub,
-            subsample=subsample, 
-            shape=shape
-        )
-        result = gpr.run()
-        del gpr
-        return result
+    
 

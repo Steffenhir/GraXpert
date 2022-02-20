@@ -68,15 +68,16 @@ class GPRegression:
             self.train_x, self.train_y, likelihood=self.likelihood
         )
 
-    def train(self, training_iterations=range(20)):
+    def train(self, training_iterations=range(1000)):
         # Find optimal model hyperparameters
         self.model.train()
         self.likelihood.train()
 
-        # Use the adam optimizer
-        optimizer = torch.optim.Adam(
+        # Use the SGD optimizer
+        optimizer = torch.optim.SGD(
             self.model.parameters(),
             lr=0.01,
+            momentum=0.9
         )  # Includes GaussianLikelihood parameters
 
         if torch.cuda.is_available:

@@ -35,6 +35,8 @@ class Application(tk.Frame):
         self.master.title(self.my_title)
         
         self.interpol_type = 'Splines'
+        self.downscale_factor = 1
+        
         self.background_points = []
 
         self.create_menu()
@@ -64,6 +66,7 @@ class Application(tk.Frame):
         
         self.interpol_type = 'RBF'
         self.intp_type_text.configure(text="Method: " + self.interpol_type)
+        self.downscale_factor = 4
         
     def menu_intp_Splines_clicked(self):
         
@@ -74,6 +77,7 @@ class Application(tk.Frame):
          
          self.interpol_type = 'Kriging'
          self.intp_type_text.configure(text="Method: " + self.interpol_type)
+         self.downscale_factor = 4
          
 
     def create_menu(self):
@@ -314,7 +318,7 @@ class Application(tk.Frame):
         
         imarray = np.array(self.image_full)
 
-        background = background_extraction.extract_background(imarray,np.array(self.background_points),self.interpol_type,10**self.smoothing.get())
+        background = background_extraction.extract_background(imarray,np.array(self.background_points),self.interpol_type,10**self.smoothing.get(),self.downscale_factor)
         
         self.image_full_processed = imarray
         

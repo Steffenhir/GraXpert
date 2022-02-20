@@ -25,7 +25,7 @@ class Application(tk.Frame):
         super().__init__(master)
 
         self.master.geometry("1920x1080") 
-        
+
         self.data_type = ""
         self.pil_image = None
         self.image_full = None
@@ -127,8 +127,8 @@ class Application(tk.Frame):
         frame_statusbar.pack(side=tk.BOTTOM, fill=tk.X)
 
         # Canvas
-        self.canvas = tk.Canvas(self.master, background="black")
-        self.canvas.pack(expand=True,  fill=tk.BOTH)
+        self.canvas = tk.Canvas(self.master, background="black", name="picture")
+        self.canvas.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)
 
 
         self.master.bind("<Button-1>", self.mouse_down_left)                   # Left Mouse Button
@@ -141,9 +141,7 @@ class Application(tk.Frame):
         
         #Side menu
         
-        self.side_menu = tk.Frame(self.canvas,bg="#765D69")
-        self.side_menu.columnconfigure(0, weight=1)
-        self.side_menu.columnconfigure(1, weight=1)
+        self.side_menu = tk.Frame(self.master,bg="#765D69")
         self.side_menu.pack(side=tk.LEFT, fill=tk.Y)
         
         #---Display---
@@ -189,7 +187,7 @@ class Application(tk.Frame):
         
         self.bg_pts = tk.IntVar()
         self.bg_pts.set(5.0)
-        self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=0,to=100,tickinterval=20,resolution=1,var=self.bg_pts,width=10)
+        self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=0,to=100,tickinterval=50,resolution=1,var=self.bg_pts,width=10)
         self.bg_pts_slider.grid(column=1, row=6, pady=5)
         
         self.bg_selection_button = tk.Button(self.side_menu, 
@@ -218,7 +216,7 @@ class Application(tk.Frame):
         
         self.smoothing = tk.DoubleVar()
         self.smoothing.set(5.0)
-        self.smoothing_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=20.0,resolution=0.1,var=self.smoothing,width=8)
+        self.smoothing_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=10.0,resolution=0.1,var=self.smoothing,width=8)
         self.smoothing_slider.grid(column=1, row=11, pady=5)
         
         self.save_background_button = tk.Button(self.side_menu, 
@@ -326,7 +324,7 @@ class Application(tk.Frame):
 
         self.master.title(self.my_title + " - " + os.path.basename(filename))
 
-        self.label_image_info["text"] = f"{self.pil_image.format} : {self.pil_image.width} x {self.pil_image.height} {self.pil_image.mode}"
+        self.label_image_info["text"] = f"{self.data_type} : {self.pil_image.width} x {self.pil_image.height} {self.pil_image.mode}"
 
         os.chdir(os.path.dirname(filename))
     
@@ -390,6 +388,10 @@ class Application(tk.Frame):
     
     def mouse_down_right(self,event):
         
+        if(str(event.widget).split(".")[-1] != "picture"):
+            return
+        
+
         if(not self.remove_pt(event) and self.to_image_point(event.x,event.y) != []):
             self.background_points.append(self.to_image_point(event.x,event.y))
 
@@ -424,11 +426,18 @@ class Application(tk.Frame):
             
         
     def mouse_down_left(self, event):
-
+        
+        if(str(event.widget).split(".")[-1] != "picture"):
+            return
+        
         self.__old_event = event
 
-    def mouse_move_left(self, event):
 
+    def mouse_move_left(self, event):
+        
+        if(str(event.widget).split(".")[-1] != "picture"):
+            return
+        
         if (self.pil_image == None):
             return
         self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
@@ -442,17 +451,20 @@ class Application(tk.Frame):
         
         image_point = self.to_image_point(event.x, event.y)
         if image_point != []:
-            self.label_image_pixel["text"] = (f"({image_point[0]:.2f}, {image_point[1]:.2f})")
+            self.label_image_pixel["text"] = "x=" + f"{image_point[0]:.2f}" + ",y=" + f"{image_point[1]:.2f}"
         else:
             self.label_image_pixel["text"] = ("(--, --)")
 
 
     def mouse_double_click_left(self, event):
-
+        
+        if(str(event.widget).split(".")[-1] != "picture"):
+            return
+        
         if self.pil_image == None:
             return
         self.zoom_fit(self.pil_image.width, self.pil_image.height)
-        self.redraw_image() # 再描画
+        self.redraw_image()
 
     def mouse_wheel(self, event):
 

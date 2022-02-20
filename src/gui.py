@@ -14,7 +14,7 @@ import background_extraction
 import background_selection
 import stretch
 from astropy.io import fits
-from skimage import io,exposure,img_as_uint
+from skimage import io,exposure,img_as_uint,img_as_float32
 from skimage.util import img_as_ubyte
 
 
@@ -264,6 +264,9 @@ class Application(tk.Frame):
         else:
             self.image_full = io.imread(filename)
         
+        # Use 32 bit float with range (0,1) for internal calculations
+        self.image_full = img_as_float32(self.image_full)
+        
         self.stretch()
               
 
@@ -305,6 +308,7 @@ class Application(tk.Frame):
             defaultextension = ".tiff",
             initialdir = os.getcwd()
             )
+        
 
         io.imsave(dir, self.background_model)
         
@@ -318,16 +322,13 @@ class Application(tk.Frame):
         
         imarray = np.array(self.image_full)
 
-        background = background_extraction.extract_background(imarray,np.array(self.background_points),self.interpol_type,10**self.smoothing.get(),self.downscale_factor)
+        self.background_model = background_extraction.extract_background(
+            imarray,np.array(self.background_points),
+            self.interpol_type,10**self.smoothing.get(),
+            self.downscale_factor
+            )
         
-        self.image_full_processed = imarray
-        
-
-        background = exposure.rescale_intensity(background, out_range='float')
-        if(imarray.dtype == np.int16 or np.int8):
-            self.background_model = img_as_uint(background)
-        else:
-            self.background_model = background
+        self.image_full_processed = imarray       
         
 
         self.stretch()

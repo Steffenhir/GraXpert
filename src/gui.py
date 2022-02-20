@@ -14,7 +14,7 @@ import background_extraction
 import background_selection
 import stretch
 from astropy.io import fits
-from skimage import io,exposure,img_as_uint
+from skimage import io,img_as_float32
 from skimage.util import img_as_ubyte
 
 
@@ -35,6 +35,8 @@ class Application(tk.Frame):
         self.master.title(self.my_title)
         
         self.interpol_type = 'Splines'
+        self.downscale_factor = 1
+        
         self.background_points = []
 
         self.create_menu()
@@ -64,21 +66,26 @@ class Application(tk.Frame):
         
         self.interpol_type = 'RBF'
         self.intp_type_text.configure(text="Method: " + self.interpol_type)
+        self.downscale_factor = 4
         
     def menu_intp_Splines_clicked(self):
         
         self.interpol_type = 'Splines'
         self.intp_type_text.configure(text="Method: " + self.interpol_type)
+        self.downscale_factor = 1
     
     def menu_intp_Kriging_clicked(self):
          
          self.interpol_type = 'Kriging'
          self.intp_type_text.configure(text="Method: " + self.interpol_type)
+         self.downscale_factor = 4
+
     
     def menu_intp_GPR_CUDA_clicked(self):
          
          self.interpol_type = 'GPR_CUDA'
          self.intp_type_text.configure(text="Method: " + self.interpol_type)
+         self.downscale_factor = 1 
          
 
     def create_menu(self):
@@ -266,6 +273,9 @@ class Application(tk.Frame):
         else:
             self.image_full = io.imread(filename)
         
+        # Use 32 bit float with range (0,1) for internal calculations
+        self.image_full = img_as_float32(self.image_full)
+        
         self.stretch()
               
 
@@ -307,6 +317,7 @@ class Application(tk.Frame):
             defaultextension = ".tiff",
             initialdir = os.getcwd()
             )
+        
 
         io.imsave(dir, self.background_model)
         
@@ -320,16 +331,13 @@ class Application(tk.Frame):
         
         imarray = np.array(self.image_full)
 
-        background = background_extraction.extract_background(imarray,np.array(self.background_points),self.interpol_type,10**self.smoothing.get())
+        self.background_model = background_extraction.extract_background(
+            imarray,np.array(self.background_points),
+            self.interpol_type,10**self.smoothing.get(),
+            self.downscale_factor
+            )
         
-        self.image_full_processed = imarray
-        
-
-        background = exposure.rescale_intensity(background, out_range='float')
-        if(imarray.dtype == np.int16 or np.int8):
-            self.background_model = img_as_uint(background)
-        else:
-            self.background_model = background
+        self.image_full_processed = imarray       
         
 
         self.stretch()

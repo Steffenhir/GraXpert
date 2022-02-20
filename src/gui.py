@@ -14,7 +14,7 @@ import background_extraction
 import background_selection
 import stretch
 from astropy.io import fits
-from skimage import io,exposure,img_as_uint,img_as_float32
+from skimage import io,img_as_float32
 from skimage.util import img_as_ubyte
 
 

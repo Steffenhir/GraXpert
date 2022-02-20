@@ -1,6 +1,8 @@
 import gpytorch
 import numpy as np
 import torch
+from gpytorch.likelihoods import GaussianLikelihood
+from skimage import img_as_uint
 from torch.utils.data import DataLoader, TensorDataset
 
 gpytorch_available = True
@@ -24,33 +26,16 @@ class LargeFeatureExtractor(torch.nn.Sequential):
 
 # Our GRP model for training and predictions
 class GPRegressionModel(gpytorch.models.ExactGP):
-    def __init__(self, x_sub, y_sub, subsample, shape, likelihood):
-
-        self.x_size = shape[1]
-        self.y_size = shape[0]
-        # map numpy arrays to normalized tensors
-        y_sub = torch.tensor(y_sub / self.y_size).float()
-        x_sub = torch.tensor(x_sub / self.x_size).float()
-        train_x = torch.cat(
-            (
-                y_sub.contiguous().view(y_sub.numel(), 1),
-                x_sub.contiguous().view(x_sub.numel(), 1),
-            ),
-            dim=1,
-        )
-        train_y = torch.tensor(subsample / (2**16)).float()
-
+    def __init__(self, train_x, train_y, likelihood):
         super(GPRegressionModel, self).__init__(train_x, train_y, likelihood)
-
+        
         self.mean_module = gpytorch.means.ConstantMean()
         self.covar_module = gpytorch.kernels.ScaleKernel(
             gpytorch.kernels.RBFKernel(ard_num_dims=2)
-            gpytorch.kernels.LinearKernel(num_dimensions=2)
+            + gpytorch.kernels.LinearKernel()
         )
         self.feature_extractor = LargeFeatureExtractor(input_dim=train_x.size(-1))
         self.scale_to_bounds = gpytorch.utils.grid.ScaleToBounds(-1.0, 1.0)
-        self.train_x = train_x
-        self.train_y = train_y
 
     def forward(self, x):
         # We're first putting our data through a deep net (feature extractor)
@@ -62,83 +47,104 @@ class GPRegressionModel(gpytorch.models.ExactGP):
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
-def train(model, likelihood, training_iterations=range(100)):
-    # Find optimal model hyperparameters
-    model.train()
-    likelihood.train()
-
-    # Use the adam optimizer
-    optimizer = torch.optim.Adam(
-        model.parameters(),
-        lr=0.01,
-    )  # Includes GaussianLikelihood parameters
-
-    train_x, train_y = (model.train_x, model.train_y)
-    if torch.cuda.is_available:
-        train_x, train_y, likelihood, model = (
-            train_x.cuda(),
-            train_y.cuda(),
-            likelihood.cuda(),
-            model.cuda(),
+class GPRegression:
+    def __init__(self, x_sub, y_sub, subsample, shape):
+        self.x_size = shape[1]
+        self.y_size = shape[0]
+        # map numpy arrays to normalized tensors
+        y_sub = torch.tensor(y_sub / self.y_size).float()
+        x_sub = torch.tensor(x_sub / self.x_size).float()
+        self.train_x = torch.cat(
+            (
+                y_sub.contiguous().view(y_sub.numel(), 1),
+                x_sub.contiguous().view(x_sub.numel(), 1),
+            ),
+            dim=1,
         )
-    else:
-        print(
-            "WARNING: pytorch has no CUDA support, cf. https://pytorch.org/get-started/locally/"
+        self.train_y = torch.tensor(subsample).float()
+
+        self.likelihood = GaussianLikelihood()
+        self.model = GPRegressionModel(
+            self.train_x, self.train_y, likelihood=self.likelihood
         )
 
-    # "Loss" for GPs - the marginal log likelihood
-    mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
+    def train(self, training_iterations=range(20)):
+        # Find optimal model hyperparameters
+        self.model.train()
+        self.likelihood.train()
 
-    for i in training_iterations:
-        print("training iteration", i)
-        optimizer.zero_grad()
-        output = model(train_x)
-        loss = -mll(output, train_y)
-        loss.backward()
-        optimizer.step()
+        # Use the adam optimizer
+        optimizer = torch.optim.Adam(
+            self.model.parameters(),
+            lr=0.01,
+        )  # Includes GaussianLikelihood parameters
 
+        if torch.cuda.is_available:
+            self.train_x, self.train_y, self.likelihood, self.model = (
+                self.train_x.cuda(),
+                self.train_y.cuda(),
+                self.likelihood.cuda(),
+                self.model.cuda(),
+            )
+        else:
+            print(
+                "WARNING: pytorch has no CUDA support, cf. https://pytorch.org/get-started/locally/"
+            )
 
-def predict(model, likelihood):
-    yv, xv = torch.meshgrid(
-        [
-            torch.linspace(0, 1, model.y_size),
-            torch.linspace(0, 1, model.x_size),
-        ]
-    )
-    test_x = torch.stack([yv, xv], -1).squeeze(1).contiguous()
-    test_y = torch.zeros(model.y_size, 1).contiguous()
+        # "Loss" for GPs - the marginal log likelihood
+        mll = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model)
 
-    if torch.cuda.is_available:
-        test_x, test_y, likelihood, model = (
-            test_x.cuda(),
-            test_y.cuda(),
-            likelihood.cuda(),
-            model.cuda(),
+        for i in training_iterations:
+            print("training iteration", i)
+            optimizer.zero_grad()
+            output = self.model(self.train_x)
+            loss = -mll(output, self.train_y)
+            loss.backward()
+            optimizer.step()
+
+    def predict(self):
+        yv, xv = torch.meshgrid(
+            [
+                torch.linspace(0, 1, self.y_size),
+                torch.linspace(0, 1, self.x_size),
+            ]
         )
-    else:
-        print(
-            "WARNING: pytorch has no CUDA support, cf. https://pytorch.org/get-started/locally/"
-        )
+        test_x = torch.stack([yv, xv], -1).squeeze(1).contiguous()
+        test_y = torch.zeros(self.y_size, 1).contiguous()
 
-    test_dataset = TensorDataset(test_x, test_y)
-    test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False)
+        if torch.cuda.is_available:
+            test_x, test_y = (test_x.cuda(), test_y.cuda())
+        else:
+            print(
+                "WARNING: pytorch has no CUDA support, cf. https://pytorch.org/get-started/locally/"
+            )
 
-    print("calculating predictions")
+        test_dataset = TensorDataset(test_x, test_y)
+        test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False)
 
-    # Set into eval mode
-    model.eval()
-    likelihood.eval()
+        print("calculating predictions")
 
-    means = torch.zeros(model.x_size, 1).reshape(1, -1)
-    with torch.no_grad(), gpytorch.settings.fast_pred_var(), gpytorch.settings.max_preconditioner_size(
-        100
-    ):
-        for x_batch, y_batch in test_loader:
-            print("processing batch", means.shape)
-            test_loader.batch_size
-            preds = likelihood(model(x_batch))
-            means = torch.cat([means, preds.mean.cpu()])
-    means = means[1:]
-    means = means * (2**16)
+        # Set into eval mode
+        self.model.eval()
+        self.likelihood.eval()
 
-    return means.numpy()
+        means = torch.zeros(self.x_size, 1).reshape(1, -1)
+        with torch.no_grad(), gpytorch.settings.fast_pred_var(), gpytorch.settings.max_preconditioner_size(
+            100
+        ):
+            for x_batch, y_batch in test_loader:
+                print("processing batch", means.shape)
+                test_loader.batch_size
+                preds = self.likelihood(self.model(x_batch))
+                means = torch.cat([means, preds.mean.cpu()])
+        means = means[1:]
+        result = means.numpy()
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        return result
+
+    def run(self):
+        self.train()
+        return self.predict()

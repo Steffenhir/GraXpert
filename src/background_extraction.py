@@ -13,10 +13,7 @@ from scipy.ndimage import gaussian_filter
 from radialbasisinterpolation import RadialBasisInterpolation
 from scipy import linalg
 from pykrige.ok import OrdinaryKriging
-from gpytorch.likelihoods import GaussianLikelihood
-from gpr_cuda import GPRegressionModel
-from gpr_cuda import train as gpr_train
-from gpr_cuda import predict as gpr_predict
+from gpr_cuda import GPRegression
 
 
 
@@ -97,16 +94,12 @@ def interpol(x_sub,y_sub,subsample,shape,kind,smoothing):
     
     if(kind=='GPR_CUDA'):
         # A likelihood in GPyTorch specifies the mapping from latent function values f(X) to observed labels y.
-        likelihood = GaussianLikelihood()
-        model = GPRegressionModel(
+        gpr = GPRegression(
             x_sub=x_sub,
             y_sub=y_sub,
             subsample=subsample, 
-            shape=shape,
-            likelihood=likelihood
+            shape=shape
         )
-
-        gpr_train(model, likelihood)
-        result =gpr_predict(model,likelihood)
-        del model, likelihood
+        result = gpr.run()
+        del gpr
         return result

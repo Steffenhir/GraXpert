@@ -154,4 +154,7 @@ class Tooltip:
         self.tw = None
 
 
-load_text = "Load your image. \n Supported formats are 16 bit integer and 32 bit float .tiff and .fits"
+load_text = ("Load your image you would like to correct. \n"
+             "\n"
+             "Supported formats: .tiff, .fits \n"
+             "Supported bitdepths: 16 bit integer, 32 bit float")

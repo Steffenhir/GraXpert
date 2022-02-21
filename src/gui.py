@@ -14,6 +14,7 @@ import os
 import background_extraction
 import background_selection
 import stretch
+import tooltip
 from astropy.io import fits
 from skimage import io,img_as_float32
 from skimage.util import img_as_ubyte
@@ -154,6 +155,7 @@ class Application(tk.Frame):
                          text="Load", fg="black",
                          command=self.menu_open_clicked,
                          height=5,width=15)
+        tt_load = tooltip.Tooltip(self.load_image_button, text=tooltip.load_text)
         self.load_image_button.grid(column=0, row=1, pady=5, columnspan=2)
         
         self.stretch_text = tk.Message(self.side_menu, text="Stretch Options:")

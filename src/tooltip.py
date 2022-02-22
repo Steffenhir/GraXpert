@@ -158,3 +158,26 @@ load_text = ("Load your image you would like to correct. \n"
              "\n"
              "Supported formats: .tiff, .fits \n"
              "Supported bitdepths: 16 bit integer, 32 bit float")
+
+stretch_text = ("Automatically stretch the picture to make gradients more visible. "
+                "The saved pictures are unaffected by the stretch.")
+
+reset_text = ("Reset all the chosen background points.")
+
+bg_select_text = ("Automatically select the specified amount of background points."
+                  "This may take a while.")
+
+num_points_text = ("Adjust the number of points selected by the automatic background selection.")
+
+interpol_type_text = ("Choose between different interpolation methods.")
+
+smoothing_text = ("Adjust the smoothing parameter for the interpolation method. "
+                  "A too small smoothing parameter may lead to over- and undershooting "
+                  "inbetween background points, while a too large smoothing parameter "
+                  "may not be suited for large deviations in gradients.")
+
+calculate_text = ("Use the specified interpolation method to calculate a background model "
+                  "and subtract it from the picture. This may take a while.")
+
+save_bg_text = ("Save the background model as a 32 bit .tiff")
+save_pic_text = ("Save your picture as a 32 bit .tiff")

@@ -34,89 +34,15 @@ class Application(tk.Frame):
         self.background_model = None
         
         self.my_title = "Background Extraction"
-        self.master.title(self.my_title)
-        
-        self.interpol_type = 'Splines'
-        self.downscale_factor = 1
+        self.master.title(self.my_title)       
         
         self.background_points = []
 
-        self.create_menu()
         self.create_widget()
 
         self.reset_transform()
         
         
-        
-        
-
-    def menu_open_clicked(self, event=None):
-
-        filename = tk.filedialog.askopenfilename(
-            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fits"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fits")],
-            initialdir = os.getcwd()
-            )
-
-        self.data_type = os.path.splitext(filename)[1]
-        self.set_image(filename)
-
-    def menu_quit_clicked(self):
-
-        self.master.destroy() 
-        
-    def menu_intp_RBF_clicked(self):
-        
-        self.interpol_type = 'RBF'
-        self.intp_type_text.configure(text="Method: " + self.interpol_type)
-        self.downscale_factor = 4
-        
-    def menu_intp_Splines_clicked(self):
-        
-        self.interpol_type = 'Splines'
-        self.intp_type_text.configure(text="Method: " + self.interpol_type)
-        self.downscale_factor = 1
-    
-    def menu_intp_Kriging_clicked(self):
-         
-         self.interpol_type = 'Kriging'
-         self.intp_type_text.configure(text="Method: " + self.interpol_type)
-         self.downscale_factor = 4
-
-    
-    def menu_intp_GPR_CUDA_clicked(self):
-         
-         self.interpol_type = 'GPR_CUDA'
-         self.intp_type_text.configure(text="Method: " + self.interpol_type)
-         self.downscale_factor = 1 
-         
-
-    def create_menu(self):
-        self.menu_bar = tk.Menu(self)
- 
-    
-        #File menu
-        self.file_menu = tk.Menu(self.menu_bar, tearoff = tk.OFF)
-        
-        self.menu_bar.add_cascade(label="File", menu=self.file_menu)
-
-        self.file_menu.add_command(label="Open", command = self.menu_open_clicked)
-        self.file_menu.add_separator()
-        self.file_menu.add_command(label="Exit", command = self.menu_quit_clicked)
-        
-        #Interpolation menu
-        
-        self.interpolation_menu = tk.Menu(self.menu_bar, tearoff = tk.OFF)   
-        self.menu_bar.add_cascade(label="Interpolation Type", menu=self.interpolation_menu)
-        
-        self.interpolation_menu.add_command(label="RBF", command = self.menu_intp_RBF_clicked)
-        self.interpolation_menu.add_command(label="Splines", command = self.menu_intp_Splines_clicked)
-        self.interpolation_menu.add_command(label="Kriging", command = self.menu_intp_Kriging_clicked)
-        self.interpolation_menu.add_command(label="GPR-CUDA", command = self.menu_intp_GPR_CUDA_clicked)
-           
-
-        self.master.config(menu=self.menu_bar)
-        
- 
 
     def create_widget(self):
 
@@ -141,119 +67,126 @@ class Application(tk.Frame):
         self.master.bind("<Return>", self.enter_key)                           # Enter Key
         
         #Side menu
+       
+        bg_color = "#765D69"
+        menu_font = ('times', 12, 'normal')
+        button_height = 4
+        button_width = 13
         
-        self.side_menu = tk.Frame(self.master,bg="#765D69")
+        self.side_menu = tk.Frame(self.master,bg=bg_color)
         self.side_menu.pack(side=tk.LEFT, fill=tk.Y)
         
         #---Display---
         
-        text = tk.Message(self.side_menu, text="1. Display")
-        text.config(width=200, font=('times', 20, 'normal'))
-        text.grid(column=0, row=0, pady=5, columnspan=2)
-        
         self.load_image_button = tk.Button(self.side_menu, 
                          text="Load", fg="black",
+                         font=menu_font,
                          command=self.menu_open_clicked,
-                         height=5,width=15)
+                         height=button_height,width=button_width)
         tt_load = tooltip.Tooltip(self.load_image_button, text=tooltip.load_text)
-        self.load_image_button.grid(column=0, row=1, pady=5, columnspan=2)
+        self.load_image_button.grid(column=0, row=1, pady=5)
         
-        self.stretch_text = tk.Message(self.side_menu, text="Stretch Options:")
+        self.stretch_text = tk.Message(self.side_menu, text="Stretch Options:", bg=bg_color, font=menu_font)
         self.stretch_text.config(width=200)
-        self.stretch_text.grid(column=0, row=2, pady=5)
+        self.stretch_text.grid(column=0, row=2, pady=(5,0))
         
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
         self.stretch_option_current = tk.StringVar()
         self.stretch_option_current.set(self.stretch_options[0])
         self.stretch_menu = tk.OptionMenu(self.side_menu, self.stretch_option_current, *self.stretch_options,command=self.stretch)
-        self.stretch_menu.grid(column=1, row=2, pady=5)
-        
-        sep = ttk.Separator(self.side_menu,orient="horizontal")
-        sep.grid(column=0, row=3, pady=5, columnspan=2, sticky="ew")
+        self.stretch_menu.config(font=menu_font)
+        self.stretch_menu.grid(column=0, row=3, pady=(0,5))
+        tt_stretch= tooltip.Tooltip(self.stretch_menu, text=tooltip.stretch_text)
         
         #---Selection---
         
-        text = tk.Message(self.side_menu, text="2. Selection")
-        text.config(width=200, font=('times', 20, 'normal'))
-        text.grid(column=0, row=4, pady=5, columnspan=2)
-        
-        self.save_background_button = tk.Button(self.side_menu, 
+        self.reset_button = tk.Button(self.side_menu, 
                          text="Reset Points",
+                         font=menu_font,
                          command=self.reset_backgroundpts,
-                         height=5,width=15)
-        self.save_background_button.grid(column=0, row=5, pady=5, columnspan=2)
+                         height=button_height,width=button_width)
+        self.reset_button.grid(column=0, row=4, pady=5)
+        tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
         
-        self.bg_selection_text = tk.Message(self.side_menu, text="# of Points")
-        self.bg_selection_text.config(width=300, font=('times', 12, 'normal'))
-        self.bg_selection_text.grid(column=0, row=6, pady=5)
+        self.bg_selection_text = tk.Message(self.side_menu, text="# of Points:", bg=bg_color)
+        self.bg_selection_text.config(width=300, font=menu_font)
+        self.bg_selection_text.grid(column=0, row=5, pady=(5,0))
         
         self.bg_pts = tk.IntVar()
         self.bg_pts.set(5.0)
         self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=0,to=100,tickinterval=50,resolution=1,var=self.bg_pts,width=10)
-        self.bg_pts_slider.grid(column=1, row=6, pady=5)
+        self.bg_pts_slider.grid(column=0, row=6, pady=(0,5))
+        tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
         
         self.bg_selection_button = tk.Button(self.side_menu, 
                          text="Select Background",
+                         font=menu_font,
                          command=self.select_background,
-                         height=5,width=15)
-        self.bg_selection_button.grid(column=0, row=7, pady=5, columnspan=2)
-
-        
-        sep = ttk.Separator(self.side_menu,orient="horizontal")
-        sep.grid(column=0, row=8, pady=5, columnspan=2, sticky="ew")
+                         height=button_height,width=button_width)
+        self.bg_selection_button.grid(column=0, row=7, pady=5)
+        tt_bg_select = tooltip.Tooltip(self.bg_selection_button, text= tooltip.bg_select_text)
         
         #---Calculation---
         
-        text = tk.Message(self.side_menu, text="3. Calculation")
-        text.config(width=200, font=('times', 20, 'normal'))
-        text.grid(column=0, row=9, pady=5, columnspan=2)
+        self.intp_type_text = tk.Message(self.side_menu, text="Method:", bg=bg_color, font=menu_font)
+        self.intp_type_text.config(width=200, font=menu_font)
+        self.intp_type_text.grid(column=0, row=8, pady=(5,0))
         
-        self.intp_type_text = tk.Message(self.side_menu, text="Method: " + self.interpol_type)
-        self.intp_type_text.config(width=200, font=('times', 12, 'normal'))
-        self.intp_type_text.grid(column=0, row=10, pady=5, columnspan=2)
+        self.interpol_options = ["Splines", "RBF", "Kriging"]
+        self.interpol_type = tk.StringVar()
+        self.interpol_type.set(self.interpol_options[0])
+        self.interpol_menu = tk.OptionMenu(self.side_menu, self.interpol_type, *self.interpol_options)
+        self.interpol_menu.config(font=menu_font)
+        self.interpol_menu.grid(column=0, row=9, pady=(0,5))
+        tt_interpol_type= tooltip.Tooltip(self.interpol_menu, text=tooltip.interpol_type_text)
         
-        self.smooth_text = tk.Message(self.side_menu, text="Smoothing ")
-        self.smooth_text.config(width=200, font=('times', 12, 'normal'))
-        self.smooth_text.grid(column=0, row=11, pady=5)
+        self.smooth_text = tk.Message(self.side_menu, text="Smoothing:", bg=bg_color)
+        self.smooth_text.config(width=200, font=menu_font)
+        self.smooth_text.grid(column=0, row=10, pady=(5,0))
         
         self.smoothing = tk.DoubleVar()
         self.smoothing.set(5.0)
-        self.smoothing_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=10.0,resolution=0.1,var=self.smoothing,width=8)
-        self.smoothing_slider.grid(column=1, row=11, pady=5)
+        self.smoothing_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=10.0,resolution=0.1,var=self.smoothing,width=10)
+        self.smoothing_slider.grid(column=0, row=11, pady=(0,5))
+        tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
-        self.save_background_button = tk.Button(self.side_menu, 
+        self.calculate_button = tk.Button(self.side_menu, 
                          text="Calculate",
+                         font=menu_font,
                          command=self.calculate,
-                         height=5,width=15)
-        self.save_background_button.grid(column=0, row=12, pady=5, columnspan=2)
+                         height=button_height,width=button_width)
+        self.calculate_button.grid(column=0, row=12, pady=5)
+        tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
-        sep = ttk.Separator(self.side_menu,orient="horizontal")
-        sep.grid(column=0, row=13, pady=5, columnspan=2, sticky="ew")
-        
-        #---Saving---
-        
-        text = tk.Message(self.side_menu, text="4. Saving")
-        text.config(width=200, font=('times', 20, 'normal'))
-        text.grid(column=0, row=14, pady=5, columnspan=2)
-        
+        #---Saving---  
         
         self.save_background_button = tk.Button(self.side_menu, 
                          text="Save Background",
+                         font=menu_font,
                          command=self.save_background_image,
-                         height=5,width=15)
-        self.save_background_button.grid(column=0, row=15, pady=5, columnspan=2)
-        
+                         height=button_height,width=button_width)
+        self.save_background_button.grid(column=0, row=13, pady=5)
+        tt_save_bg = tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
               
         
         self.save_button = tk.Button(self.side_menu, 
                          text="Save Picture",
+                         font=menu_font,
                          command=self.save_image,
-                         height=5,width=15)
-        self.save_button.grid(column=0, row=16, pady=5, columnspan=2)
-        
+                         height=button_height,width=button_width)
+        self.save_button.grid(column=0, row=14, pady=5, padx=20)
+        tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
+    
+    
+    def menu_open_clicked(self, event=None):
 
-        sep = ttk.Separator(self.side_menu,orient="horizontal")
-        sep.grid(column=0, row=17, pady=5, columnspan=2, sticky="ew")
+        filename = tk.filedialog.askopenfilename(
+            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fits"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fits")],
+            initialdir = os.getcwd()
+            )
+
+        self.data_type = os.path.splitext(filename)[1]
+        self.set_image(filename)
 
 
     def select_background(self,event=None):
@@ -264,6 +197,7 @@ class Application(tk.Frame):
 
         self.redraw_image()
         return
+
         
     def stretch(self,event=None):
         
@@ -298,6 +232,7 @@ class Application(tk.Frame):
         
 
         self.redraw_image()
+
 
     def set_image(self, filename):
 
@@ -370,11 +305,17 @@ class Application(tk.Frame):
     def calculate(self):
         
         imarray = np.array(self.image_full)
+        
+        downscale_factor = 1
+        
+        if(self.interpol_type.get() == "Kriging" or self.interpol_type.get() == "RBF"):
+            downscale_factor = 4
 
+            
         self.background_model = background_extraction.extract_background(
             imarray,np.array(self.background_points),
-            self.interpol_type,10**self.smoothing.get(),
-            self.downscale_factor
+            self.interpol_type.get(),10**self.smoothing.get(),
+            downscale_factor
             )
         
         self.image_full_processed = imarray       

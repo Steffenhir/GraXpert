@@ -67,26 +67,33 @@ class Application(tk.Frame):
         self.master.bind("<Return>", self.enter_key)                           # Enter Key
         
         #Side menu
-       
-        bg_color = "#765D69"
-        menu_font = ('times', 12, 'normal')
-        button_height = 4
-        button_width = 13
         
-        self.side_menu = tk.Frame(self.master,bg=bg_color)
+        border_color = "#171717"
+        bg_color = "#474747"
+        button_color = "#6a6a6a"
+        text_color = "#F0F0F0"
+        menu_font = ('Segoe UI Semibold', 12, 'normal')
+        button_height = 2
+        button_width = 16
+        relief = "raised"
+        bdwidth = 5
+        
+        self.side_menu = tk.Frame(self.master, bg=bg_color, relief=relief, borderwidth=bdwidth)
         self.side_menu.pack(side=tk.LEFT, fill=tk.Y)
         
         #---Display---
         
         self.load_image_button = tk.Button(self.side_menu, 
-                         text="Load", fg="black",
+                         text="Load",
                          font=menu_font,
+                         bg=button_color,fg=text_color,
+                         relief=relief, borderwidth=bdwidth,
                          command=self.menu_open_clicked,
                          height=button_height,width=button_width)
         tt_load = tooltip.Tooltip(self.load_image_button, text=tooltip.load_text)
-        self.load_image_button.grid(column=0, row=1, pady=5)
+        self.load_image_button.grid(column=0, row=1, pady=(15,5))
         
-        self.stretch_text = tk.Message(self.side_menu, text="Stretch Options:", bg=bg_color, font=menu_font)
+        self.stretch_text = tk.Message(self.side_menu, text="Stretch Options:", bg=bg_color, font=menu_font, fg=text_color)
         self.stretch_text.config(width=200)
         self.stretch_text.grid(column=0, row=2, pady=(5,0))
         
@@ -94,33 +101,40 @@ class Application(tk.Frame):
         self.stretch_option_current = tk.StringVar()
         self.stretch_option_current.set(self.stretch_options[0])
         self.stretch_menu = tk.OptionMenu(self.side_menu, self.stretch_option_current, *self.stretch_options,command=self.stretch)
-        self.stretch_menu.config(font=menu_font)
+        self.stretch_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, borderwidth=bdwidth, highlightbackground=bg_color)
         self.stretch_menu.grid(column=0, row=3, pady=(0,5))
         tt_stretch= tooltip.Tooltip(self.stretch_menu, text=tooltip.stretch_text)
         
+      
         #---Selection---
         
         self.reset_button = tk.Button(self.side_menu, 
                          text="Reset Points",
                          font=menu_font,
+                         bg=button_color,fg=text_color,
+                         relief=relief, borderwidth=bdwidth,
                          command=self.reset_backgroundpts,
                          height=button_height,width=button_width)
         self.reset_button.grid(column=0, row=4, pady=5)
         tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
         
         self.bg_selection_text = tk.Message(self.side_menu, text="# of Points:", bg=bg_color)
-        self.bg_selection_text.config(width=300, font=menu_font)
+        self.bg_selection_text.config(width=300, font=menu_font, fg=text_color)
         self.bg_selection_text.grid(column=0, row=5, pady=(5,0))
         
         self.bg_pts = tk.IntVar()
         self.bg_pts.set(5.0)
-        self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=0,to=100,tickinterval=50,resolution=1,var=self.bg_pts,width=10)
+        self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=0,to=100,tickinterval=50,resolution=1,
+                                      var=self.bg_pts,width=12, bg=button_color, fg=text_color, relief=relief, 
+                                      borderwidth=bdwidth, highlightbackground=bg_color)
         self.bg_pts_slider.grid(column=0, row=6, pady=(0,5))
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
         
         self.bg_selection_button = tk.Button(self.side_menu, 
                          text="Select Background",
                          font=menu_font,
+                         bg=button_color,fg=text_color,
+                         relief=relief, borderwidth=bdwidth,
                          command=self.select_background,
                          height=button_height,width=button_width)
         self.bg_selection_button.grid(column=0, row=7, pady=5)
@@ -129,30 +143,36 @@ class Application(tk.Frame):
         #---Calculation---
         
         self.intp_type_text = tk.Message(self.side_menu, text="Method:", bg=bg_color, font=menu_font)
-        self.intp_type_text.config(width=200, font=menu_font)
+        self.intp_type_text.config(width=200, font=menu_font, fg=text_color)
         self.intp_type_text.grid(column=0, row=8, pady=(5,0))
         
         self.interpol_options = ["Splines", "RBF", "Kriging"]
         self.interpol_type = tk.StringVar()
         self.interpol_type.set(self.interpol_options[0])
         self.interpol_menu = tk.OptionMenu(self.side_menu, self.interpol_type, *self.interpol_options)
-        self.interpol_menu.config(font=menu_font)
+        self.interpol_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
+                                  borderwidth=bdwidth, highlightbackground=bg_color)
         self.interpol_menu.grid(column=0, row=9, pady=(0,5))
         tt_interpol_type= tooltip.Tooltip(self.interpol_menu, text=tooltip.interpol_type_text)
         
         self.smooth_text = tk.Message(self.side_menu, text="Smoothing:", bg=bg_color)
-        self.smooth_text.config(width=200, font=menu_font)
+        self.smooth_text.config(width=200, font=menu_font, fg=text_color)
         self.smooth_text.grid(column=0, row=10, pady=(5,0))
         
         self.smoothing = tk.DoubleVar()
         self.smoothing.set(5.0)
-        self.smoothing_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=10.0,resolution=0.1,var=self.smoothing,width=10)
+        self.smoothing_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,
+                                         from_=-10,to=10,tickinterval=10.0,resolution=0.1,var=self.smoothing,
+                                         width=12, bg=button_color, fg=text_color, relief=relief, 
+                                         borderwidth=bdwidth, highlightbackground=bg_color)
         self.smoothing_slider.grid(column=0, row=11, pady=(0,5))
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
         self.calculate_button = tk.Button(self.side_menu, 
                          text="Calculate",
                          font=menu_font,
+                         bg=button_color,fg=text_color,
+                         relief=relief, borderwidth=bdwidth,
                          command=self.calculate,
                          height=button_height,width=button_width)
         self.calculate_button.grid(column=0, row=12, pady=5)
@@ -163,6 +183,8 @@ class Application(tk.Frame):
         self.save_background_button = tk.Button(self.side_menu, 
                          text="Save Background",
                          font=menu_font,
+                         bg=button_color,fg=text_color,
+                         relief=relief, borderwidth=bdwidth,
                          command=self.save_background_image,
                          height=button_height,width=button_width)
         self.save_background_button.grid(column=0, row=13, pady=5)
@@ -172,6 +194,8 @@ class Application(tk.Frame):
         self.save_button = tk.Button(self.side_menu, 
                          text="Save Picture",
                          font=menu_font,
+                         bg=button_color,fg=text_color,
+                         relief=relief, borderwidth=bdwidth,
                          command=self.save_image,
                          height=button_height,width=button_width)
         self.save_button.grid(column=0, row=14, pady=5, padx=20)

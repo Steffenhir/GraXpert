@@ -1,0 +1,5 @@
+astropy
+Pillow
+pykrige
+scikit-image
+scipy

@@ -116,10 +116,14 @@ def downscale(imarray, background_points, downscale_factor):
     
     if downscale_factor == 1:
         return imarray, background_points
-    else:
-        background_points = background_points//downscale_factor
-        imarray = resize(imarray, (imarray.shape[0]//downscale_factor,imarray.shape[1]//downscale_factor), mode="reflect", preserve_range=True)
-        return imarray, background_points
+     
+    imarray_scaled = resize(imarray, (imarray.shape[0]//downscale_factor,imarray.shape[1]//downscale_factor), mode="reflect", preserve_range=True)
+
+    background_points_scaled = np.zeros(background_points.shape)
+    background_points_scaled[:,0] = background_points[:,0] / imarray.shape[1] * imarray_scaled.shape[1]
+    background_points_scaled[:,1] = background_points[:,1] / imarray.shape[0] * imarray_scaled.shape[0]
+
+    return imarray_scaled, background_points_scaled
     
 
 

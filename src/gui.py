@@ -286,12 +286,13 @@ class Application(tk.Frame):
             self.image_full = io.imread(filename)
         
         
-        if(self.image_full.dtype == "float32"):
+        if(self.image_full.dtype == "float32" or self.image_full.dtype == ">f4"):
             self.saveas_type.set("32 bit Tiff")
         
         elif(self.image_full.dtype == "uint16"):
             self.saveas_type.set("16 bit Tiff")
             
+        print(self.image_full.dtype)
         
         # Use 32 bit float with range (0,1) for internal calculations
         self.image_full = img_as_float32(self.image_full)

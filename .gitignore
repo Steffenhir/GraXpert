@@ -4,3 +4,5 @@
 *.fits
 __pycache__
 python-venv
+build
+dist

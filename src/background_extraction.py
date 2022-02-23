@@ -15,7 +15,7 @@ from scipy import linalg
 from pykrige.ok import OrdinaryKriging
 from skimage.transform import resize
 from skimage import img_as_float32
-from gpr_cuda import GPRegression
+# from gpr_cuda import GPRegression
 
 
 
@@ -99,27 +99,31 @@ def interpol(x_sub,y_sub,subsample,shape,kind,smoothing):
         result, var = OK.execute("grid", xpoints=x_new, ypoints=y_new, backend="C")
         return result
 
-    if(kind=='GPR_CUDA'):
-        # A likelihood in GPyTorch specifies the mapping from latent function values f(X) to observed labels y.
-        gpr = GPRegression(
-            x_sub=x_sub,
-            y_sub=y_sub,
-            subsample=subsample, 
-            shape=shape
-        )
-        result = gpr.run()
-        del gpr
-        return result
+    # if(kind=='GPR_CUDA'):
+    #     # A likelihood in GPyTorch specifies the mapping from latent function values f(X) to observed labels y.
+    #     gpr = GPRegression(
+    #         x_sub=x_sub,
+    #         y_sub=y_sub,
+    #         subsample=subsample, 
+    #         shape=shape
+    #     )
+    #     result = gpr.run()
+    #     del gpr
+    #     return result
 
 
 def downscale(imarray, background_points, downscale_factor):
     
     if downscale_factor == 1:
         return imarray, background_points
-    else:
-        background_points = background_points//downscale_factor
-        imarray = resize(imarray, (imarray.shape[0]//downscale_factor,imarray.shape[1]//downscale_factor), mode="reflect", preserve_range=True)
-        return imarray, background_points
+     
+    imarray_scaled = resize(imarray, (imarray.shape[0]//downscale_factor,imarray.shape[1]//downscale_factor), mode="reflect", preserve_range=True)
+
+    background_points_scaled = np.zeros(background_points.shape)
+    background_points_scaled[:,0] = background_points[:,0] / imarray.shape[1] * imarray_scaled.shape[1]
+    background_points_scaled[:,1] = background_points[:,1] / imarray.shape[0] * imarray_scaled.shape[0]
+
+    return imarray_scaled, background_points_scaled
     
 
 

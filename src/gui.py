@@ -16,7 +16,7 @@ import background_selection
 import stretch
 import tooltip
 from astropy.io import fits
-from skimage import io,img_as_float32
+from skimage import io,img_as_float32, img_as_uint
 from skimage.util import img_as_ubyte
 
 
@@ -180,6 +180,19 @@ class Application(tk.Frame):
         
         #---Saving---  
         
+        self.saveas_text = tk.Message(self.side_menu, text="Save as:", bg=bg_color, font=menu_font)
+        self.saveas_text.config(width=200, font=menu_font, fg=text_color)
+        self.saveas_text.grid(column=0, row=13, pady=(5,0))
+        
+        self.saveas_options = ["16 bit Tiff", "32 bit Tiff"]
+        self.saveas_type = tk.StringVar()
+        self.saveas_type.set(self.saveas_options[0])
+        self.saveas_menu = tk.OptionMenu(self.side_menu, self.saveas_type, *self.saveas_options)
+        self.saveas_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
+                                  borderwidth=bdwidth, highlightbackground=bg_color)
+        self.saveas_menu.grid(column=0, row=14, pady=(0,5))
+        tt_interpol_type= tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
+        
         self.save_background_button = tk.Button(self.side_menu, 
                          text="Save Background",
                          font=menu_font,
@@ -187,7 +200,7 @@ class Application(tk.Frame):
                          relief=relief, borderwidth=bdwidth,
                          command=self.save_background_image,
                          height=button_height,width=button_width)
-        self.save_background_button.grid(column=0, row=13, pady=5)
+        self.save_background_button.grid(column=0, row=15, pady=5)
         tt_save_bg = tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
               
         
@@ -198,7 +211,7 @@ class Application(tk.Frame):
                          relief=relief, borderwidth=bdwidth,
                          command=self.save_image,
                          height=button_height,width=button_width)
-        self.save_button.grid(column=0, row=14, pady=5, padx=20)
+        self.save_button.grid(column=0, row=16, pady=5, padx=20)
         tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
     
     
@@ -272,6 +285,14 @@ class Application(tk.Frame):
         else:
             self.image_full = io.imread(filename)
         
+        
+        if(self.image_full.dtype == "float32"):
+            self.saveas_type.set("32 bit Tiff")
+        
+        elif(self.image_full.dtype == "uint16"):
+            self.saveas_type.set("16 bit Tiff")
+            
+        
         # Use 32 bit float with range (0,1) for internal calculations
         self.image_full = img_as_float32(self.image_full)
         
@@ -302,7 +323,12 @@ class Application(tk.Frame):
            initialdir = os.getcwd()
            )
        
-       io.imsave(dir, self.image_full_processed)
+       if(self.saveas_type.get() == "16 bit Tiff"):
+           image_converted = img_as_uint(self.image_full_processed)
+       else:
+           image_converted = self.image_full_processed
+       
+       io.imsave(dir, image_converted)
 
        
     def save_background_image(self):
@@ -317,8 +343,12 @@ class Application(tk.Frame):
             initialdir = os.getcwd()
             )
         
+        if(self.saveas_type.get() == "16 bit Tiff"):
+            background_model_converted = img_as_uint(self.background_model)
+        else:
+            background_model_converted = self.background_model
 
-        io.imsave(dir, self.background_model)
+        io.imsave(dir, background_model_converted)
         
     
     def reset_backgroundpts(self):

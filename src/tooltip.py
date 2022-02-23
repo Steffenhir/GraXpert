@@ -179,5 +179,7 @@ smoothing_text = ("Adjust the smoothing parameter for the interpolation method. 
 calculate_text = ("Use the specified interpolation method to calculate a background model "
                   "and subtract it from the picture. This may take a while.")
 
-save_bg_text = ("Save the background model as a 32 bit .tiff")
-save_pic_text = ("Save your picture as a 32 bit .tiff")
+saveas_text = ("Choose the bitdepth of the saved pictures. The default value "
+               "is automatically set to be equal to the input picture.")
+save_bg_text = ("Save the background model as a .tiff")
+save_pic_text = ("Save your picture as a .tiff")

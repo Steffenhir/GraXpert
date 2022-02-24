@@ -293,7 +293,9 @@ class Application(tk.Frame):
         
         
         if(self.data_type == ".fits" or self.data_type == ".fit"):
-            self.image_full = np.moveaxis(fits.open(filename)[0].data,0,-1)           
+            self.image_full = fits.open(filename)[0].data
+            if(len(self.image_full.shape) == 3):
+               self.image_full = np.moveaxis(self.image_full,0,-1)           
         else:
             self.image_full = io.imread(filename)
         
@@ -301,25 +303,23 @@ class Application(tk.Frame):
         if(self.image_full.dtype == "float32" or self.image_full.dtype == ">f4"):
             self.saveas_type.set("32 bit Tiff")
         
-        elif(self.image_full.dtype == "uint16"):
+        elif(self.image_full.dtype == "uint16" or self.image_full.dtype == ">i2"):
             self.saveas_type.set("16 bit Tiff")
             
         print(self.image_full.dtype)
-        
-        # Use 32 bit float with range (0,1) for internal calculations
-        self.image_full = img_as_float32(self.image_full)
-        
-        
-        if(np.min(self.image_full) < 0):
-            
-            self.image_full = exposure.rescale_intensity(self.image_full, in_range=(-1,1))
-            
+       
         # Reshape greyscale picture to shape (y,x,1)
         if(len(self.image_full.shape) == 2):
             
             self.image_full = np.array([self.image_full])
             self.image_full = np.moveaxis(self.image_full,0,-1)
+       
+        # Use 32 bit float with range (0,1) for internal calculations
+        self.image_full = img_as_float32(self.image_full)
         
+        if(np.min(self.image_full) < 0):
+            self.image_full = exposure.rescale_intensity(self.image_full, in_range=(-1,1), out_range=(0,1))
+
         
         self.stretch()
               

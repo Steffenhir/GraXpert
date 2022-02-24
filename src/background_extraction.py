@@ -52,20 +52,10 @@ def calc_mode_dataset(data, x_sub, y_sub, halfsize):
     
     for i in range(n):
         data_footprint = data_padded[y_sub[i]:y_sub[i]+2*halfsize,x_sub[i]:x_sub[i]+2*halfsize].ravel()
-        #distribution = stats.gaussian_kde(data_footprint)
-        #subsample[i] = calc_mode(data_footprint, distribution)
         subsample[i] = np.median(data_footprint)
         
     return subsample
-    
-    
-def calc_mode(data, distribution):
-    def objective(x):
-        return 1/distribution.pdf(x)[0]
-    
-    solution = optimize.minimize(objective, [np.mean(data)])
-    
-    return solution.x[0]
+
 
 
 def interpol(x_sub,y_sub,subsample,shape,kind,smoothing,downscale_factor):

@@ -32,7 +32,7 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
         
         x_sub = np.array(background_points[:,0],dtype=int)
         y_sub = np.array(background_points[:,1],dtype=int)
-        subsample = calc_mode_dataset(imarray[:,:,c], x_sub, y_sub, 25)
+        subsample = calc_median_dataset(imarray[:,:,c], x_sub, y_sub, 25)
 
         background[:,:,c] = interpol(x_sub,y_sub,subsample,(y_size,x_size),interpolation_type,smoothing,downscale_factor)
         
@@ -44,7 +44,7 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
     return background
 
 
-def calc_mode_dataset(data, x_sub, y_sub, halfsize):
+def calc_median_dataset(data, x_sub, y_sub, halfsize):
     
     n = x_sub.shape[0]
     data_padded = np.pad(array=data, pad_width=(halfsize,), mode="reflect")

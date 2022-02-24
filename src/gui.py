@@ -16,7 +16,7 @@ import background_selection
 import stretch
 import tooltip
 from astropy.io import fits
-from skimage import io,img_as_float32, img_as_uint
+from skimage import io,img_as_float32, img_as_uint, exposure
 from skimage.util import img_as_ubyte
 
 
@@ -218,7 +218,7 @@ class Application(tk.Frame):
     def menu_open_clicked(self, event=None):
 
         filename = tk.filedialog.askopenfilename(
-            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fits"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits")],
+            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits")],
             initialdir = os.getcwd()
             )
 
@@ -296,6 +296,10 @@ class Application(tk.Frame):
         
         # Use 32 bit float with range (0,1) for internal calculations
         self.image_full = img_as_float32(self.image_full)
+        
+        if(np.min(self.image_full) < 0):
+            
+            self.image_full = exposure.rescale_intensity(self.image_full, in_range=(-1,1))
         
         self.stretch()
               

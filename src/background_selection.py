@@ -48,8 +48,12 @@ def background_selection(data, num_pts):
         background_pts.append(np.array(np.unravel_index(data_map.argmin(),data_map.shape)))
         pts_current += 1
     
+
+    
     for i in range(len(background_pts)):
-        background_pts[i] = background_pts[i]*64 + 32
+        background_pts[i][0] = (background_pts[i][0] + 0.5) / data_norm.shape[0] * data.shape[0]
+        background_pts[i][1] = (background_pts[i][1] + 0.5) / data_norm.shape[1] * data.shape[1]
+    
     
 
     return background_pts
@@ -61,6 +65,3 @@ def background_selection(data, num_pts):
 #arr = np.array([[[10,11,12],[13,14,15]],[[1,2,3],[4,5,6]]])
 
 #background_selection(arr,2)
-    
-    
-    

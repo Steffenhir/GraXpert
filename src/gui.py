@@ -382,6 +382,20 @@ class Application(tk.Frame):
     
     def calculate(self):
         
+        #Error messages if not enough points
+        if(len(self.background_points) == 0):
+            tk.messagebox.showerror("Error", "Please select background points with right click")
+            return
+        
+        if(len(self.background_points) < 2 and self.interpol_type.get() == "Kriging"):
+            tk.messagebox.showerror("Error", "Please select at least 2 background points with right click for the Kriging method")
+            return
+        
+        if(len(self.background_points) < 16 and self.interpol_type.get() == "Splines"):
+            tk.messagebox.showerror("Error", "Please select at least 16 background points with right click for the Splines method")
+            return
+        
+        
         imarray = np.array(self.image_full)
         
         downscale_factor = 1

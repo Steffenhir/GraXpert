@@ -253,19 +253,31 @@ class Application(tk.Frame):
         if(self.stretch_option_current.get() == "25% Bg, 1.25 sigma"):
                 bg, sigma = (0.25,1.25)
         
-
+        
         
         if(self.image_full_processed is None):
             if(self.stretch_option_current.get() == "No Stretch"):
-                self.pil_image = Image.fromarray(img_as_ubyte(self.image_full))
+                if(self.image_full.shape[2] == 1):
+                    self.pil_image = Image.fromarray(img_as_ubyte(self.image_full[:,:,0]))
+                else:
+                    self.pil_image = Image.fromarray(img_as_ubyte(self.image_full))
             else:
-                self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full,bg,sigma)))
+                if(self.image_full.shape[2] == 1):
+                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full[:,:,0],bg,sigma)))
+                else:
+                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full,bg,sigma)))
         
         else:
             if(self.stretch_option_current.get() == "No Stretch"):
-                self.pil_image = Image.fromarray(img_as_ubyte(self.image_full_processed))    
+                if(self.image_full_processed.shape[2] == 1):
+                    self.pil_image = Image.fromarray(img_as_ubyte(self.image_full_processed[:,:,0]))    
+                else:
+                    self.pil_image = Image.fromarray(img_as_ubyte(self.image_full_processed))    
             else:
-                self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full_processed,bg,sigma)))
+                if(self.image_full_processed.shape[2] == 1):
+                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full_processed[:,:,0],bg,sigma)))
+                else:
+                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full_processed,bg,sigma)))
         
 
         self.redraw_image()
@@ -297,13 +309,20 @@ class Application(tk.Frame):
         # Use 32 bit float with range (0,1) for internal calculations
         self.image_full = img_as_float32(self.image_full)
         
+        
         if(np.min(self.image_full) < 0):
             
             self.image_full = exposure.rescale_intensity(self.image_full, in_range=(-1,1))
+            
+        # Reshape greyscale picture to shape (y,x,1)
+        if(len(self.image_full.shape) == 2):
+            
+            self.image_full = np.array([self.image_full])
+            self.image_full = np.moveaxis(self.image_full,0,-1)
+        
         
         self.stretch()
               
-
         self.zoom_fit(self.pil_image.width, self.pil_image.height)
 
         self.draw_image(self.pil_image)

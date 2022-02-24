@@ -280,7 +280,7 @@ class Application(tk.Frame):
         self.image_full_processed = None
         
         
-        if self.data_type == ".fits" or ".fit":
+        if(self.data_type == ".fits" or self.data_type == ".fit"):
             self.image_full = np.moveaxis(fits.open(filename)[0].data,0,-1)           
         else:
             self.image_full = io.imread(filename)

@@ -52,9 +52,9 @@ def calc_mode_dataset(data, x_sub, y_sub, halfsize):
     
     for i in range(n):
         data_footprint = data_padded[y_sub[i]:y_sub[i]+2*halfsize,x_sub[i]:x_sub[i]+2*halfsize].ravel()
-        distribution = stats.gaussian_kde(data_footprint)
-        subsample[i] = calc_mode(data_footprint, distribution)
-
+        #distribution = stats.gaussian_kde(data_footprint)
+        #subsample[i] = calc_mode(data_footprint, distribution)
+        subsample[i] = np.median(data_footprint)
         
     return subsample
     

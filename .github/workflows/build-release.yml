@@ -20,13 +20,19 @@ jobs:
           pip install setuptools wheel pyinstaller && \
           pip install -r requirements.txt
       - name: create background-extraction-linux bundle
-        run: pyinstaller --onefile -n background-extraction-linux ./src/gui.py
+        run: |
+          pyinstaller \
+          --onefile \
+          --hidden-import='PIL._tkinter_finder' \
+          --collect-all pykrige \
+          -n background-extraction-linux \
+          ./src/gui.py
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
           name: background-extraction-linux
           path: ./dist/background-extraction-linux
-          retention-days: 1
+          retention-days: 5
 
   build-windows:
     runs-on: windows-latest
@@ -42,13 +48,19 @@ jobs:
           pip install setuptools wheel pyinstaller && `
           pip install -r requirements.txt
       - name: create background-extraction-win64 bundle
-        run: pyinstaller.exe --onefile -n background-extraction-win64 ./src/gui.py
+        run: |
+          pyinstaller `
+          --onefile `
+          --hidden-import='PIL._tkinter_finder' `
+          --collect-all pykrige `
+          -n background-extraction-win64 `
+          ./src/gui.py
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
           name: background-extraction-win64.exe
           path: ./dist/background-extraction-win64.exe
-          retention-days: 1
+          retention-days: 5
 
   build-macos-x86_64:
     runs-on: macos-latest
@@ -64,13 +76,20 @@ jobs:
           pip install setuptools wheel pyinstaller && \
           pip install -r requirements-macos.txt
       - name: create background-extraction-macos-x86_64 bundle
-        run: pyinstaller --onefile --target-architecture x86_64 -n background-extraction-macos-x86_64 ./src/gui.py
+        run: |
+          pyinstaller \
+          --onefile \
+          --hidden-import='PIL._tkinter_finder' \
+          --collect-all pykrige \
+          --target-architecture x86_64 \
+          -n background-extraction-macos-x86_64 \
+          ./src/gui.py
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
           name: background-extraction-macos-x86_64
           path: ./dist/background-extraction-macos-x86_64
-          retention-days: 1
+          retention-days: 5
 
   release:
     runs-on: ubuntu-latest

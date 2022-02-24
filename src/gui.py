@@ -218,7 +218,7 @@ class Application(tk.Frame):
     def menu_open_clicked(self, event=None):
 
         filename = tk.filedialog.askopenfilename(
-            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fits"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fits")],
+            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fits"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits")],
             initialdir = os.getcwd()
             )
 
@@ -280,7 +280,7 @@ class Application(tk.Frame):
         self.image_full_processed = None
         
         
-        if self.data_type == ".fits":
+        if self.data_type == ".fits" or ".fit":
             self.image_full = np.moveaxis(fits.open(filename)[0].data,0,-1)           
         else:
             self.image_full = io.imread(filename)

@@ -101,7 +101,7 @@ class Application(tk.Frame):
         
         self.stretch_text = tk.Message(self.side_menu, text="Stretch Options:", bg=bg_color, font=menu_font, fg=text_color)
         self.stretch_text.config(width=200)
-        self.stretch_text.grid(column=0, row=2, pady=(5,0), padx=15, sticky="news")
+        self.stretch_text.grid(column=0, row=2, pady=(5,0), padx=15, sticky="ews")
         
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
         self.stretch_option_current = tk.StringVar()
@@ -126,12 +126,12 @@ class Application(tk.Frame):
         
         self.bg_selection_text = tk.Message(self.side_menu, text="# of Points:", bg=bg_color)
         self.bg_selection_text.config(width=300, font=menu_font, fg=text_color)
-        self.bg_selection_text.grid(column=0, row=5, pady=(5,0), padx=15, sticky="news")
+        self.bg_selection_text.grid(column=0, row=5, pady=(5,0), padx=15, sticky="ews")
         
         self.bg_pts = tk.IntVar()
-        self.bg_pts.set(5.0)
-        self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=0,to=100,tickinterval=50,resolution=1,
-                                      var=self.bg_pts,width=12, bg=button_color, fg=text_color, relief=relief, 
+        self.bg_pts.set(40)
+        self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=20,to=100,tickinterval=80,resolution=1,
+                                      var=self.bg_pts, width=12, bg=button_color, fg=text_color, relief=relief, 
                                       borderwidth=bdwidth, highlightbackground=bg_color)
         self.bg_pts_slider.grid(column=0, row=6, pady=(0,5), padx=15, sticky="news")
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
@@ -150,9 +150,9 @@ class Application(tk.Frame):
         
         self.intp_type_text = tk.Message(self.side_menu, text="Method:", bg=bg_color, font=menu_font)
         self.intp_type_text.config(width=200, font=menu_font, fg=text_color)
-        self.intp_type_text.grid(column=0, row=8, pady=(5,0), padx=15, sticky="news")
+        self.intp_type_text.grid(column=0, row=8, pady=(5,0), padx=15, sticky="ews")
         
-        self.interpol_options = ["Splines", "RBF", "Kriging"]
+        self.interpol_options = ["RBF", "Splines", "Kriging"]
         self.interpol_type = tk.StringVar()
         self.interpol_type.set(self.interpol_options[0])
         self.interpol_menu = tk.OptionMenu(self.side_menu, self.interpol_type, *self.interpol_options)
@@ -163,7 +163,7 @@ class Application(tk.Frame):
         
         self.smooth_text = tk.Message(self.side_menu, text="Smoothing:", bg=bg_color)
         self.smooth_text.config(width=200, font=menu_font, fg=text_color)
-        self.smooth_text.grid(column=0, row=10, pady=(5,0), padx=15, sticky="news")
+        self.smooth_text.grid(column=0, row=10, pady=(5,0), padx=15, sticky="ews")
         
         self.smoothing = tk.DoubleVar()
         self.smoothing.set(5.0)
@@ -188,7 +188,7 @@ class Application(tk.Frame):
         
         self.saveas_text = tk.Message(self.side_menu, text="Save as:", bg=bg_color, font=menu_font)
         self.saveas_text.config(width=200, font=menu_font, fg=text_color)
-        self.saveas_text.grid(column=0, row=13, pady=(5,0), padx=15, sticky="news")
+        self.saveas_text.grid(column=0, row=13, pady=(5,0), padx=15, sticky="ews")
         
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff"]
         self.saveas_type = tk.StringVar()

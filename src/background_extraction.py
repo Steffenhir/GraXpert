@@ -13,6 +13,9 @@ from radialbasisinterpolation import RadialBasisInterpolation
 from scipy import linalg, stats, optimize
 from pykrige.ok import OrdinaryKriging
 from skimage.transform import resize
+import skyall
+from PIL import Image
+from skimage.util import img_as_ubyte
 # from gpr_cuda import GPRegression
 
 
@@ -24,6 +27,7 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
     num_colors = imarray.shape[2]
     x_size = imarray.shape[1]
     y_size = imarray.shape[0]
+    
 
     
     background = np.zeros((y_size,x_size,num_colors), dtype=np.float32)
@@ -32,7 +36,7 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
         
         x_sub = np.array(background_points[:,0],dtype=int)
         y_sub = np.array(background_points[:,1],dtype=int)
-        subsample = calc_median_dataset(imarray[:,:,c], x_sub, y_sub, 25)
+        subsample = calc_mode_dataset(imarray[:,:,c], x_sub, y_sub, 25)
 
         background[:,:,c] = interpol(x_sub,y_sub,subsample,(y_size,x_size),interpolation_type,smoothing,downscale_factor)
         
@@ -44,7 +48,7 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
     return background
 
 
-def calc_median_dataset(data, x_sub, y_sub, halfsize):
+def calc_mode_dataset(data, x_sub, y_sub, halfsize):
     
     n = x_sub.shape[0]
     data_padded = np.pad(array=data, pad_width=(halfsize,), mode="reflect")
@@ -52,7 +56,7 @@ def calc_median_dataset(data, x_sub, y_sub, halfsize):
     
     for i in range(n):
         data_footprint = data_padded[y_sub[i]:y_sub[i]+2*halfsize,x_sub[i]:x_sub[i]+2*halfsize].ravel()
-        subsample[i] = np.median(data_footprint)
+        subsample[i] = skyall.mode(data_footprint)
         
     return subsample
 

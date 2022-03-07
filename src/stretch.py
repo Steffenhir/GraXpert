@@ -10,32 +10,39 @@ from astropy.visualization import AsinhStretch
 from scipy.optimize import root
 
 def stretch(data, bg, sigma):
+
+    copy = np.copy(data)
     
-    data = data/np.max(data)
-    median = np.median(data)
-    deviation_from_median = np.mean(np.abs(data-median))
+    for c in range(copy.shape[-1]):
+        
+        copy_color = copy[:,:,c]
+        
+        indx_clip = np.logical_and(copy_color < 1.0, copy_color > 0.0)
+        median = np.median(copy_color[indx_clip])
+        mad = np.median(np.abs(copy_color[indx_clip]-median))
 
     
-    shadow_clipping = np.clip(median - sigma*deviation_from_median, 0, 1.0)
-    highlight_clipping = 1.0
+        shadow_clipping = np.clip(median - sigma*mad, 0, 1.0)
+        highlight_clipping = 1.0
 
-    midtone = MTF((median-shadow_clipping)/(highlight_clipping - shadow_clipping),bg)
+        midtone = MTF((median-shadow_clipping)/(highlight_clipping - shadow_clipping),bg)
 
 
-    data[data <= shadow_clipping] = 0.0
-    data[data >= highlight_clipping] = 1.0
+        copy_color[copy_color <= shadow_clipping] = 0.0
+        copy_color[copy_color >= highlight_clipping] = 1.0
     
-    indx_inside = data > shadow_clipping
+        indx_inside = np.logical_and(copy_color > shadow_clipping, copy_color < highlight_clipping)
     
-    data[indx_inside] = (data[indx_inside]-shadow_clipping)/(highlight_clipping - shadow_clipping)
+        copy_color[indx_inside] = (copy_color[indx_inside]-shadow_clipping)/(highlight_clipping - shadow_clipping)
     
+        copy_color = MTF(copy_color, midtone)
     
+        copy[:,:,c] = copy_color
     
-    data = MTF(data, midtone)
-    
-    data = np.clip(data,0,1)
-    
-    return data
+    copy = copy.clip(min=0,max=1)
+
+
+    return copy
     
 
 def MTF(data, midtone):

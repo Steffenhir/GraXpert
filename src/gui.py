@@ -25,8 +25,12 @@ class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
 
-        self.master.geometry("1920x1080") 
-        self.master.state("zoomed")
+        self.master.geometry("1920x1080")
+        
+        try:
+            self.master.state("zoomed")
+        except:
+            self.master.state("normal")
 
         self.data_type = ""
         self.pil_image = None
@@ -324,8 +328,8 @@ class Application(tk.Frame):
         self.image_full = img_as_float32(self.image_full)
         
         
-        if(np.min(self.image_full) < 0):
-            self.image_full = exposure.rescale_intensity(self.image_full, in_range=(-1,1), out_range=(0,1))
+        if(np.min(self.image_full) < 0 or np.max(self.image_full > 1)):
+            self.image_full = exposure.rescale_intensity(self.image_full, out_range=(0,1))
 
         
         self.stretch()

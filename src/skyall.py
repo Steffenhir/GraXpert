@@ -66,7 +66,8 @@ def mode(distribution):
         iterations = iterations + 1
 
         if(iterations > 20):
-            print("More than 20 iterations in second step of SKYALL")
+            print("More than 20 iterations in second step of SKYALL. Return median instead.")
+            return median
     
     #print(bin_edges[left_pointer])
     #print(bin_edges[right_pointer])
@@ -98,7 +99,8 @@ def mode(distribution):
 
         if(iterations >= 20):
             
-            print("More than 20 iterations in third step of SKYALL")
+            print("More than 20 iterations in third step of SKYAL. Return median instead.L")
+            return median
             
         num_bins = int(num_bins*1.5)
         histo, bin_edges = np.histogram(distribution, bins=num_bins, range=(lower_bound,upper_bound), density=True)

@@ -115,7 +115,6 @@ def interpol(x_sub,y_sub,subsample,shape,kind,smoothing,downscale_factor):
         x_new = np.arange(0,shape_scaled[1],1).astype("float64")
         y_new = np.arange(0,shape_scaled[0],1).astype("float64")
 
-
         result, var = OK.execute("grid", xpoints=x_new, ypoints=y_new, backend="C")
     
     # if(kind=='GPR_CUDA'):

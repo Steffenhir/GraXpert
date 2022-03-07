@@ -268,7 +268,7 @@ class Application(tk.Frame):
                     self.pil_image = Image.fromarray(img_as_ubyte(self.image_full))
             else:
                 if(self.image_full.shape[2] == 1):
-                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full[:,:,0],bg,sigma)))
+                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full,bg,sigma))[:,:,0])
                 else:
                     self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full,bg,sigma)))
         
@@ -280,7 +280,7 @@ class Application(tk.Frame):
                     self.pil_image = Image.fromarray(img_as_ubyte(self.image_full_processed))    
             else:
                 if(self.image_full_processed.shape[2] == 1):
-                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full_processed[:,:,0],bg,sigma)))
+                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full_processed,bg,sigma))[:,:,0])
                 else:
                     self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full_processed,bg,sigma)))
         
@@ -321,6 +321,7 @@ class Application(tk.Frame):
        
         # Use 32 bit float with range (0,1) for internal calculations
         self.image_full = img_as_float32(self.image_full)
+        
         
         if(np.min(self.image_full) < 0):
             self.image_full = exposure.rescale_intensity(self.image_full, in_range=(-1,1), out_range=(0,1))

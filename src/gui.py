@@ -26,6 +26,7 @@ class Application(tk.Frame):
         super().__init__(master)
 
         self.master.geometry("1920x1080") 
+        self.master.state("zoomed")
 
         self.data_type = ""
         self.pil_image = None

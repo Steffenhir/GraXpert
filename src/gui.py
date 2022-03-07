@@ -25,8 +25,12 @@ class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
 
-        self.master.geometry("1920x1080") 
-        self.master.state("zoomed")
+        self.master.geometry("1920x1080")
+        
+        try:
+            self.master.state("zoomed")
+        except:
+            self.master.state("normal")
 
         self.data_type = ""
         self.pil_image = None

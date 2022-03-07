@@ -81,6 +81,11 @@ class Application(tk.Frame):
         self.side_menu = tk.Frame(self.master, bg=bg_color, relief=relief, borderwidth=bdwidth)
         self.side_menu.pack(side=tk.LEFT, fill=tk.Y)
         
+        self.side_menu.grid_columnconfigure(0, weight=1)
+        
+        for i in range(17):
+            self.side_menu.grid_rowconfigure(i, weight=1)
+        
         #---Display---
         
         self.load_image_button = tk.Button(self.side_menu, 

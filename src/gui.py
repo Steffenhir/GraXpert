@@ -96,18 +96,18 @@ class Application(tk.Frame):
                          command=self.menu_open_clicked,
                          height=button_height,width=button_width)
         tt_load = tooltip.Tooltip(self.load_image_button, text=tooltip.load_text)
-        self.load_image_button.grid(column=0, row=1, pady=(15,5))
+        self.load_image_button.grid(column=0, row=1, pady=(15,5), padx=15, sticky="news")
         
         self.stretch_text = tk.Message(self.side_menu, text="Stretch Options:", bg=bg_color, font=menu_font, fg=text_color)
         self.stretch_text.config(width=200)
-        self.stretch_text.grid(column=0, row=2, pady=(5,0))
+        self.stretch_text.grid(column=0, row=2, pady=(5,0), padx=15, sticky="news")
         
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
         self.stretch_option_current = tk.StringVar()
         self.stretch_option_current.set(self.stretch_options[0])
         self.stretch_menu = tk.OptionMenu(self.side_menu, self.stretch_option_current, *self.stretch_options,command=self.stretch)
         self.stretch_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, borderwidth=bdwidth, highlightbackground=bg_color)
-        self.stretch_menu.grid(column=0, row=3, pady=(0,5))
+        self.stretch_menu.grid(column=0, row=3, pady=(0,5), padx=15, sticky="news")
         tt_stretch= tooltip.Tooltip(self.stretch_menu, text=tooltip.stretch_text)
         
       
@@ -120,19 +120,19 @@ class Application(tk.Frame):
                          relief=relief, borderwidth=bdwidth,
                          command=self.reset_backgroundpts,
                          height=button_height,width=button_width)
-        self.reset_button.grid(column=0, row=4, pady=5)
+        self.reset_button.grid(column=0, row=4, pady=5, padx=15, sticky="news")
         tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
         
         self.bg_selection_text = tk.Message(self.side_menu, text="# of Points:", bg=bg_color)
         self.bg_selection_text.config(width=300, font=menu_font, fg=text_color)
-        self.bg_selection_text.grid(column=0, row=5, pady=(5,0))
+        self.bg_selection_text.grid(column=0, row=5, pady=(5,0), padx=15, sticky="news")
         
         self.bg_pts = tk.IntVar()
         self.bg_pts.set(5.0)
         self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=0,to=100,tickinterval=50,resolution=1,
                                       var=self.bg_pts,width=12, bg=button_color, fg=text_color, relief=relief, 
                                       borderwidth=bdwidth, highlightbackground=bg_color)
-        self.bg_pts_slider.grid(column=0, row=6, pady=(0,5))
+        self.bg_pts_slider.grid(column=0, row=6, pady=(0,5), padx=15, sticky="news")
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
         
         self.bg_selection_button = tk.Button(self.side_menu, 
@@ -142,14 +142,14 @@ class Application(tk.Frame):
                          relief=relief, borderwidth=bdwidth,
                          command=self.select_background,
                          height=button_height,width=button_width)
-        self.bg_selection_button.grid(column=0, row=7, pady=5)
+        self.bg_selection_button.grid(column=0, row=7, pady=5, padx=15, sticky="news")
         tt_bg_select = tooltip.Tooltip(self.bg_selection_button, text= tooltip.bg_select_text)
         
         #---Calculation---
         
         self.intp_type_text = tk.Message(self.side_menu, text="Method:", bg=bg_color, font=menu_font)
         self.intp_type_text.config(width=200, font=menu_font, fg=text_color)
-        self.intp_type_text.grid(column=0, row=8, pady=(5,0))
+        self.intp_type_text.grid(column=0, row=8, pady=(5,0), padx=15, sticky="news")
         
         self.interpol_options = ["Splines", "RBF", "Kriging"]
         self.interpol_type = tk.StringVar()
@@ -157,12 +157,12 @@ class Application(tk.Frame):
         self.interpol_menu = tk.OptionMenu(self.side_menu, self.interpol_type, *self.interpol_options)
         self.interpol_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
                                   borderwidth=bdwidth, highlightbackground=bg_color)
-        self.interpol_menu.grid(column=0, row=9, pady=(0,5))
+        self.interpol_menu.grid(column=0, row=9, pady=(0,5), padx=15, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.interpol_menu, text=tooltip.interpol_type_text)
         
         self.smooth_text = tk.Message(self.side_menu, text="Smoothing:", bg=bg_color)
         self.smooth_text.config(width=200, font=menu_font, fg=text_color)
-        self.smooth_text.grid(column=0, row=10, pady=(5,0))
+        self.smooth_text.grid(column=0, row=10, pady=(5,0), padx=15, sticky="news")
         
         self.smoothing = tk.DoubleVar()
         self.smoothing.set(5.0)
@@ -170,7 +170,7 @@ class Application(tk.Frame):
                                          from_=-10,to=10,tickinterval=10.0,resolution=0.1,var=self.smoothing,
                                          width=12, bg=button_color, fg=text_color, relief=relief, 
                                          borderwidth=bdwidth, highlightbackground=bg_color)
-        self.smoothing_slider.grid(column=0, row=11, pady=(0,5))
+        self.smoothing_slider.grid(column=0, row=11, pady=(0,5), padx=15, sticky="news")
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
         self.calculate_button = tk.Button(self.side_menu, 
@@ -180,14 +180,14 @@ class Application(tk.Frame):
                          relief=relief, borderwidth=bdwidth,
                          command=self.calculate,
                          height=button_height,width=button_width)
-        self.calculate_button.grid(column=0, row=12, pady=5)
+        self.calculate_button.grid(column=0, row=12, pady=5, padx=15, sticky="news")
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
         #---Saving---  
         
         self.saveas_text = tk.Message(self.side_menu, text="Save as:", bg=bg_color, font=menu_font)
         self.saveas_text.config(width=200, font=menu_font, fg=text_color)
-        self.saveas_text.grid(column=0, row=13, pady=(5,0))
+        self.saveas_text.grid(column=0, row=13, pady=(5,0), padx=15, sticky="news")
         
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff"]
         self.saveas_type = tk.StringVar()
@@ -195,7 +195,7 @@ class Application(tk.Frame):
         self.saveas_menu = tk.OptionMenu(self.side_menu, self.saveas_type, *self.saveas_options)
         self.saveas_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
                                   borderwidth=bdwidth, highlightbackground=bg_color)
-        self.saveas_menu.grid(column=0, row=14, pady=(0,5))
+        self.saveas_menu.grid(column=0, row=14, pady=(0,5), padx=15, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
         
         self.save_background_button = tk.Button(self.side_menu, 
@@ -205,7 +205,7 @@ class Application(tk.Frame):
                          relief=relief, borderwidth=bdwidth,
                          command=self.save_background_image,
                          height=button_height,width=button_width)
-        self.save_background_button.grid(column=0, row=15, pady=5)
+        self.save_background_button.grid(column=0, row=15, pady=5, padx=15, sticky="news")
         tt_save_bg = tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
               
         
@@ -216,7 +216,7 @@ class Application(tk.Frame):
                          relief=relief, borderwidth=bdwidth,
                          command=self.save_image,
                          height=button_height,width=button_width)
-        self.save_button.grid(column=0, row=16, pady=5, padx=20)
+        self.save_button.grid(column=0, row=16, pady=5, padx=15, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
     
     

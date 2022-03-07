@@ -30,15 +30,17 @@ def stretch(data, bg, sigma):
         copy_color[copy_color <= shadow_clipping] = 0.0
         copy_color[copy_color >= highlight_clipping] = 1.0
     
-        indx_inside = copy_color > shadow_clipping
+        indx_inside = np.logical_and(copy_color > shadow_clipping, copy_color < highlight_clipping)
     
         copy_color[indx_inside] = (copy_color[indx_inside]-shadow_clipping)/(highlight_clipping - shadow_clipping)
     
         copy_color = MTF(copy_color, midtone)
     
         copy[:,:,c] = copy_color
-
     
+    copy = copy.clip(min=0,max=1)
+
+
     return copy
     
 

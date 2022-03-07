@@ -17,11 +17,12 @@ def stretch(data, bg, sigma):
         
         copy_color = copy[:,:,c]
         
-        median = np.median(copy_color)
-        deviation_from_median = np.mean(np.abs(copy_color-median))
+        indx_clip = np.logical_and(copy_color < 1.0, copy_color > 0.0)
+        median = np.median(copy_color[indx_clip])
+        mad = np.median(np.abs(copy_color[indx_clip]-median))
 
     
-        shadow_clipping = np.clip(median - sigma*deviation_from_median, 0, 1.0)
+        shadow_clipping = np.clip(median - sigma*mad, 0, 1.0)
         highlight_clipping = 1.0
 
         midtone = MTF((median-shadow_clipping)/(highlight_clipping - shadow_clipping),bg)

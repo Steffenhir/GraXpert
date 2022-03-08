@@ -21,9 +21,14 @@ def background_selection(data, num_pts):
     
     
     # Normalize and downscale data
-    data_norm = color.rgb2gray(data)
-    data_norm = rescale(data_norm,1/64, mode="reflect")
-    data_norm = stretch.stretch(data_norm,0.3,2)
+    data_norm = stretch.stretch(data,0.25,1.25)
+    data_norm = rescale(data_norm,1/50, mode="reflect", anti_aliasing=False, multichannel=True)
+    
+    if(data_norm.shape[-1] == 3):
+        data_norm = color.rgb2gray(data_norm)
+    else:
+        data_norm = data_norm[:,:,0]
+    
     data_norm = data_norm + 0.1*np.max(data_norm)
     
     # First point is darkest point in picture

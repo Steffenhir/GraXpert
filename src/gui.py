@@ -69,6 +69,8 @@ class Application(tk.Frame):
         self.master.bind("<Motion>", self.mouse_move)                          # Mouse move
         self.master.bind("<Double-Button-1>", self.mouse_double_click_left)    # Left Button Double Click
         self.master.bind("<MouseWheel>", self.mouse_wheel)                     # Mouse Wheel
+        self.master.bind("<Button-4>", self.mouse_wheel)                       # Mouse Wheel Linux
+        self.master.bind("<Button-5>", self.mouse_wheel)                       # Mouse Wheel Linux
         self.master.bind("<Return>", self.enter_key)                           # Enter Key
         
         #Side menu
@@ -518,7 +520,7 @@ class Application(tk.Frame):
             return
 
         if event.state != 9:
-            if (event.delta > 0):
+            if (event.delta > 0 or event.num == 4):
 
                 self.scale_at(6/5, event.x, event.y)
             else:
@@ -533,7 +535,6 @@ class Application(tk.Frame):
                 self.rotate_at(5, event.x, event.y)     
         self.redraw_image()
         
-
 
     def reset_transform(self):
 

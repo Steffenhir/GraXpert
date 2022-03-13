@@ -10,9 +10,9 @@ from tkinter import filedialog
 from PIL import Image, ImageTk 
 import math                   
 import numpy as np            
-import os       
+import os
 import background_extraction
-import background_selection
+from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
 import stretch
 import tooltip
 from astropy.io import fits
@@ -39,13 +39,14 @@ class Application(tk.Frame):
         self.background_model = None
         
         self.my_title = "Background Extraction"
-        self.master.title(self.my_title)       
-        
-        self.background_points = []
+        self.master.title(self.my_title)
 
         self.create_widget()
 
         self.reset_transform()
+
+        self.cmd: Command = Command(INIT_HANDLER)
+        self.cmd.execute()
         
         
 
@@ -72,6 +73,8 @@ class Application(tk.Frame):
         self.master.bind("<Button-4>", self.mouse_wheel)                       # Mouse Wheel Linux
         self.master.bind("<Button-5>", self.mouse_wheel)                       # Mouse Wheel Linux
         self.master.bind("<Return>", self.enter_key)                           # Enter Key
+        self.master.bind("<Control-z>", self.undo)                             # undo
+        self.master.bind("<Control-y>", self.redo)                             # redo
         
         #Side menu
         
@@ -239,11 +242,9 @@ class Application(tk.Frame):
 
 
     def select_background(self,event=None):
-        self.background_points = background_selection.background_selection(self.image_full,self.bg_pts.get())
-        for i in range(len(self.background_points)):
-            self.background_points[i] = np.array([self.background_points[i][1],self.background_points[i][0],1.0])
-        
 
+        self.cmd = Command(SEL_POINTS_HANDLER, self.cmd, data=self.image_full, num_pts=self.bg_pts.get())
+        self.cmd.execute()
         self.redraw_image()
         return
 
@@ -299,8 +300,7 @@ class Application(tk.Frame):
 
         if not filename:
             return
-        
-        self.background_points = []
+
         self.image_full_processed = None
         
         
@@ -390,21 +390,25 @@ class Application(tk.Frame):
     
     def reset_backgroundpts(self):
         
-        self.background_points = []
-        self.redraw_image()
+        if len(self.cmd.app_state["background_points"]) > 0:
+            self.cmd = Command(RESET_POINTS_HANDLER, self.cmd)
+            self.cmd.execute()
+            self.redraw_image()
     
     def calculate(self):
+
+        background_points = self.cmd.app_state["background_points"]
         
         #Error messages if not enough points
-        if(len(self.background_points) == 0):
+        if(len(background_points) == 0):
             tk.messagebox.showerror("Error", "Please select background points with right click")
             return
         
-        if(len(self.background_points) < 2 and self.interpol_type.get() == "Kriging"):
+        if(len(background_points) < 2 and self.interpol_type.get() == "Kriging"):
             tk.messagebox.showerror("Error", "Please select at least 2 background points with right click for the Kriging method")
             return
         
-        if(len(self.background_points) < 16 and self.interpol_type.get() == "Splines"):
+        if(len(background_points) < 16 and self.interpol_type.get() == "Splines"):
             tk.messagebox.showerror("Error", "Please select at least 16 background points with right click for the Splines method")
             return
         
@@ -418,7 +422,7 @@ class Application(tk.Frame):
 
             
         self.background_model = background_extraction.extract_background(
-            imarray,np.array(self.background_points),
+            imarray,np.array(background_points),
             self.interpol_type.get(),10**self.smoothing.get(),
             downscale_factor
             )
@@ -441,19 +445,26 @@ class Application(tk.Frame):
         
 
         if(not self.remove_pt(event) and self.to_image_point(event.x,event.y) != []):
-            self.background_points.append(self.to_image_point(event.x,event.y))
+            point = self.to_image_point(event.x,event.y)
+            self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
+            self.cmd.execute()
 
         self.redraw_image()
         self.__old_event = event
         
     def remove_pt(self,event):
         
+        if len(self.cmd.app_state["background_points"]) == 0:
+            return False
+        
+        background_points = self.cmd.app_state["background_points"]
+        
         min_idx = -1
         min_dist = -1
         
-        for i in range(len(self.background_points)):
-            x_im = self.background_points[i][0]
-            y_im = self.background_points[i][1]
+        for i in range(len(background_points)):
+            x_im = background_points[i][0]
+            y_im = background_points[i][1]
             
             x = self.to_canvas_point(x_im, y_im)[0]
             y = self.to_canvas_point(x_im, y_im)[1]
@@ -466,11 +477,12 @@ class Application(tk.Frame):
         
         
         if(min_idx != -1 and min_dist <= 10):
-            self.background_points.pop(min_idx)
+            point = background_points[min_idx]
+            self.cmd = Command(RM_POINT_HANDLER, self.cmd, idx=min_idx, point=point)
+            self.cmd.execute()
             return True
-        
-        return False
-
+        else:
+            return False
             
         
     def mouse_down_left(self, event):
@@ -667,7 +679,9 @@ class Application(tk.Frame):
         
         self.canvas.delete("oval")
         ovalsize=10
-        for point in self.background_points:
+        background_points = self.cmd.app_state["background_points"]
+
+        for point in background_points:
             canvas_point = self.to_canvas_point(point[0],point[1])
             x = canvas_point[0]
             y = canvas_point[1]
@@ -680,6 +694,18 @@ class Application(tk.Frame):
         if self.pil_image == None:
             return
         self.draw_image(self.pil_image)
+
+    def undo(self, event):
+        if not type(self.cmd.handler) is InitHandler:
+            undo = self.cmd.undo()
+            self.cmd = undo
+            self.redraw_image()
+    
+    def redo(self, event):
+        if self.cmd.next is not None:
+            redo = self.cmd.redo()
+            self.cmd = redo
+            self.redraw_image()
 
 
 if __name__ == "__main__":

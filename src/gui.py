@@ -33,6 +33,7 @@ class Application(tk.Frame):
             self.master.state("normal")
 
         self.data_type = ""
+        self.show_bgmodel = False
         self.pil_image = None
         self.image_full = None
         self.image_full_processed = None
@@ -51,6 +52,17 @@ class Application(tk.Frame):
         
 
     def create_widget(self):
+        
+        #Style    
+        border_color = "#171717"
+        bg_color = "#474747"
+        button_color = "#6a6a6a"
+        text_color = "#F0F0F0"
+        menu_font = ('Segoe UI Semibold', 12, 'normal')
+        button_height = 2
+        button_width = 16
+        relief = "raised"
+        bdwidth = 5
 
         frame_statusbar = tk.Frame(self.master, bd=1, relief = tk.SUNKEN)
         self.label_image_info = tk.Label(frame_statusbar, text="image info", anchor=tk.E, padx = 5)
@@ -62,6 +74,15 @@ class Application(tk.Frame):
         # Canvas
         self.canvas = tk.Canvas(self.master, background="black", name="picture")
         self.canvas.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)
+        
+        self.display_options = ["Original","Processed","Background"]
+        self.display_type = tk.StringVar()
+        self.display_type.set(self.display_options[0])
+        self.display_menu = tk.OptionMenu(self.canvas, self.display_type, *self.display_options, command=self.switch_display)
+        self.display_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
+                                  borderwidth=bdwidth, highlightbackground=bg_color)
+        self.display_menu.pack(side=tk.TOP)
+        tt_display_type = tooltip.Tooltip(self.display_menu, text=tooltip.display_text, wraplength=500)
 
 
         self.master.bind("<Button-1>", self.mouse_down_left)                   # Left Mouse Button
@@ -77,16 +98,6 @@ class Application(tk.Frame):
         self.master.bind("<Control-y>", self.redo)                             # redo
         
         #Side menu
-        
-        border_color = "#171717"
-        bg_color = "#474747"
-        button_color = "#6a6a6a"
-        text_color = "#F0F0F0"
-        menu_font = ('Segoe UI Semibold', 12, 'normal')
-        button_height = 2
-        button_width = 16
-        relief = "raised"
-        bdwidth = 5
         
         self.side_menu = tk.Frame(self.master, bg=bg_color, relief=relief, borderwidth=bdwidth)
         self.side_menu.pack(side=tk.LEFT, fill=tk.Y)
@@ -266,31 +277,25 @@ class Application(tk.Frame):
         if(self.stretch_option_current.get() == "25% Bg, 1.25 sigma"):
                 bg, sigma = (0.25,1.25)
         
-        
-        
-        if(self.image_full_processed is None):
-            if(self.stretch_option_current.get() == "No Stretch"):
-                if(self.image_full.shape[2] == 1):
-                    self.pil_image = Image.fromarray(img_as_ubyte(self.image_full[:,:,0]))
-                else:
-                    self.pil_image = Image.fromarray(img_as_ubyte(self.image_full))
-            else:
-                if(self.image_full.shape[2] == 1):
-                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full,bg,sigma))[:,:,0])
-                else:
-                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full,bg,sigma)))
-        
+        if(self.display_type.get() == "Original"):
+            image = self.image_full
+        elif(self.display_type.get() == "Background"):
+            image = self.background_model
         else:
-            if(self.stretch_option_current.get() == "No Stretch"):
-                if(self.image_full_processed.shape[2] == 1):
-                    self.pil_image = Image.fromarray(img_as_ubyte(self.image_full_processed[:,:,0]))    
-                else:
-                    self.pil_image = Image.fromarray(img_as_ubyte(self.image_full_processed))    
+            image = self.image_full_processed
+            
+
+        if(self.stretch_option_current.get() == "No Stretch"):
+            if(self.image_full.shape[2] == 1):
+                self.pil_image = Image.fromarray(img_as_ubyte(image[:,:,0]))
             else:
-                if(self.image_full_processed.shape[2] == 1):
-                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full_processed,bg,sigma))[:,:,0])
-                else:
-                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full_processed,bg,sigma)))
+                self.pil_image = Image.fromarray(img_as_ubyte(image))
+        else:
+            if(self.image_full.shape[2] == 1):
+                self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(image,bg,sigma))[:,:,0])
+            else:
+                self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(image,bg,sigma)))
+        
         
 
         self.redraw_image()
@@ -429,7 +434,7 @@ class Application(tk.Frame):
         
         self.image_full_processed = imarray       
         
-
+        self.display_type.set("Processed")
         self.stretch()
         return
     
@@ -706,7 +711,14 @@ class Application(tk.Frame):
             redo = self.cmd.redo()
             self.cmd = redo
             self.redraw_image()
-
+            
+    def switch_display(self, event):
+        if(self.image_full_processed is None and self.display_type.get() != "Original"):
+            self.display_type.set("Original")
+            tk.messagebox.showerror("Error", "Please select background points and press the Calculate button first")         
+            return
+        
+        self.stretch()
 
 if __name__ == "__main__":
     root = tk.Tk()

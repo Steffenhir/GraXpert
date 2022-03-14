@@ -183,3 +183,9 @@ saveas_text = ("Choose the bitdepth of the saved pictures. The default value "
                "is automatically set to be equal to the input picture.")
 save_bg_text = ("Save the background model as a .tiff")
 save_pic_text = ("Save your picture as a .tiff")
+
+display_text = ("Switch display between \n"
+                "\n"
+                "Original: Your original picture \n"
+                "Processed: Picture with subtracted background model \n"
+                "Background: The background model") 

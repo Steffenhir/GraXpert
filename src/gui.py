@@ -33,7 +33,6 @@ class Application(tk.Frame):
             self.master.state("normal")
 
         self.data_type = ""
-        self.show_bgmodel = False
         self.pil_image = None
         self.image_full = None
         self.image_full_processed = None

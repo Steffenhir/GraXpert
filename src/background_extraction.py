@@ -16,20 +16,36 @@ from skimage.transform import resize
 import skyall
 from PIL import Image
 from skimage.util import img_as_ubyte
+from multiprocessing import Pool
+import time
+import os
 # from gpr_cuda import GPRegression
 
 
 
 
 def extract_background(imarray, background_points,interpolation_type,smoothing,downscale_factor):
-    
+    start = time.time()
     
     num_colors = imarray.shape[2]
     x_size = imarray.shape[1]
     y_size = imarray.shape[0]
     
-
+    x_sub = np.array(background_points[:,0],dtype=int)
+    y_sub = np.array(background_points[:,1],dtype=int)
+    subsample = np.zeros((num_colors, x_sub.shape[0]))
     
+    for c in range(num_colors):
+        subsample[c,:] = calc_mode_dataset(imarray[:,:,c], x_sub, y_sub, 25)
+    
+    pool = Pool(num_colors)
+
+    background = pool.starmap_async(interpol, [(x_sub,y_sub,subsample[c,:],(y_size,x_size),interpolation_type,smoothing,downscale_factor) for c in range(num_colors)])
+    background = background.get()
+    background = np.moveaxis(background, 0 ,-1)
+    
+
+    """
     background = np.zeros((y_size,x_size,num_colors), dtype=np.float32)
     
     for c in range(num_colors):
@@ -39,12 +55,13 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
         subsample = calc_mode_dataset(imarray[:,:,c], x_sub, y_sub, 25)
 
         background[:,:,c] = interpol(x_sub,y_sub,subsample,(y_size,x_size),interpolation_type,smoothing,downscale_factor)
-        
     
+    """
     #Subtract background from image
     mean = np.mean(background)
     imarray[:,:,:] = (imarray[:,:,:] - background[:,:,:] + mean).clip(min=0,max=np.max(imarray))
-        
+    
+    print(time.time() - start)
     return background
 
 

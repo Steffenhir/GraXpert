@@ -18,7 +18,7 @@ import tooltip
 from astropy.io import fits
 from skimage import io,img_as_float32, img_as_uint, exposure
 from skimage.util import img_as_ubyte
-
+from loadingframe import LoadingFrame
 
 
 class Application(tk.Frame):
@@ -74,6 +74,7 @@ class Application(tk.Frame):
         self.canvas = tk.Canvas(self.master, background="black", name="picture")
         self.canvas.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)
         
+        
         self.display_options = ["Original","Processed","Background"]
         self.display_type = tk.StringVar()
         self.display_type.set(self.display_options[0])
@@ -82,6 +83,8 @@ class Application(tk.Frame):
                                   borderwidth=bdwidth, highlightbackground=bg_color)
         self.display_menu.pack(side=tk.TOP)
         tt_display_type = tooltip.Tooltip(self.display_menu, text=tooltip.display_text, wraplength=500)
+        
+        self.loading_frame = LoadingFrame(self.canvas, self.master)
 
 
         self.master.bind("<Button-1>", self.mouse_down_left)                   # Left Mouse Button
@@ -103,7 +106,7 @@ class Application(tk.Frame):
         
         self.side_menu.grid_columnconfigure(0, weight=1)
         
-        for i in range(17):
+        for i in range(19):
             self.side_menu.grid_rowconfigure(i, weight=1)
         
         #---Display---
@@ -125,7 +128,7 @@ class Application(tk.Frame):
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
         self.stretch_option_current = tk.StringVar()
         self.stretch_option_current.set(self.stretch_options[0])
-        self.stretch_menu = tk.OptionMenu(self.side_menu, self.stretch_option_current, *self.stretch_options,command=self.stretch)
+        self.stretch_menu = tk.OptionMenu(self.side_menu, self.stretch_option_current, *self.stretch_options,command=self.change_stretch)
         self.stretch_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, borderwidth=bdwidth, highlightbackground=bg_color)
         self.stretch_menu.grid(column=0, row=3, pady=(0,5), padx=15, sticky="news")
         tt_stretch= tooltip.Tooltip(self.stretch_menu, text=tooltip.stretch_text)
@@ -149,7 +152,7 @@ class Application(tk.Frame):
         
         self.bg_pts = tk.IntVar()
         self.bg_pts.set(15)
-        self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=5,to=30,tickinterval=25,resolution=1,
+        self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=4,to=20,tickinterval=16,resolution=1,
                                       var=self.bg_pts, width=12, bg=button_color, fg=text_color, relief=relief, 
                                       borderwidth=bdwidth, highlightbackground=bg_color)
         self.bg_pts_slider.grid(column=0, row=6, pady=(0,0), padx=15, sticky="news")
@@ -161,11 +164,11 @@ class Application(tk.Frame):
         
         self.bg_tol = tk.DoubleVar()
         self.bg_tol.set(1)
-        self.bg_tol_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=-5,to=5,tickinterval=10,resolution=0.1,
+        self.bg_tol_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=20,resolution=0.1,
                                       var=self.bg_tol, width=12, bg=button_color, fg=text_color, relief=relief, 
                                       borderwidth=bdwidth, highlightbackground=bg_color)
         self.bg_tol_slider.grid(column=0, row=8, pady=(0,0), padx=15, sticky="news")
-        tt_tol_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
+        tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
         self.bg_selection_button = tk.Button(self.side_menu, 
                          text="Select Background",
@@ -258,19 +261,26 @@ class Application(tk.Frame):
             filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits")],
             initialdir = os.getcwd()
             )
-
+        
+        self.loading_frame.start()
         self.data_type = os.path.splitext(filename)[1]
         self.set_image(filename)
-
-
+        self.loading_frame.end()
+        
     def select_background(self,event=None):
-
+        self.loading_frame.start()
         self.cmd = Command(SEL_POINTS_HANDLER, self.cmd, data=self.image_full, num_pts=self.bg_pts.get(), tol=self.bg_tol.get())
         self.cmd.execute()
         self.redraw_image()
+        self.loading_frame.end()
         return
 
-        
+    def change_stretch(self,event=None):
+        self.loading_frame.start()
+        self.stretch(event)
+        self.loading_frame.end()
+        return
+    
     def stretch(self,event=None):
         
         if(self.image_full is None):
@@ -412,7 +422,7 @@ class Application(tk.Frame):
             self.redraw_image()
     
     def calculate(self):
-
+        
         background_points = self.cmd.app_state["background_points"]
         
         #Error messages if not enough points
@@ -428,6 +438,7 @@ class Application(tk.Frame):
             tk.messagebox.showerror("Error", "Please select at least 16 background points with right click for the Splines method")
             return
         
+        self.loading_frame.start()
         
         imarray = np.array(self.image_full)
         
@@ -447,6 +458,8 @@ class Application(tk.Frame):
         
         self.display_type.set("Processed")
         self.stretch()
+        
+        self.loading_frame.end()
         return
     
     def enter_key(self,enter):
@@ -728,8 +741,9 @@ class Application(tk.Frame):
             self.display_type.set("Original")
             tk.messagebox.showerror("Error", "Please select background points and press the Calculate button first")         
             return
-        
+        self.loading_frame.start()
         self.stretch()
+        self.loading_frame.end()
 
 if __name__ == "__main__":
     root = tk.Tk()

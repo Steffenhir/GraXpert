@@ -137,6 +137,8 @@ class SelectPointsHandler(PointHandler):
         automatic_points = background_selection(data, num_pts, tol)
         for i in range(len(automatic_points)):
             automatic_points[i] = np.array([automatic_points[i][1],automatic_points[i][0],1.0])
+            
+        """
         for a in automatic_points:
             match = False
             for e in app_state["background_points"]:
@@ -146,6 +148,9 @@ class SelectPointsHandler(PointHandler):
             if match:
                 continue
             app_state_copy["background_points"].append(a)
+        """
+        
+        app_state_copy["background_points"] = automatic_points
         return app_state_copy
 
     def progress(self) -> float:

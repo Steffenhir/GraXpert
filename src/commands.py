@@ -133,7 +133,8 @@ class SelectPointsHandler(PointHandler):
         app_state_copy = deepcopy(app_state)
         data = cmd_args["data"]
         num_pts = cmd_args["num_pts"]
-        automatic_points = background_selection(data, num_pts)
+        tol = cmd_args["tol"]
+        automatic_points = background_selection(data, num_pts, tol)
         for i in range(len(automatic_points)):
             automatic_points[i] = np.array([automatic_points[i][1],automatic_points[i][0],1.0])
         for a in automatic_points:

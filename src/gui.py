@@ -10,15 +10,15 @@ from tkinter import filedialog
 from PIL import Image, ImageTk 
 import math                   
 import numpy as np            
-import os       
+import os
 import background_extraction
-import background_selection
+from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
 import stretch
 import tooltip
 from astropy.io import fits
 from skimage import io,img_as_float32, img_as_uint, exposure
 from skimage.util import img_as_ubyte
-
+from loadingframe import LoadingFrame
 
 
 class Application(tk.Frame):
@@ -39,17 +39,29 @@ class Application(tk.Frame):
         self.background_model = None
         
         self.my_title = "Background Extraction"
-        self.master.title(self.my_title)       
-        
-        self.background_points = []
+        self.master.title(self.my_title)
 
         self.create_widget()
 
         self.reset_transform()
+
+        self.cmd: Command = Command(INIT_HANDLER)
+        self.cmd.execute()
         
         
 
     def create_widget(self):
+        
+        #Style    
+        border_color = "#171717"
+        bg_color = "#474747"
+        button_color = "#6a6a6a"
+        text_color = "#F0F0F0"
+        menu_font = ('Segoe UI Semibold', 12, 'normal')
+        button_height = 2
+        button_width = 16
+        relief = "raised"
+        bdwidth = 5
 
         frame_statusbar = tk.Frame(self.master, bd=1, relief = tk.SUNKEN)
         self.label_image_info = tk.Label(frame_statusbar, text="image info", anchor=tk.E, padx = 5)
@@ -61,6 +73,18 @@ class Application(tk.Frame):
         # Canvas
         self.canvas = tk.Canvas(self.master, background="black", name="picture")
         self.canvas.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)
+        
+        
+        self.display_options = ["Original","Processed","Background"]
+        self.display_type = tk.StringVar()
+        self.display_type.set(self.display_options[0])
+        self.display_menu = tk.OptionMenu(self.canvas, self.display_type, *self.display_options, command=self.switch_display)
+        self.display_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
+                                  borderwidth=bdwidth, highlightbackground=bg_color)
+        self.display_menu.pack(side=tk.TOP)
+        tt_display_type = tooltip.Tooltip(self.display_menu, text=tooltip.display_text, wraplength=500)
+        
+        self.loading_frame = LoadingFrame(self.canvas, self.master)
 
 
         self.master.bind("<Button-1>", self.mouse_down_left)                   # Left Mouse Button
@@ -69,26 +93,20 @@ class Application(tk.Frame):
         self.master.bind("<Motion>", self.mouse_move)                          # Mouse move
         self.master.bind("<Double-Button-1>", self.mouse_double_click_left)    # Left Button Double Click
         self.master.bind("<MouseWheel>", self.mouse_wheel)                     # Mouse Wheel
+        self.master.bind("<Button-4>", self.mouse_wheel)                       # Mouse Wheel Linux
+        self.master.bind("<Button-5>", self.mouse_wheel)                       # Mouse Wheel Linux
         self.master.bind("<Return>", self.enter_key)                           # Enter Key
+        self.master.bind("<Control-z>", self.undo)                             # undo
+        self.master.bind("<Control-y>", self.redo)                             # redo
         
         #Side menu
-        
-        border_color = "#171717"
-        bg_color = "#474747"
-        button_color = "#6a6a6a"
-        text_color = "#F0F0F0"
-        menu_font = ('Segoe UI Semibold', 12, 'normal')
-        button_height = 2
-        button_width = 16
-        relief = "raised"
-        bdwidth = 5
         
         self.side_menu = tk.Frame(self.master, bg=bg_color, relief=relief, borderwidth=bdwidth)
         self.side_menu.pack(side=tk.LEFT, fill=tk.Y)
         
         self.side_menu.grid_columnconfigure(0, weight=1)
         
-        for i in range(17):
+        for i in range(19):
             self.side_menu.grid_rowconfigure(i, weight=1)
         
         #---Display---
@@ -110,7 +128,7 @@ class Application(tk.Frame):
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
         self.stretch_option_current = tk.StringVar()
         self.stretch_option_current.set(self.stretch_options[0])
-        self.stretch_menu = tk.OptionMenu(self.side_menu, self.stretch_option_current, *self.stretch_options,command=self.stretch)
+        self.stretch_menu = tk.OptionMenu(self.side_menu, self.stretch_option_current, *self.stretch_options,command=self.change_stretch)
         self.stretch_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, borderwidth=bdwidth, highlightbackground=bg_color)
         self.stretch_menu.grid(column=0, row=3, pady=(0,5), padx=15, sticky="news")
         tt_stretch= tooltip.Tooltip(self.stretch_menu, text=tooltip.stretch_text)
@@ -128,17 +146,29 @@ class Application(tk.Frame):
         self.reset_button.grid(column=0, row=4, pady=5, padx=15, sticky="news")
         tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
         
-        self.bg_selection_text = tk.Message(self.side_menu, text="# of Points:", bg=bg_color)
+        self.bg_selection_text = tk.Message(self.side_menu, text="Points per row:", bg=bg_color)
         self.bg_selection_text.config(width=300, font=menu_font, fg=text_color)
         self.bg_selection_text.grid(column=0, row=5, pady=(5,0), padx=15, sticky="ews")
         
         self.bg_pts = tk.IntVar()
-        self.bg_pts.set(40)
-        self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=20,to=100,tickinterval=80,resolution=1,
+        self.bg_pts.set(15)
+        self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=4,to=20,tickinterval=16,resolution=1,
                                       var=self.bg_pts, width=12, bg=button_color, fg=text_color, relief=relief, 
                                       borderwidth=bdwidth, highlightbackground=bg_color)
-        self.bg_pts_slider.grid(column=0, row=6, pady=(0,5), padx=15, sticky="news")
+        self.bg_pts_slider.grid(column=0, row=6, pady=(0,0), padx=15, sticky="news")
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
+        
+        self.bg_selection_tol = tk.Message(self.side_menu, text="Tolerance:", bg=bg_color)
+        self.bg_selection_tol.config(width=300, font=menu_font, fg=text_color)
+        self.bg_selection_tol.grid(column=0, row=7, pady=(0,0), padx=15, sticky="ews")
+        
+        self.bg_tol = tk.DoubleVar()
+        self.bg_tol.set(1)
+        self.bg_tol_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=20,resolution=0.1,
+                                      var=self.bg_tol, width=12, bg=button_color, fg=text_color, relief=relief, 
+                                      borderwidth=bdwidth, highlightbackground=bg_color)
+        self.bg_tol_slider.grid(column=0, row=8, pady=(0,0), padx=15, sticky="news")
+        tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
         self.bg_selection_button = tk.Button(self.side_menu, 
                          text="Select Background",
@@ -147,14 +177,14 @@ class Application(tk.Frame):
                          relief=relief, borderwidth=bdwidth,
                          command=self.select_background,
                          height=button_height,width=button_width)
-        self.bg_selection_button.grid(column=0, row=7, pady=5, padx=15, sticky="news")
+        self.bg_selection_button.grid(column=0, row=9, pady=5, padx=15, sticky="news")
         tt_bg_select = tooltip.Tooltip(self.bg_selection_button, text= tooltip.bg_select_text)
         
         #---Calculation---
         
         self.intp_type_text = tk.Message(self.side_menu, text="Method:", bg=bg_color, font=menu_font)
         self.intp_type_text.config(width=200, font=menu_font, fg=text_color)
-        self.intp_type_text.grid(column=0, row=8, pady=(5,0), padx=15, sticky="ews")
+        self.intp_type_text.grid(column=0, row=10, pady=(5,0), padx=15, sticky="ews")
         
         self.interpol_options = ["RBF", "Splines", "Kriging"]
         self.interpol_type = tk.StringVar()
@@ -162,12 +192,12 @@ class Application(tk.Frame):
         self.interpol_menu = tk.OptionMenu(self.side_menu, self.interpol_type, *self.interpol_options)
         self.interpol_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
                                   borderwidth=bdwidth, highlightbackground=bg_color)
-        self.interpol_menu.grid(column=0, row=9, pady=(0,5), padx=15, sticky="news")
+        self.interpol_menu.grid(column=0, row=11, pady=(0,5), padx=15, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.interpol_menu, text=tooltip.interpol_type_text)
         
         self.smooth_text = tk.Message(self.side_menu, text="Smoothing:", bg=bg_color)
         self.smooth_text.config(width=200, font=menu_font, fg=text_color)
-        self.smooth_text.grid(column=0, row=10, pady=(5,0), padx=15, sticky="ews")
+        self.smooth_text.grid(column=0, row=12, pady=(5,0), padx=15, sticky="ews")
         
         self.smoothing = tk.DoubleVar()
         self.smoothing.set(5.0)
@@ -175,7 +205,7 @@ class Application(tk.Frame):
                                          from_=-10,to=10,tickinterval=10.0,resolution=0.1,var=self.smoothing,
                                          width=12, bg=button_color, fg=text_color, relief=relief, 
                                          borderwidth=bdwidth, highlightbackground=bg_color)
-        self.smoothing_slider.grid(column=0, row=11, pady=(0,5), padx=15, sticky="news")
+        self.smoothing_slider.grid(column=0, row=13, pady=(0,5), padx=15, sticky="news")
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
         self.calculate_button = tk.Button(self.side_menu, 
@@ -185,14 +215,14 @@ class Application(tk.Frame):
                          relief=relief, borderwidth=bdwidth,
                          command=self.calculate,
                          height=button_height,width=button_width)
-        self.calculate_button.grid(column=0, row=12, pady=5, padx=15, sticky="news")
+        self.calculate_button.grid(column=0, row=14, pady=5, padx=15, sticky="news")
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
         #---Saving---  
         
         self.saveas_text = tk.Message(self.side_menu, text="Save as:", bg=bg_color, font=menu_font)
         self.saveas_text.config(width=200, font=menu_font, fg=text_color)
-        self.saveas_text.grid(column=0, row=13, pady=(5,0), padx=15, sticky="ews")
+        self.saveas_text.grid(column=0, row=15, pady=(5,0), padx=15, sticky="ews")
         
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff"]
         self.saveas_type = tk.StringVar()
@@ -200,7 +230,7 @@ class Application(tk.Frame):
         self.saveas_menu = tk.OptionMenu(self.side_menu, self.saveas_type, *self.saveas_options)
         self.saveas_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
                                   borderwidth=bdwidth, highlightbackground=bg_color)
-        self.saveas_menu.grid(column=0, row=14, pady=(0,5), padx=15, sticky="news")
+        self.saveas_menu.grid(column=0, row=16, pady=(0,5), padx=15, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
         
         self.save_background_button = tk.Button(self.side_menu, 
@@ -210,7 +240,7 @@ class Application(tk.Frame):
                          relief=relief, borderwidth=bdwidth,
                          command=self.save_background_image,
                          height=button_height,width=button_width)
-        self.save_background_button.grid(column=0, row=15, pady=5, padx=15, sticky="news")
+        self.save_background_button.grid(column=0, row=17, pady=5, padx=15, sticky="news")
         tt_save_bg = tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
               
         
@@ -221,7 +251,7 @@ class Application(tk.Frame):
                          relief=relief, borderwidth=bdwidth,
                          command=self.save_image,
                          height=button_height,width=button_width)
-        self.save_button.grid(column=0, row=16, pady=5, padx=15, sticky="news")
+        self.save_button.grid(column=0, row=18, pady=5, padx=15, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
     
     
@@ -231,21 +261,26 @@ class Application(tk.Frame):
             filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits")],
             initialdir = os.getcwd()
             )
-
+        
+        self.loading_frame.start()
         self.data_type = os.path.splitext(filename)[1]
         self.set_image(filename)
-
-
-    def select_background(self,event=None):
-        self.background_points = background_selection.background_selection(self.image_full,self.bg_pts.get())
-        for i in range(len(self.background_points)):
-            self.background_points[i] = np.array([self.background_points[i][1],self.background_points[i][0],1.0])
+        self.loading_frame.end()
         
-
+    def select_background(self,event=None):
+        self.loading_frame.start()
+        self.cmd = Command(SEL_POINTS_HANDLER, self.cmd, data=self.image_full, num_pts=self.bg_pts.get(), tol=self.bg_tol.get())
+        self.cmd.execute()
         self.redraw_image()
+        self.loading_frame.end()
         return
 
-        
+    def change_stretch(self,event=None):
+        self.loading_frame.start()
+        self.stretch(event)
+        self.loading_frame.end()
+        return
+    
     def stretch(self,event=None):
         
         if(self.image_full is None):
@@ -263,31 +298,25 @@ class Application(tk.Frame):
         if(self.stretch_option_current.get() == "25% Bg, 1.25 sigma"):
                 bg, sigma = (0.25,1.25)
         
-        
-        
-        if(self.image_full_processed is None):
-            if(self.stretch_option_current.get() == "No Stretch"):
-                if(self.image_full.shape[2] == 1):
-                    self.pil_image = Image.fromarray(img_as_ubyte(self.image_full[:,:,0]))
-                else:
-                    self.pil_image = Image.fromarray(img_as_ubyte(self.image_full))
-            else:
-                if(self.image_full.shape[2] == 1):
-                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full,bg,sigma))[:,:,0])
-                else:
-                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full,bg,sigma)))
-        
+        if(self.display_type.get() == "Original"):
+            image = self.image_full
+        elif(self.display_type.get() == "Background"):
+            image = self.background_model
         else:
-            if(self.stretch_option_current.get() == "No Stretch"):
-                if(self.image_full_processed.shape[2] == 1):
-                    self.pil_image = Image.fromarray(img_as_ubyte(self.image_full_processed[:,:,0]))    
-                else:
-                    self.pil_image = Image.fromarray(img_as_ubyte(self.image_full_processed))    
+            image = self.image_full_processed
+            
+
+        if(self.stretch_option_current.get() == "No Stretch"):
+            if(self.image_full.shape[2] == 1):
+                self.pil_image = Image.fromarray(img_as_ubyte(image[:,:,0]))
             else:
-                if(self.image_full_processed.shape[2] == 1):
-                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full_processed,bg,sigma))[:,:,0])
-                else:
-                    self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(self.image_full_processed,bg,sigma)))
+                self.pil_image = Image.fromarray(img_as_ubyte(image))
+        else:
+            if(self.image_full.shape[2] == 1):
+                self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(image,bg,sigma))[:,:,0])
+            else:
+                self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(image,bg,sigma)))
+        
         
 
         self.redraw_image()
@@ -297,8 +326,7 @@ class Application(tk.Frame):
 
         if not filename:
             return
-        
-        self.background_points = []
+
         self.image_full_processed = None
         
         
@@ -388,24 +416,29 @@ class Application(tk.Frame):
     
     def reset_backgroundpts(self):
         
-        self.background_points = []
-        self.redraw_image()
+        if len(self.cmd.app_state["background_points"]) > 0:
+            self.cmd = Command(RESET_POINTS_HANDLER, self.cmd)
+            self.cmd.execute()
+            self.redraw_image()
     
     def calculate(self):
         
+        background_points = self.cmd.app_state["background_points"]
+        
         #Error messages if not enough points
-        if(len(self.background_points) == 0):
+        if(len(background_points) == 0):
             tk.messagebox.showerror("Error", "Please select background points with right click")
             return
         
-        if(len(self.background_points) < 2 and self.interpol_type.get() == "Kriging"):
+        if(len(background_points) < 2 and self.interpol_type.get() == "Kriging"):
             tk.messagebox.showerror("Error", "Please select at least 2 background points with right click for the Kriging method")
             return
         
-        if(len(self.background_points) < 16 and self.interpol_type.get() == "Splines"):
+        if(len(background_points) < 16 and self.interpol_type.get() == "Splines"):
             tk.messagebox.showerror("Error", "Please select at least 16 background points with right click for the Splines method")
             return
         
+        self.loading_frame.start()
         
         imarray = np.array(self.image_full)
         
@@ -416,15 +449,17 @@ class Application(tk.Frame):
 
             
         self.background_model = background_extraction.extract_background(
-            imarray,np.array(self.background_points),
+            imarray,np.array(background_points),
             self.interpol_type.get(),10**self.smoothing.get(),
             downscale_factor
             )
         
         self.image_full_processed = imarray       
         
-
+        self.display_type.set("Processed")
         self.stretch()
+        
+        self.loading_frame.end()
         return
     
     def enter_key(self,enter):
@@ -439,19 +474,26 @@ class Application(tk.Frame):
         
 
         if(not self.remove_pt(event) and self.to_image_point(event.x,event.y) != []):
-            self.background_points.append(self.to_image_point(event.x,event.y))
+            point = self.to_image_point(event.x,event.y)
+            self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
+            self.cmd.execute()
 
         self.redraw_image()
         self.__old_event = event
         
     def remove_pt(self,event):
         
+        if len(self.cmd.app_state["background_points"]) == 0:
+            return False
+        
+        background_points = self.cmd.app_state["background_points"]
+        
         min_idx = -1
         min_dist = -1
         
-        for i in range(len(self.background_points)):
-            x_im = self.background_points[i][0]
-            y_im = self.background_points[i][1]
+        for i in range(len(background_points)):
+            x_im = background_points[i][0]
+            y_im = background_points[i][1]
             
             x = self.to_canvas_point(x_im, y_im)[0]
             y = self.to_canvas_point(x_im, y_im)[1]
@@ -464,11 +506,12 @@ class Application(tk.Frame):
         
         
         if(min_idx != -1 and min_dist <= 10):
-            self.background_points.pop(min_idx)
+            point = background_points[min_idx]
+            self.cmd = Command(RM_POINT_HANDLER, self.cmd, idx=min_idx, point=point)
+            self.cmd.execute()
             return True
-        
-        return False
-
+        else:
+            return False
             
         
     def mouse_down_left(self, event):
@@ -518,7 +561,7 @@ class Application(tk.Frame):
             return
 
         if event.state != 9:
-            if (event.delta > 0):
+            if (event.delta > 0 or event.num == 4):
 
                 self.scale_at(6/5, event.x, event.y)
             else:
@@ -533,7 +576,6 @@ class Application(tk.Frame):
                 self.rotate_at(5, event.x, event.y)     
         self.redraw_image()
         
-
 
     def reset_transform(self):
 
@@ -666,7 +708,9 @@ class Application(tk.Frame):
         
         self.canvas.delete("oval")
         ovalsize=10
-        for point in self.background_points:
+        background_points = self.cmd.app_state["background_points"]
+
+        for point in background_points:
             canvas_point = self.to_canvas_point(point[0],point[1])
             x = canvas_point[0]
             y = canvas_point[1]
@@ -680,6 +724,26 @@ class Application(tk.Frame):
             return
         self.draw_image(self.pil_image)
 
+    def undo(self, event):
+        if not type(self.cmd.handler) is InitHandler:
+            undo = self.cmd.undo()
+            self.cmd = undo
+            self.redraw_image()
+    
+    def redo(self, event):
+        if self.cmd.next is not None:
+            redo = self.cmd.redo()
+            self.cmd = redo
+            self.redraw_image()
+            
+    def switch_display(self, event):
+        if(self.image_full_processed is None and self.display_type.get() != "Original"):
+            self.display_type.set("Original")
+            tk.messagebox.showerror("Error", "Please select background points and press the Calculate button first")         
+            return
+        self.loading_frame.start()
+        self.stretch()
+        self.loading_frame.end()
 
 if __name__ == "__main__":
     root = tk.Tk()

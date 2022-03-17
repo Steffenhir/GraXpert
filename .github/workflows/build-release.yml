@@ -110,7 +110,7 @@ jobs:
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v0.0.5
+          tag_name: v0.0.6
           files: |
             background-extraction-linux
             background-extraction-win64.exe

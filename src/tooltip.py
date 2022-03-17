@@ -164,8 +164,8 @@ stretch_text = ("Automatically stretch the picture to make gradients more visibl
 
 reset_text = ("Reset all the chosen background points.")
 
-bg_select_text = ("Specify the number of points per row for the grid created by "
-                  "automatic background selection")
+bg_select_text = ("Creates a grid with the specified amount of points per row"
+                  "and rejects points below a threshold defined by the tolerance.")
 
 bg_tol_text = ("The tolerance adjusts the threshold for rejection of background points " 
                "with automatic background selection")

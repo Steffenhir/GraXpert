@@ -164,10 +164,14 @@ stretch_text = ("Automatically stretch the picture to make gradients more visibl
 
 reset_text = ("Reset all the chosen background points.")
 
-bg_select_text = ("Automatically select the specified amount of background points."
-                  "This may take a while.")
+bg_select_text = ("Creates a grid with the specified amount of points per row"
+                  "and rejects points below a threshold defined by the tolerance.")
 
-num_points_text = ("Adjust the number of points selected by the automatic background selection.")
+bg_tol_text = ("The tolerance adjusts the threshold for rejection of background points " 
+               "with automatic background selection")
+
+num_points_text = ("Adjust the number of points per row for the grid created by"
+                   " automatic background selection.")
 
 interpol_type_text = ("Choose between different interpolation methods.")
 
@@ -183,3 +187,9 @@ saveas_text = ("Choose the bitdepth of the saved pictures. The default value "
                "is automatically set to be equal to the input picture.")
 save_bg_text = ("Save the background model as a .tiff")
 save_pic_text = ("Save your picture as a .tiff")
+
+display_text = ("Switch display between \n"
+                "\n"
+                "Original: Your original picture \n"
+                "Processed: Picture with subtracted background model \n"
+                "Background: The background model") 

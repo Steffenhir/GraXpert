@@ -16,6 +16,7 @@ from skimage.transform import resize
 import skyall
 from PIL import Image
 from skimage.util import img_as_ubyte
+from astropy.stats import sigma_clipped_stats
 # from gpr_cuda import GPRegression
 
 
@@ -55,8 +56,8 @@ def calc_mode_dataset(data, x_sub, y_sub, halfsize):
     subsample = np.zeros(n)
     
     for i in range(n):
-        data_footprint = data_padded[y_sub[i]:y_sub[i]+2*halfsize,x_sub[i]:x_sub[i]+2*halfsize].ravel()
-        subsample[i] = skyall.mode(data_footprint)
+        data_footprint = data_padded[y_sub[i]:y_sub[i]+2*halfsize,x_sub[i]:x_sub[i]+2*halfsize]
+        subsample[i] = sigma_clipped_stats(data=data_footprint, cenfunc="median", stdfunc="std", grow=4)[1]
         
     return subsample
 

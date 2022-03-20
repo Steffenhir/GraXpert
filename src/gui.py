@@ -327,7 +327,10 @@ class Application(tk.Frame):
         if not filename:
             return
 
+        self.image_full = None
         self.image_full_processed = None
+        self.background_model = None
+        self.display_type.set("Original")
         
         
         if(self.data_type == ".fits" or self.data_type == ".fit"):

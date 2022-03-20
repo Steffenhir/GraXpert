@@ -331,6 +331,7 @@ class Application(tk.Frame):
         self.image_full_processed = None
         self.background_model = None
         self.display_type.set("Original")
+        self.reset_backgroundpts()
         
         
         if(self.data_type == ".fits" or self.data_type == ".fit"):

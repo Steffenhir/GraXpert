@@ -19,6 +19,7 @@ from astropy.io import fits
 from skimage import io,img_as_float32, img_as_uint, exposure
 from skimage.util import img_as_ubyte
 from loadingframe import LoadingFrame
+from help_panel import Help_Panel
 
 
 class Application(tk.Frame):
@@ -69,9 +70,17 @@ class Application(tk.Frame):
         self.label_image_info.pack(side=tk.RIGHT)
         self.label_image_pixel.pack(side=tk.LEFT)
         frame_statusbar.pack(side=tk.BOTTOM, fill=tk.X)
-
-        # Canvas
+        
+        
+        self.master.grid_columnconfigure(3)
+        #Right help panel
+        
         self.canvas = tk.Canvas(self.master, background="black", name="picture")
+        self.help_panel = Help_Panel(self.master, self.canvas)
+        
+       
+        # Canvas
+        
         self.canvas.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)
         
         
@@ -81,7 +90,7 @@ class Application(tk.Frame):
         self.display_menu = tk.OptionMenu(self.canvas, self.display_type, *self.display_options, command=self.switch_display)
         self.display_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
                                   borderwidth=bdwidth, highlightbackground=bg_color)
-        self.display_menu.pack(side=tk.TOP)
+        self.display_menu.place(relx=0.5, rely=0.01)
         tt_display_type = tooltip.Tooltip(self.display_menu, text=tooltip.display_text, wraplength=500)
         
         self.loading_frame = LoadingFrame(self.canvas, self.master)
@@ -98,6 +107,7 @@ class Application(tk.Frame):
         self.master.bind("<Return>", self.enter_key)                           # Enter Key
         self.master.bind("<Control-z>", self.undo)                             # undo
         self.master.bind("<Control-y>", self.redo)                             # redo
+        
         
         #Side menu
         

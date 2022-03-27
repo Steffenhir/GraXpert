@@ -111,7 +111,7 @@ class Application(tk.Frame):
         
         #Side menu
         
-        self.side_menu = tk.Frame(self.master, bg=bg_color, relief=relief, borderwidth=bdwidth)
+        self.side_menu = tk.Frame(self.master, bg=bg_color, relief=relief, borderwidth=0)
         self.side_menu.pack(side=tk.LEFT, fill=tk.Y)
         
         self.side_menu.grid_columnconfigure(0, weight=1)

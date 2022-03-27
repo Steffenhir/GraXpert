@@ -8,7 +8,8 @@ class Help_Panel():
         bg_color = "#474747"
         button_color = "#6a6a6a"
         text_color = "#F0F0F0"
-        menu_font = ('Segoe UI Semibold', 12, 'normal')
+        menu_font = ('Segoe UI Semibold', 13, 'normal')
+        heading_font = ('Segoe UI Semibold', 24, 'normal')
         button_height = 2
         button_width = 16
         relief = "raised"
@@ -44,45 +45,48 @@ class Help_Panel():
                          activebackground="black",
                          command=self.advanced)
         
-        self.advanced_button.grid(row=1, column=0)
+        #self.advanced_button.grid(row=1, column=0)
         
         
         self.button_frame.pack(side=tk.RIGHT)
         
         # Help Panel
         
-        self.help_panel = tk.Frame(self.canvas, bg=bg_color, relief=relief, borderwidth=bdwidth)
+        self.help_panel = tk.Frame(self.canvas, bg=bg_color, relief=relief, borderwidth=0)
         
         self.logo = tk.PhotoImage(file="../img/GraXpert_LOGO_Hauptvariante.png")
         self.logo = self.logo.subsample(6)
         self.label = tk.Label(self.help_panel, image=self.logo, bg=bg_color)
         self.label.image=self.logo
-        self.label.grid(column=0, row=0, padx=10, pady=10)
+        self.label.grid(column=0, row=0, padx=(40,30), pady=60)
         
-        text = tk.Message(self.help_panel, text="1. Load your image", bg=bg_color, font=menu_font, fg=text_color, width=300)
-        text.grid(column=0, row=1, padx=3, pady=3, sticky="w")
+        text = tk.Message(self.help_panel, text="Instructions", bg=bg_color, font=heading_font, fg=text_color, width=240)
+        text.grid(column=0, row=1, padx=(40,30), pady=(0,5), sticky="w")
+        
+        text = tk.Message(self.help_panel, text="1. Load your image", bg=bg_color, font=menu_font, fg=text_color, width=240)
+        text.grid(column=0, row=2, padx=(40,30), pady=5, sticky="w")
         
         
-        text = tk.Message(self.help_panel, text="2. Stretch your image if necessary to reveal gradients", bg=bg_color, font=menu_font, fg=text_color, width=300)
-        text.grid(column=0, row=2, padx=3, pady=3, sticky="w")
+        text = tk.Message(self.help_panel, text="2. Stretch your image if necessary to reveal gradients", bg=bg_color, font=menu_font, fg=text_color, width=240)
+        text.grid(column=0, row=3, padx=(40,30), pady=5, sticky="w")
         
         
         text = tk.Message(self.help_panel
                           ,text="3. Select background points \n a) manually with right click \n b) automatically with grid selection \n"
                           "You can remove already set points by right clicking on them."
-                          ,bg=bg_color, font=menu_font, fg=text_color, width=300)
-        text.grid(column=0, row=3, padx=3, pady=3, sticky="w")
+                          ,bg=bg_color, font=menu_font, fg=text_color, width=240)
+        text.grid(column=0, row=4, padx=(40,30), pady=5, sticky="w")
         
-        text = tk.Message(self.help_panel, text="4. Click on Calculate to get the processed image.", bg=bg_color, font=menu_font, fg=text_color, width=300)
-        text.grid(column=0, row=4, padx=3, pady=3, sticky="w")
+        text = tk.Message(self.help_panel, text="4. Click on Calculate to get the processed image.", bg=bg_color, font=menu_font, fg=text_color, width=240)
+        text.grid(column=0, row=5, padx=(40,30), pady=5, sticky="w")
         
-        text = tk.Message(self.help_panel, text="5. Save the processed image.", bg=bg_color, font=menu_font, fg=text_color, width=300)
-        text.grid(column=0, row=5, padx=3, pady=3, sticky="w")
+        text = tk.Message(self.help_panel, text="5. Save the processed image.", bg=bg_color, font=menu_font, fg=text_color, width=240)
+        text.grid(column=0, row=6, padx=(40,30), pady=5, sticky="w")
     
         # Advanced Panel
         
         self.advanced_panel = tk.Frame(self.canvas, bg=bg_color, relief=relief, borderwidth=bdwidth)
-        text = tk.Message(self.advanced_panel, text="Advanced", bg=bg_color, font=menu_font, fg=text_color, width=300)
+        text = tk.Message(self.advanced_panel, text="Advanced", bg=bg_color, font=menu_font, fg=text_color, width=240)
         text.grid(column=0, row=0, padx=3, pady=3)
         
     def help(self):

@@ -168,7 +168,7 @@ class Application(tk.Frame):
         self.bg_pts_slider.grid(column=0, row=6, pady=(0,0), padx=15, sticky="news")
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
         
-        self.bg_selection_tol = tk.Message(self.side_menu, text="Tolerance:", bg=bg_color)
+        self.bg_selection_tol = tk.Message(self.side_menu, text="Grid Tolerance:", bg=bg_color)
         self.bg_selection_tol.config(width=300, font=menu_font, fg=text_color)
         self.bg_selection_tol.grid(column=0, row=7, pady=(0,0), padx=15, sticky="ews")
         
@@ -181,7 +181,7 @@ class Application(tk.Frame):
         tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
         self.bg_selection_button = tk.Button(self.side_menu, 
-                         text="Select Background",
+                         text="Grid Selection",
                          font=menu_font,
                          bg=button_color,fg=text_color,
                          relief=relief, borderwidth=bdwidth,

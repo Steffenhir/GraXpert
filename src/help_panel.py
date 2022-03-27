@@ -59,8 +59,25 @@ class Help_Panel():
         self.label.image=self.logo
         self.label.grid(column=0, row=0, padx=10, pady=10)
         
-        text = tk.Message(self.help_panel, text="Instructions", bg=bg_color, font=menu_font, fg=text_color, width=300)
-        text.grid(column=0, row=1, padx=3, pady=3)
+        text = tk.Message(self.help_panel, text="1. Load your image", bg=bg_color, font=menu_font, fg=text_color, width=300)
+        text.grid(column=0, row=1, padx=3, pady=3, sticky="w")
+        
+        
+        text = tk.Message(self.help_panel, text="2. Stretch your image if necessary to reveal gradients", bg=bg_color, font=menu_font, fg=text_color, width=300)
+        text.grid(column=0, row=2, padx=3, pady=3, sticky="w")
+        
+        
+        text = tk.Message(self.help_panel
+                          ,text="3. Select background points \n a) manually with right click \n b) automatically with grid selection \n"
+                          "You can remove already set points by right clicking on them."
+                          ,bg=bg_color, font=menu_font, fg=text_color, width=300)
+        text.grid(column=0, row=3, padx=3, pady=3, sticky="w")
+        
+        text = tk.Message(self.help_panel, text="4. Click on Calculate to get the processed image.", bg=bg_color, font=menu_font, fg=text_color, width=300)
+        text.grid(column=0, row=4, padx=3, pady=3, sticky="w")
+        
+        text = tk.Message(self.help_panel, text="5. Save the processed image.", bg=bg_color, font=menu_font, fg=text_color, width=300)
+        text.grid(column=0, row=5, padx=3, pady=3, sticky="w")
     
         # Advanced Panel
         

@@ -200,9 +200,9 @@ class Application(tk.Frame):
         self.smooth_text.grid(column=0, row=12, pady=(5,0), padx=15, sticky="ews")
         
         self.smoothing = tk.DoubleVar()
-        self.smoothing.set(5.0)
+        self.smoothing.set(1.0)
         self.smoothing_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,
-                                         from_=-10,to=10,tickinterval=10.0,resolution=0.1,var=self.smoothing,
+                                         from_=0,to=1,tickinterval=1.0,resolution=0.05,var=self.smoothing,
                                          width=12, bg=button_color, fg=text_color, relief=relief, 
                                          borderwidth=bdwidth, highlightbackground=bg_color)
         self.smoothing_slider.grid(column=0, row=13, pady=(0,5), padx=15, sticky="news")
@@ -454,7 +454,7 @@ class Application(tk.Frame):
             
         self.background_model = background_extraction.extract_background(
             imarray,np.array(background_points),
-            self.interpol_type.get(),10**self.smoothing.get(),
+            self.interpol_type.get(),self.smoothing.get(),
             downscale_factor
             )
         

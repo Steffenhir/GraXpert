@@ -113,9 +113,9 @@ class RadialBasisInterpolation:
         
         r = scipy.spatial.distance.cdist(X,X)
 
-        self.smooth = max(float(smooth),1e-10*scipy.linalg.norm(f)/np.sqrt(len(f))) # Scale by ||f||
+        self.smooth = max(float(smooth),1e-10)
         
-        K = self._kernel(r) + np.eye(self.N)*self.smooth
+        K = self._kernel(r) + np.eye(self.N)*self.smooth*np.mean(self._kernel(r))
         P = RadialBasisInterpolation.vandermond(X,degree=self.degree)
         
         # Build the matrix

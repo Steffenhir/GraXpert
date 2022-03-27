@@ -29,6 +29,7 @@ class Help_Panel():
                          font=menu_font,
                          bg="black",
                          borderwidth=0,
+                         activebackground="black",
                          command=self.help)
         
         self.toggle_button.grid(row=0,column=0)
@@ -40,6 +41,7 @@ class Help_Panel():
                          font=menu_font,
                          bg="black",
                          borderwidth=0,
+                         activebackground="black",
                          command=self.advanced)
         
         self.advanced_button.grid(row=1, column=0)

@@ -47,9 +47,9 @@ class Help_Panel():
         
         self.toggle_button.grid(row=0,column=0)
         
-        self.advanced_pic = tk.PhotoImage(file=resource_path("advanced.png"))
+        #self.advanced_pic = tk.PhotoImage(file=resource_path("advanced.png"))
         
-        self.advanced_button = tk.Button(self.button_frame, 
+        #self.advanced_button = tk.Button(self.button_frame, 
                          image=self.advanced_pic,
                          font=menu_font,
                          bg="black",

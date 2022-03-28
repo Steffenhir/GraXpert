@@ -31,11 +31,11 @@ class Help_Panel():
                 # PyInstaller creates a temp folder and stores path in _MEIPASS
                 base_path = sys._MEIPASS
             except:
-                base_path = os.path.abspath(".")
+                base_path = os.path.abspath("../img")
 
             return os.path.join(base_path, relative_path)
 
-        self.help_pic = tk.PhotoImage(file=resource_path("../img/HELP.png"))
+        self.help_pic = tk.PhotoImage(file=resource_path("HELP.png"))
         
         self.toggle_button = tk.Button(self.button_frame, 
                          image=self.help_pic,
@@ -47,7 +47,7 @@ class Help_Panel():
         
         self.toggle_button.grid(row=0,column=0)
         
-        self.advanced_pic = tk.PhotoImage(file=resource_path("../img/advanced.png"))
+        self.advanced_pic = tk.PhotoImage(file=resource_path("advanced.png"))
         
         self.advanced_button = tk.Button(self.button_frame, 
                          image=self.advanced_pic,

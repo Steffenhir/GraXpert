@@ -1,4 +1,6 @@
 import tkinter as tk
+import os
+import sys
 
 class Help_Panel():
     def __init__(self, master, canvas):
@@ -23,7 +25,17 @@ class Help_Panel():
         
         self.button_frame = tk.Frame(self.canvas, bg=bg_color)
         
-        self.help_pic = tk.PhotoImage(file="../img/HELP.png")
+        def resource_path(relative_path):
+            """ Get absolute path to resource, works for dev and for PyInstaller """
+            try:
+                # PyInstaller creates a temp folder and stores path in _MEIPASS
+                base_path = sys._MEIPASS
+            except:
+                base_path = os.path.abspath(".")
+
+            return os.path.join(base_path, relative_path)
+
+        self.help_pic = tk.PhotoImage(file=resource_path("../img/HELP.png"))
         
         self.toggle_button = tk.Button(self.button_frame, 
                          image=self.help_pic,
@@ -35,7 +47,7 @@ class Help_Panel():
         
         self.toggle_button.grid(row=0,column=0)
         
-        self.advanced_pic = tk.PhotoImage(file="../img/advanced.png")
+        self.advanced_pic = tk.PhotoImage(file=resource_path("../img/advanced.png"))
         
         self.advanced_button = tk.Button(self.button_frame, 
                          image=self.advanced_pic,

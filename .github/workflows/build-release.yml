@@ -22,6 +22,7 @@ jobs:
       - name: create background-extraction-linux bundle
         run: |
           pyinstaller \
+          --add-data='img/HELP.png:img/GraXpert_LOGO_Hauptvariante.png' \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
           --collect-all pykrige \
@@ -50,6 +51,7 @@ jobs:
       - name: create background-extraction-win64 bundle
         run: |
           pyinstaller `
+          --add-data='img/HELP.png;img/GraXpert_LOGO_Hauptvariante.png' `
           --onefile `
           --hidden-import='PIL._tkinter_finder' `
           --collect-all pykrige `
@@ -78,6 +80,7 @@ jobs:
       - name: create background-extraction-macos-x86_64 bundle
         run: |
           pyinstaller \
+          --add-data='img/HELP.png:img/GraXpert_LOGO_Hauptvariante.png' \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
           --collect-all pykrige \

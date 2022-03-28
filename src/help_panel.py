@@ -2,6 +2,16 @@ import tkinter as tk
 import os
 import sys
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except:
+        base_path = os.path.abspath("../img")
+
+    return os.path.join(base_path, relative_path)
+
 class Help_Panel():
     def __init__(self, master, canvas):
         
@@ -25,15 +35,7 @@ class Help_Panel():
         
         self.button_frame = tk.Frame(self.canvas, bg=bg_color)
         
-        def resource_path(relative_path):
-            """ Get absolute path to resource, works for dev and for PyInstaller """
-            try:
-                # PyInstaller creates a temp folder and stores path in _MEIPASS
-                base_path = sys._MEIPASS
-            except:
-                base_path = os.path.abspath("../img")
-
-            return os.path.join(base_path, relative_path)
+        
 
         self.help_pic = tk.PhotoImage(file=resource_path("HELP.png"))
         
@@ -50,12 +52,12 @@ class Help_Panel():
         #self.advanced_pic = tk.PhotoImage(file=resource_path("advanced.png"))
         
         #self.advanced_button = tk.Button(self.button_frame, 
-                         image=self.advanced_pic,
-                         font=menu_font,
-                         bg="black",
-                         borderwidth=0,
-                         activebackground="black",
-                         command=self.advanced)
+                         #image=self.advanced_pic,
+                         #font=menu_font,
+                         #bg="black",
+                         #borderwidth=0,
+                         #activebackground="black",
+                         #command=self.advanced)
         
         #self.advanced_button.grid(row=1, column=0)
         
@@ -66,7 +68,7 @@ class Help_Panel():
         
         self.help_panel = tk.Frame(self.canvas, bg=bg_color, relief=relief, borderwidth=0)
         
-        self.logo = tk.PhotoImage(file="../img/GraXpert_LOGO_Hauptvariante.png")
+        self.logo = tk.PhotoImage(file=resource_path("GraXpert_LOGO_Hauptvariante.png"))
         self.logo = self.logo.subsample(6)
         self.label = tk.Label(self.help_panel, image=self.logo, bg=bg_color)
         self.label.image=self.logo

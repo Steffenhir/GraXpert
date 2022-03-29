@@ -22,6 +22,8 @@ jobs:
       - name: create background-extraction-linux bundle
         run: |
           pyinstaller \
+          --add-data="./img/HELP.png:./img/" \
+          --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
           --collect-all pykrige \
@@ -50,6 +52,8 @@ jobs:
       - name: create background-extraction-win64 bundle
         run: |
           pyinstaller `
+          --add-data="./img/HELP.png;./img/" `
+          --add-data="./img/GraXpert_LOGO_Hauptvariante.png;./img/" `
           --onefile `
           --hidden-import='PIL._tkinter_finder' `
           --collect-all pykrige `
@@ -78,6 +82,8 @@ jobs:
       - name: create background-extraction-macos-x86_64 bundle
         run: |
           pyinstaller \
+          --add-data="./img/HELP.png:./img/" \
+          --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
           --collect-all pykrige \
@@ -110,7 +116,7 @@ jobs:
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v0.0.7
+          tag_name: v0.0.8
           files: |
             background-extraction-linux
             background-extraction-win64.exe

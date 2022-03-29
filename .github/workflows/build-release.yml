@@ -19,19 +19,21 @@ jobs:
         run: |
           pip install setuptools wheel pyinstaller && \
           pip install -r requirements.txt
-      - name: create background-extraction-linux bundle
+      - name: create GraXpert-linux bundle
         run: |
           pyinstaller \
+          --add-data="./img/HELP.png:./img/" \
+          --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
           --collect-all pykrige \
-          -n background-extraction-linux \
+          -n GraXpert-linux \
           ./src/gui.py
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: background-extraction-linux
-          path: ./dist/background-extraction-linux
+          name: GraXpert-linux
+          path: ./dist/GraXpert-linux
           retention-days: 5
 
   build-windows:
@@ -47,19 +49,21 @@ jobs:
         run: |
           pip install setuptools wheel pyinstaller && `
           pip install -r requirements.txt
-      - name: create background-extraction-win64 bundle
+      - name: create GraXpert-win64 bundle
         run: |
           pyinstaller `
+          --add-data="./img/HELP.png;./img/" `
+          --add-data="./img/GraXpert_LOGO_Hauptvariante.png;./img/" `
           --onefile `
           --hidden-import='PIL._tkinter_finder' `
           --collect-all pykrige `
-          -n background-extraction-win64 `
+          -n GraXpert-win64 `
           ./src/gui.py
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: background-extraction-win64.exe
-          path: ./dist/background-extraction-win64.exe
+          name: GraXpert-win64.exe
+          path: ./dist/GraXpert-win64.exe
           retention-days: 5
 
   build-macos-x86_64:
@@ -75,20 +79,22 @@ jobs:
         run: |
           pip install setuptools wheel pyinstaller && \
           pip install -r requirements-macos.txt
-      - name: create background-extraction-macos-x86_64 bundle
+      - name: create GraXpert-macos-x86_64 bundle
         run: |
           pyinstaller \
+          --add-data="./img/HELP.png:./img/" \
+          --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
           --collect-all pykrige \
           --target-architecture x86_64 \
-          -n background-extraction-macos-x86_64 \
+          -n GraXpert-macos-x86_64 \
           ./src/gui.py
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: background-extraction-macos-x86_64
-          path: ./dist/background-extraction-macos-x86_64
+          name: GraXpert-macos-x86_64
+          path: ./dist/GraXpert-macos-x86_64
           retention-days: 5
 
   release:
@@ -98,20 +104,20 @@ jobs:
       - name: download linux artifacts
         uses: actions/download-artifact@v2
         with:
-          name: background-extraction-linux
+          name: GraXpert-linux
       - name: download windows artifacts
         uses: actions/download-artifact@v2
         with:
-          name: background-extraction-win64.exe
+          name: GraXpert-win64.exe
       - name: download macos artifacts
         uses: actions/download-artifact@v2
         with:
-          name: background-extraction-macos-x86_64
+          name: GraXpert-macos-x86_64
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v0.0.7
+          tag_name: v0.0.8
           files: |
-            background-extraction-linux
-            background-extraction-win64.exe
-            background-extraction-macos-x86_64
+            GraXpert-linux
+            GraXpert-win64.exe
+            GraXpert-macos-x86_64

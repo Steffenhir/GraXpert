@@ -7,6 +7,7 @@ Created on Sun Feb 13 10:05:08 2022
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
+from tkinter import messagebox
 from PIL import Image, ImageTk 
 import math                   
 import numpy as np            
@@ -19,6 +20,7 @@ from astropy.io import fits
 from skimage import io,img_as_float32, img_as_uint, exposure
 from skimage.util import img_as_ubyte
 from loadingframe import LoadingFrame
+from help_panel import Help_Panel
 
 
 class Application(tk.Frame):
@@ -38,7 +40,7 @@ class Application(tk.Frame):
         self.image_full_processed = None
         self.background_model = None
         
-        self.my_title = "Background Extraction"
+        self.my_title = "GraXpert"
         self.master.title(self.my_title)
 
         self.create_widget()
@@ -69,9 +71,17 @@ class Application(tk.Frame):
         self.label_image_info.pack(side=tk.RIGHT)
         self.label_image_pixel.pack(side=tk.LEFT)
         frame_statusbar.pack(side=tk.BOTTOM, fill=tk.X)
-
-        # Canvas
+        
+        
+        self.master.grid_columnconfigure(3)
+        #Right help panel
+        
         self.canvas = tk.Canvas(self.master, background="black", name="picture")
+        self.help_panel = Help_Panel(self.master, self.canvas)
+        
+       
+        # Canvas
+        
         self.canvas.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)
         
         
@@ -81,7 +91,7 @@ class Application(tk.Frame):
         self.display_menu = tk.OptionMenu(self.canvas, self.display_type, *self.display_options, command=self.switch_display)
         self.display_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
                                   borderwidth=bdwidth, highlightbackground=bg_color)
-        self.display_menu.pack(side=tk.TOP)
+        self.display_menu.place(relx=0.5, rely=0.01)
         tt_display_type = tooltip.Tooltip(self.display_menu, text=tooltip.display_text, wraplength=500)
         
         self.loading_frame = LoadingFrame(self.canvas, self.master)
@@ -99,9 +109,10 @@ class Application(tk.Frame):
         self.master.bind("<Control-z>", self.undo)                             # undo
         self.master.bind("<Control-y>", self.redo)                             # redo
         
+        
         #Side menu
         
-        self.side_menu = tk.Frame(self.master, bg=bg_color, relief=relief, borderwidth=bdwidth)
+        self.side_menu = tk.Frame(self.master, bg=bg_color, relief=relief, borderwidth=0)
         self.side_menu.pack(side=tk.LEFT, fill=tk.Y)
         
         self.side_menu.grid_columnconfigure(0, weight=1)
@@ -158,7 +169,7 @@ class Application(tk.Frame):
         self.bg_pts_slider.grid(column=0, row=6, pady=(0,0), padx=15, sticky="news")
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
         
-        self.bg_selection_tol = tk.Message(self.side_menu, text="Tolerance:", bg=bg_color)
+        self.bg_selection_tol = tk.Message(self.side_menu, text="Grid Tolerance:", bg=bg_color)
         self.bg_selection_tol.config(width=300, font=menu_font, fg=text_color)
         self.bg_selection_tol.grid(column=0, row=7, pady=(0,0), padx=15, sticky="ews")
         
@@ -171,7 +182,7 @@ class Application(tk.Frame):
         tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
         self.bg_selection_button = tk.Button(self.side_menu, 
-                         text="Select Background",
+                         text="Grid Selection",
                          font=menu_font,
                          bg=button_color,fg=text_color,
                          relief=relief, borderwidth=bdwidth,
@@ -200,9 +211,9 @@ class Application(tk.Frame):
         self.smooth_text.grid(column=0, row=12, pady=(5,0), padx=15, sticky="ews")
         
         self.smoothing = tk.DoubleVar()
-        self.smoothing.set(5.0)
+        self.smoothing.set(1.0)
         self.smoothing_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,
-                                         from_=-10,to=10,tickinterval=10.0,resolution=0.1,var=self.smoothing,
+                                         from_=0,to=1,tickinterval=1.0,resolution=0.05,var=self.smoothing,
                                          width=12, bg=button_color, fg=text_color, relief=relief, 
                                          borderwidth=bdwidth, highlightbackground=bg_color)
         self.smoothing_slider.grid(column=0, row=13, pady=(0,5), padx=15, sticky="news")
@@ -264,7 +275,12 @@ class Application(tk.Frame):
         
         self.loading_frame.start()
         self.data_type = os.path.splitext(filename)[1]
-        self.set_image(filename)
+        
+        try:
+            self.set_image(filename)
+        except:
+            messagebox.showerror("Error", "An error occurred while loading your picture.")
+        
         self.loading_frame.end()
         
     def select_background(self,event=None):
@@ -331,6 +347,7 @@ class Application(tk.Frame):
         self.image_full_processed = None
         self.background_model = None
         self.display_type.set("Original")
+        self.reset_backgroundpts()
         
         
         if(self.data_type == ".fits" or self.data_type == ".fit"):
@@ -430,15 +447,15 @@ class Application(tk.Frame):
         
         #Error messages if not enough points
         if(len(background_points) == 0):
-            tk.messagebox.showerror("Error", "Please select background points with right click")
+            messagebox.showerror("Error", "Please select background points with right click")
             return
         
         if(len(background_points) < 2 and self.interpol_type.get() == "Kriging"):
-            tk.messagebox.showerror("Error", "Please select at least 2 background points with right click for the Kriging method")
+            messagebox.showerror("Error", "Please select at least 2 background points with right click for the Kriging method")
             return
         
         if(len(background_points) < 16 and self.interpol_type.get() == "Splines"):
-            tk.messagebox.showerror("Error", "Please select at least 16 background points with right click for the Splines method")
+            messagebox.showerror("Error", "Please select at least 16 background points with right click for the Splines method")
             return
         
         self.loading_frame.start()
@@ -453,7 +470,7 @@ class Application(tk.Frame):
             
         self.background_model = background_extraction.extract_background(
             imarray,np.array(background_points),
-            self.interpol_type.get(),10**self.smoothing.get(),
+            self.interpol_type.get(),self.smoothing.get(),
             downscale_factor
             )
         
@@ -742,7 +759,7 @@ class Application(tk.Frame):
     def switch_display(self, event):
         if(self.image_full_processed is None and self.display_type.get() != "Original"):
             self.display_type.set("Original")
-            tk.messagebox.showerror("Error", "Please select background points and press the Calculate button first")         
+            messagebox.showerror("Error", "Please select background points and press the Calculate button first")         
             return
         self.loading_frame.start()
         self.stretch()

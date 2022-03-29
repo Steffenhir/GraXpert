@@ -40,7 +40,7 @@ class Application(tk.Frame):
         self.image_full_processed = None
         self.background_model = None
         
-        self.my_title = "Background Extraction"
+        self.my_title = "GraXpert"
         self.master.title(self.my_title)
 
         self.create_widget()

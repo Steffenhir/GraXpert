@@ -7,6 +7,7 @@ Created on Sun Feb 13 10:05:08 2022
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
+from tkinter import messagebox
 from PIL import Image, ImageTk 
 import math                   
 import numpy as np            
@@ -264,7 +265,12 @@ class Application(tk.Frame):
         
         self.loading_frame.start()
         self.data_type = os.path.splitext(filename)[1]
-        self.set_image(filename)
+        
+        try:
+            self.set_image(filename)
+        except:
+            messagebox.showerror("Error", "An error occurred while loading your picture.")
+        
         self.loading_frame.end()
         
     def select_background(self,event=None):
@@ -431,15 +437,15 @@ class Application(tk.Frame):
         
         #Error messages if not enough points
         if(len(background_points) == 0):
-            tk.messagebox.showerror("Error", "Please select background points with right click")
+            messagebox.showerror("Error", "Please select background points with right click")
             return
         
         if(len(background_points) < 2 and self.interpol_type.get() == "Kriging"):
-            tk.messagebox.showerror("Error", "Please select at least 2 background points with right click for the Kriging method")
+            messagebox.showerror("Error", "Please select at least 2 background points with right click for the Kriging method")
             return
         
         if(len(background_points) < 16 and self.interpol_type.get() == "Splines"):
-            tk.messagebox.showerror("Error", "Please select at least 16 background points with right click for the Splines method")
+            messagebox.showerror("Error", "Please select at least 16 background points with right click for the Splines method")
             return
         
         self.loading_frame.start()
@@ -743,7 +749,7 @@ class Application(tk.Frame):
     def switch_display(self, event):
         if(self.image_full_processed is None and self.display_type.get() != "Original"):
             self.display_type.set("Original")
-            tk.messagebox.showerror("Error", "Please select background points and press the Calculate button first")         
+            messagebox.showerror("Error", "Please select background points and press the Calculate button first")         
             return
         self.loading_frame.start()
         self.stretch()

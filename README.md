@@ -1,4 +1,7 @@
-Program which can be used to extract and remove gradients in the background of astrophotos.
-To use the program, simply download the main.exe and start it !
+<p align="center">
+<img src="https://github.com/Steffenhir/GraXpert/blob/main/img/GraXpert_LOGO_Hauptvariante.png" width="500"/>
+</p>
 
-Currently supported formats: .tiff, .fits
+GraXpert is an astronomical image processing program which can be used to extract and remove
+gradients in the background of your astrophotos.
+

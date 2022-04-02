@@ -12,8 +12,10 @@ from PIL import Image, ImageTk
 import math                   
 import numpy as np            
 import os
+from app_state import INITIAL_STATE
 import background_extraction
 from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
+from preferences import DEFAULT_PREFS, Prefs, app_state_2_prefs, merge_json, prefs_2_app_state
 import stretch
 import tooltip
 from astropy.io import fits
@@ -21,7 +23,10 @@ from skimage import io,img_as_float32, img_as_uint, exposure
 from skimage.util import img_as_ubyte
 from loadingframe import LoadingFrame
 from help_panel import Help_Panel
+import json
+from appdirs import user_config_dir
 
+root = tk.Tk()
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -43,13 +48,21 @@ class Application(tk.Frame):
         self.my_title = "GraXpert"
         self.master.title(self.my_title)
 
+        self.prefs: Prefs = DEFAULT_PREFS
+        prefs_file = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
+        if os.path.isfile(prefs_file):
+            with open(prefs_file) as f:
+                json_prefs: Prefs = json.load(f)
+                self.prefs = merge_json(self.prefs, json_prefs)
+
+        tmp_state = prefs_2_app_state(self.prefs, INITIAL_STATE)
+        
+        self.cmd: Command = Command(INIT_HANDLER, background_points=tmp_state["background_points"])
+        self.cmd.execute()
+
         self.create_widget()
 
         self.reset_transform()
-
-        self.cmd: Command = Command(INIT_HANDLER)
-        self.cmd.execute()
-        
         
 
     def create_widget(self):
@@ -139,6 +152,8 @@ class Application(tk.Frame):
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
         self.stretch_option_current = tk.StringVar()
         self.stretch_option_current.set(self.stretch_options[0])
+        if "stretch_option" in self.prefs:
+            self.stretch_option_current.set(self.prefs["stretch_option"])
         self.stretch_menu = tk.OptionMenu(self.side_menu, self.stretch_option_current, *self.stretch_options,command=self.change_stretch)
         self.stretch_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, borderwidth=bdwidth, highlightbackground=bg_color)
         self.stretch_menu.grid(column=0, row=3, pady=(0,5), padx=15, sticky="news")
@@ -163,6 +178,8 @@ class Application(tk.Frame):
         
         self.bg_pts = tk.IntVar()
         self.bg_pts.set(15)
+        if "bg_pts_option" in self.prefs:
+            self.bg_pts.set(self.prefs["bg_pts_option"])
         self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=4,to=20,tickinterval=16,resolution=1,
                                       var=self.bg_pts, width=12, bg=button_color, fg=text_color, relief=relief, 
                                       borderwidth=bdwidth, highlightbackground=bg_color)
@@ -175,6 +192,8 @@ class Application(tk.Frame):
         
         self.bg_tol = tk.DoubleVar()
         self.bg_tol.set(1)
+        if "bg_tol_option" in self.prefs:
+            self.bg_tol.set(self.prefs["bg_tol_option"])
         self.bg_tol_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=20,resolution=0.1,
                                       var=self.bg_tol, width=12, bg=button_color, fg=text_color, relief=relief, 
                                       borderwidth=bdwidth, highlightbackground=bg_color)
@@ -200,6 +219,8 @@ class Application(tk.Frame):
         self.interpol_options = ["RBF", "Splines", "Kriging"]
         self.interpol_type = tk.StringVar()
         self.interpol_type.set(self.interpol_options[0])
+        if "interpol_type_option" in self.prefs:
+            self.interpol_type.set(self.prefs["interpol_type_option"])
         self.interpol_menu = tk.OptionMenu(self.side_menu, self.interpol_type, *self.interpol_options)
         self.interpol_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
                                   borderwidth=bdwidth, highlightbackground=bg_color)
@@ -212,6 +233,8 @@ class Application(tk.Frame):
         
         self.smoothing = tk.DoubleVar()
         self.smoothing.set(1.0)
+        if "smoothing_option" in self.prefs:
+            self.smoothing.set(self.prefs["smoothing_option"])
         self.smoothing_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,
                                          from_=0,to=1,tickinterval=1.0,resolution=0.05,var=self.smoothing,
                                          width=12, bg=button_color, fg=text_color, relief=relief, 
@@ -238,6 +261,8 @@ class Application(tk.Frame):
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff"]
         self.saveas_type = tk.StringVar()
         self.saveas_type.set(self.saveas_options[0])
+        if "saveas_option" in self.prefs:
+            self.saveas_type.set(self.prefs["saveas_option"])
         self.saveas_menu = tk.OptionMenu(self.side_menu, self.saveas_type, *self.saveas_options)
         self.saveas_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
                                   borderwidth=bdwidth, highlightbackground=bg_color)
@@ -268,8 +293,8 @@ class Application(tk.Frame):
     
     def menu_open_clicked(self, event=None):
 
-        if self.cmd.app_state["working_dir"] != "" and os.path.exists(self.cmd.app_state["working_dir"]):
-            initialdir = self.cmd.app_state["working_dir"]
+        if self.prefs["working_dir"] != "" and os.path.exists(self.prefs["working_dir"]):
+            initialdir = self.prefs["working_dir"]
         else:
             initialdir = os.getcwd()
         
@@ -283,7 +308,7 @@ class Application(tk.Frame):
         
         try:
             self.set_image(filename)
-            self.cmd.app_state["working_dir"] = os.path.dirname(filename)
+            self.prefs["working_dir"] = os.path.dirname(filename)
         except:
             messagebox.showerror("Error", "An error occurred while loading your picture.")
         
@@ -353,7 +378,6 @@ class Application(tk.Frame):
         self.image_full_processed = None
         self.background_model = None
         self.display_type.set("Original")
-        self.reset_backgroundpts()
         
         
         if(self.data_type == ".fits" or self.data_type == ".fit"):
@@ -398,6 +422,12 @@ class Application(tk.Frame):
         self.label_image_info["text"] = f"{self.data_type} : {self.pil_image.width} x {self.pil_image.height} {self.pil_image.mode}"
 
         os.chdir(os.path.dirname(filename))
+
+        if self.prefs["width"] != self.pil_image.width or self.prefs["height"] != self.pil_image.height:
+            self.reset_backgroundpts()
+
+        self.prefs["width"] = self.pil_image.width
+        self.prefs["height"] = self.pil_image.height
     
    
     def save_image(self):
@@ -770,8 +800,24 @@ class Application(tk.Frame):
         self.loading_frame.start()
         self.stretch()
         self.loading_frame.end()
+    
+    def on_closing(self):
+        prefs_file = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
+        try:
+            with open(prefs_file, "w") as f:
+                self.prefs = app_state_2_prefs(self.prefs, self.cmd.app_state)
+                self.prefs["bg_pts_option"] = self.bg_pts.get()
+                self.prefs["stretch_option"] = self.stretch_option_current.get()
+                self.prefs["bg_tol_option"] = self.bg_tol.get()
+                self.prefs["interpol_type_option"] = self.interpol_type.get()
+                self.prefs["smoothing_option"] = self.smoothing.get()
+                self.prefs["saveas_option"] = self.saveas_type.get()
+                json.dump(self.prefs, f)
+        except OSError as err:
+            print("error serializing preferences: {0}".format(err))
+        root.destroy()
 
 if __name__ == "__main__":
-    root = tk.Tk()
     app = Application(master=root)
+    root.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()

@@ -73,12 +73,16 @@ class Command:
 class InitHandler(ICommandHandler):
 
     def execute(self, app_state: AppState, cmd_args: Dict) -> AppState:
-        return INITIAL_STATE
+        state = INITIAL_STATE
+        state["background_points"] = cmd_args["background_points"]
+        return state
 
     def undo(
         self, cur_state: AppState, prev_state: AppState, cmd_args: Dict
     ) -> AppState:
-        return INITIAL_STATE
+        state = INITIAL_STATE
+        state["background_points"] = cmd_args["background_points"]
+        return state
 
     def redo(
         self, cur_state: AppState, next_state: AppState, cmd_args: Dict

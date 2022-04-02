@@ -268,9 +268,14 @@ class Application(tk.Frame):
     
     def menu_open_clicked(self, event=None):
 
+        if self.cmd.app_state["working_dir"] != "" and os.path.exists(self.cmd.app_state["working_dir"]):
+            initialdir = self.cmd.app_state["working_dir"]
+        else:
+            initialdir = os.getcwd()
+        
         filename = tk.filedialog.askopenfilename(
             filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits")],
-            initialdir = os.getcwd()
+            initialdir = initialdir
             )
         
         self.loading_frame.start()
@@ -278,6 +283,7 @@ class Application(tk.Frame):
         
         try:
             self.set_image(filename)
+            self.cmd.app_state["working_dir"] = os.path.dirname(filename)
         except:
             messagebox.showerror("Error", "An error occurred while loading your picture.")
         

@@ -809,6 +809,7 @@ class Application(tk.Frame):
     def on_closing(self):
         prefs_file = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
         try:
+            os.makedirs(os.path.dirname(prefs_file), exist_ok=True)
             with open(prefs_file, "w") as f:
                 self.prefs = app_state_2_prefs(self.prefs, self.cmd.app_state)
                 self.prefs["bg_pts_option"] = self.bg_pts.get()

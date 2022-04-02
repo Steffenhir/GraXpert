@@ -315,6 +315,11 @@ class Application(tk.Frame):
         self.loading_frame.end()
         
     def select_background(self,event=None):
+        
+        if self.image_full == None:
+            messagebox.showerror("Error", "Please load your picture first.")
+            return
+        
         self.loading_frame.start()
         self.cmd = Command(SEL_POINTS_HANDLER, self.cmd, data=self.image_full, num_pts=self.bg_pts.get(), tol=self.bg_tol.get())
         self.cmd.execute()
@@ -483,15 +488,15 @@ class Application(tk.Frame):
         
         #Error messages if not enough points
         if(len(background_points) == 0):
-            messagebox.showerror("Error", "Please select background points with right click")
+            messagebox.showerror("Error", "Please load your picture and select background points with right click.")
             return
         
         if(len(background_points) < 2 and self.interpol_type.get() == "Kriging"):
-            messagebox.showerror("Error", "Please select at least 2 background points with right click for the Kriging method")
+            messagebox.showerror("Error", "Please select at least 2 background points with right click for the Kriging method.")
             return
         
         if(len(background_points) < 16 and self.interpol_type.get() == "Splines"):
-            messagebox.showerror("Error", "Please select at least 16 background points with right click for the Splines method")
+            messagebox.showerror("Error", "Please select at least 16 background points with right click for the Splines method.")
             return
         
         self.loading_frame.start()

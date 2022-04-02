@@ -16,6 +16,7 @@ from skimage.transform import resize
 import skyall
 from PIL import Image
 from skimage.util import img_as_ubyte
+from astropy.stats import sigma_clipped_stats
 # from gpr_cuda import GPRegression
 
 
@@ -55,8 +56,8 @@ def calc_mode_dataset(data, x_sub, y_sub, halfsize):
     subsample = np.zeros(n)
     
     for i in range(n):
-        data_footprint = data_padded[y_sub[i]:y_sub[i]+2*halfsize,x_sub[i]:x_sub[i]+2*halfsize].ravel()
-        subsample[i] = skyall.mode(data_footprint)
+        data_footprint = data_padded[y_sub[i]:y_sub[i]+2*halfsize,x_sub[i]:x_sub[i]+2*halfsize]
+        subsample[i] = sigma_clipped_stats(data=data_footprint, cenfunc="median", stdfunc="std", grow=4)[1]
         
     return subsample
 
@@ -82,7 +83,7 @@ def interpol(x_sub,y_sub,subsample,shape,kind,smoothing,downscale_factor):
     
     if(kind=='RBF'):
         points_stacked = np.stack([x_sub,y_sub],-1)
-        interp = RadialBasisInterpolation(points_stacked,subsample,kernel="thin_plate",smooth=smoothing*1e-10*linalg.norm(subsample)/np.sqrt(len(subsample)))   
+        interp = RadialBasisInterpolation(points_stacked,subsample,kernel="thin_plate",smooth=smoothing*linalg.norm(subsample)/np.sqrt(len(subsample)))   
     
         # Create background from interpolation
         x_new = np.arange(0,shape_scaled[1],1)
@@ -94,7 +95,7 @@ def interpol(x_sub,y_sub,subsample,shape,kind,smoothing,downscale_factor):
         result = interp(points_new_stacked).reshape(shape_scaled)
     
     elif(kind=='Splines'):
-        interp = interpolate.bisplrep(y_sub,x_sub,subsample,s=smoothing*np.sum(subsample**2))
+        interp = interpolate.bisplrep(y_sub,x_sub,subsample,w=np.ones(len(x_sub))/np.std(subsample), s=smoothing*len(x_sub))
         
         # Create background from interpolation
         x_new = np.arange(0,shape_scaled[1],1)

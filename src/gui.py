@@ -318,7 +318,7 @@ class Application(tk.Frame):
         
     def select_background(self,event=None):
         
-        if self.image_full == None:
+        if self.image_full is None:
             messagebox.showerror("Error", "Please load your picture first.")
             return
         
@@ -612,17 +612,17 @@ class Application(tk.Frame):
             x_im = background_points[i][0]
             y_im = background_points[i][1]
             
-            x = self.to_canvas_point(x_im, y_im)[0]
-            y = self.to_canvas_point(x_im, y_im)[1]
+            eventx_im = self.to_image_point(event.x, event.y)[0]
+            eventy_im = self.to_image_point(event.x, event.y)[1]
             
-            dist = np.sqrt((x-event.x)**2 + (y-event.y)**2)
+            dist = np.max(np.abs([x_im-eventx_im, y_im-eventy_im]))
             
             if(min_idx == -1 or dist < min_dist):
                 min_dist = dist
                 min_idx = i
         
         
-        if(min_idx != -1 and min_dist <= 10):
+        if(min_idx != -1 and min_dist <= 25):
             point = background_points[min_idx]
             self.cmd = Command(RM_POINT_HANDLER, self.cmd, idx=min_idx, point=point)
             self.cmd.execute()
@@ -644,7 +644,7 @@ class Application(tk.Frame):
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
-        if (self.pil_image == None):
+        if (self.pil_image is None):
             return
         self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
         self.redraw_image()
@@ -652,7 +652,7 @@ class Application(tk.Frame):
 
     def mouse_move(self, event):
 
-        if (self.pil_image == None):
+        if (self.pil_image is None):
             return
         
         image_point = self.to_image_point(event.x, event.y)
@@ -667,14 +667,14 @@ class Application(tk.Frame):
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
-        if self.pil_image == None:
+        if self.pil_image is None:
             return
         self.zoom_fit(self.pil_image.width, self.pil_image.height)
         self.redraw_image()
 
     def mouse_wheel(self, event):
 
-        if self.pil_image == None:
+        if self.pil_image is None:
             return
 
         if event.state != 9:
@@ -770,7 +770,7 @@ class Application(tk.Frame):
 
     def to_image_point(self, x, y):
 
-        if self.pil_image == None:
+        if self.pil_image is None:
             return []
 
         mat_inv = np.linalg.inv(self.mat_affine)
@@ -786,7 +786,7 @@ class Application(tk.Frame):
 
     def draw_image(self, pil_image):
 
-        if pil_image == None:
+        if pil_image is None:
             return
 
         self.pil_image = pil_image
@@ -823,21 +823,21 @@ class Application(tk.Frame):
 
         self.image = im
         
-        self.canvas.delete("oval")
-        ovalsize=10
+        self.canvas.delete("rectangle")
+        
+        rectsize=25
         background_points = self.cmd.app_state["background_points"]
 
-        for point in background_points:
-            canvas_point = self.to_canvas_point(point[0],point[1])
-            x = canvas_point[0]
-            y = canvas_point[1]
-            self.canvas.create_oval(x-ovalsize,y-ovalsize, x+ovalsize,y+ovalsize,outline="red", tags="oval")
+        for point in background_points:        
+            corner1 = self.to_canvas_point(point[0]-rectsize,point[1]-rectsize)
+            corner2 = self.to_canvas_point(point[0]+rectsize,point[1]+rectsize)
+            self.canvas.create_rectangle(corner1[0],corner1[1], corner2[0],corner2[1],outline="red", tags="rectangle")
             
         return
 
     def redraw_image(self):
 
-        if self.pil_image == None:
+        if self.pil_image is None:
             return
         self.draw_image(self.pil_image)
 

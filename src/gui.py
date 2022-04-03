@@ -12,8 +12,10 @@ from PIL import Image, ImageTk
 import math                   
 import numpy as np            
 import os
+from app_state import INITIAL_STATE
 import background_extraction
 from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
+from preferences import DEFAULT_PREFS, Prefs, app_state_2_prefs, merge_json, prefs_2_app_state
 import stretch
 import tooltip
 from astropy.io import fits
@@ -21,7 +23,10 @@ from skimage import io,img_as_float32, img_as_uint, exposure
 from skimage.util import img_as_ubyte
 from loadingframe import LoadingFrame
 from help_panel import Help_Panel
+import json
+from appdirs import user_config_dir
 
+root = tk.Tk()
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -33,8 +38,10 @@ class Application(tk.Frame):
             self.master.state("zoomed")
         except:
             self.master.state("normal")
-
+        
+        self.filename = ""
         self.data_type = ""
+        self.fits_header = None
         self.pil_image = None
         self.image_full = None
         self.image_full_processed = None
@@ -43,13 +50,21 @@ class Application(tk.Frame):
         self.my_title = "GraXpert"
         self.master.title(self.my_title)
 
+        self.prefs: Prefs = DEFAULT_PREFS
+        prefs_file = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
+        if os.path.isfile(prefs_file):
+            with open(prefs_file) as f:
+                json_prefs: Prefs = json.load(f)
+                self.prefs = merge_json(self.prefs, json_prefs)
+
+        tmp_state = prefs_2_app_state(self.prefs, INITIAL_STATE)
+        
+        self.cmd: Command = Command(INIT_HANDLER, background_points=tmp_state["background_points"])
+        self.cmd.execute()
+
         self.create_widget()
 
         self.reset_transform()
-
-        self.cmd: Command = Command(INIT_HANDLER)
-        self.cmd.execute()
-        
         
 
     def create_widget(self):
@@ -139,6 +154,8 @@ class Application(tk.Frame):
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
         self.stretch_option_current = tk.StringVar()
         self.stretch_option_current.set(self.stretch_options[0])
+        if "stretch_option" in self.prefs:
+            self.stretch_option_current.set(self.prefs["stretch_option"])
         self.stretch_menu = tk.OptionMenu(self.side_menu, self.stretch_option_current, *self.stretch_options,command=self.change_stretch)
         self.stretch_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, borderwidth=bdwidth, highlightbackground=bg_color)
         self.stretch_menu.grid(column=0, row=3, pady=(0,5), padx=15, sticky="news")
@@ -163,6 +180,8 @@ class Application(tk.Frame):
         
         self.bg_pts = tk.IntVar()
         self.bg_pts.set(15)
+        if "bg_pts_option" in self.prefs:
+            self.bg_pts.set(self.prefs["bg_pts_option"])
         self.bg_pts_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=4,to=20,tickinterval=16,resolution=1,
                                       var=self.bg_pts, width=12, bg=button_color, fg=text_color, relief=relief, 
                                       borderwidth=bdwidth, highlightbackground=bg_color)
@@ -175,6 +194,8 @@ class Application(tk.Frame):
         
         self.bg_tol = tk.DoubleVar()
         self.bg_tol.set(1)
+        if "bg_tol_option" in self.prefs:
+            self.bg_tol.set(self.prefs["bg_tol_option"])
         self.bg_tol_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,from_=-10,to=10,tickinterval=20,resolution=0.1,
                                       var=self.bg_tol, width=12, bg=button_color, fg=text_color, relief=relief, 
                                       borderwidth=bdwidth, highlightbackground=bg_color)
@@ -200,6 +221,8 @@ class Application(tk.Frame):
         self.interpol_options = ["RBF", "Splines", "Kriging"]
         self.interpol_type = tk.StringVar()
         self.interpol_type.set(self.interpol_options[0])
+        if "interpol_type_option" in self.prefs:
+            self.interpol_type.set(self.prefs["interpol_type_option"])
         self.interpol_menu = tk.OptionMenu(self.side_menu, self.interpol_type, *self.interpol_options)
         self.interpol_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
                                   borderwidth=bdwidth, highlightbackground=bg_color)
@@ -212,6 +235,8 @@ class Application(tk.Frame):
         
         self.smoothing = tk.DoubleVar()
         self.smoothing.set(1.0)
+        if "smoothing_option" in self.prefs:
+            self.smoothing.set(self.prefs["smoothing_option"])
         self.smoothing_slider = tk.Scale(self.side_menu,orient=tk.HORIZONTAL,
                                          from_=0,to=1,tickinterval=1.0,resolution=0.05,var=self.smoothing,
                                          width=12, bg=button_color, fg=text_color, relief=relief, 
@@ -235,9 +260,11 @@ class Application(tk.Frame):
         self.saveas_text.config(width=200, font=menu_font, fg=text_color)
         self.saveas_text.grid(column=0, row=15, pady=(5,0), padx=15, sticky="ews")
         
-        self.saveas_options = ["16 bit Tiff", "32 bit Tiff"]
+        self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits"]
         self.saveas_type = tk.StringVar()
         self.saveas_type.set(self.saveas_options[0])
+        if "saveas_option" in self.prefs:
+            self.saveas_type.set(self.prefs["saveas_option"])
         self.saveas_menu = tk.OptionMenu(self.side_menu, self.saveas_type, *self.saveas_options)
         self.saveas_menu.config(font=menu_font, bg=button_color, fg=text_color, relief=relief, 
                                   borderwidth=bdwidth, highlightbackground=bg_color)
@@ -268,9 +295,14 @@ class Application(tk.Frame):
     
     def menu_open_clicked(self, event=None):
 
+        if self.prefs["working_dir"] != "" and os.path.exists(self.prefs["working_dir"]):
+            initialdir = self.prefs["working_dir"]
+        else:
+            initialdir = os.getcwd()
+        
         filename = tk.filedialog.askopenfilename(
             filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits")],
-            initialdir = os.getcwd()
+            initialdir = initialdir
             )
         
         self.loading_frame.start()
@@ -278,6 +310,7 @@ class Application(tk.Frame):
         
         try:
             self.set_image(filename)
+            self.prefs["working_dir"] = os.path.dirname(filename)
         except:
             messagebox.showerror("Error", "An error occurred while loading your picture.")
         
@@ -285,7 +318,7 @@ class Application(tk.Frame):
         
     def select_background(self,event=None):
         
-        if self.image_full == None:
+        if self.image_full is None:
             messagebox.showerror("Error", "Please load your picture first.")
             return
         
@@ -352,11 +385,14 @@ class Application(tk.Frame):
         self.image_full_processed = None
         self.background_model = None
         self.display_type.set("Original")
-        self.reset_backgroundpts()
         
         
         if(self.data_type == ".fits" or self.data_type == ".fit"):
-            self.image_full = fits.open(filename)[0].data
+            hdul = fits.open(filename)
+            self.image_full = hdul[0].data
+            self.fits_header = hdul[0].header
+            hdul.close()
+            
             if(len(self.image_full.shape) == 3):
                self.image_full = np.moveaxis(self.image_full,0,-1)           
         else:
@@ -364,12 +400,18 @@ class Application(tk.Frame):
         
         
         if(self.image_full.dtype == "float32" or self.image_full.dtype == ">f4"):
-            self.saveas_type.set("32 bit Tiff")
+            if(self.data_type == ".fits" or self.data_type == ".fit"):
+                self.saveas_type.set("32 bit Fits")
+            else:
+                self.saveas_type.set("32 bit Tiff")
         
         elif(self.image_full.dtype == "uint16" or self.image_full.dtype == ">i2"):
-            self.saveas_type.set("16 bit Tiff")
+            if(self.data_type == ".fits" or self.data_type == ".fit"):
+                self.saveas_type.set("16 bit Fits")
+            else:
+                self.saveas_type.set("16 bit Tiff")
             
-        print(self.image_full.dtype)
+        print("Image data type:" + str(self.image_full.dtype))
        
         # Reshape greyscale picture to shape (y,x,1)
         if(len(self.image_full.shape) == 2):
@@ -393,50 +435,100 @@ class Application(tk.Frame):
 
 
         self.master.title(self.my_title + " - " + os.path.basename(filename))
+        self.filename = os.path.basename(filename)
 
         self.label_image_info["text"] = f"{self.data_type} : {self.pil_image.width} x {self.pil_image.height} {self.pil_image.mode}"
 
         os.chdir(os.path.dirname(filename))
+
+        if self.prefs["width"] != self.pil_image.width or self.prefs["height"] != self.pil_image.height:
+            self.reset_backgroundpts()
+
+        self.prefs["width"] = self.pil_image.width
+        self.prefs["height"] = self.pil_image.height
     
    
     def save_image(self):
        
        if(self.image_full_processed is None):
            return
-        
-       dir = tk.filedialog.asksaveasfilename(
-           initialfile = "out.tiff",
-           filetypes = [("Tiff", ".tiff")],
-           defaultextension = ".tiff",
-           initialdir = os.getcwd()
-           )
        
-       if(self.saveas_type.get() == "16 bit Tiff"):
-           image_converted = img_as_uint(self.image_full_processed)
+       if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
+           dir = tk.filedialog.asksaveasfilename(
+               initialfile = self.filename + "_GraXpert.tiff",
+               filetypes = [("Tiff", ".tiff")],
+               defaultextension = ".tiff",
+               initialdir = self.prefs["working_dir"]
+               )           
        else:
-           image_converted = self.image_full_processed
+           dir = tk.filedialog.asksaveasfilename(
+               initialfile = self.filename + "_GraXpert.fits",
+               filetypes = [("Fits", ".fits")],
+               defaultextension = ".fits",
+               initialdir = self.prefs["working_dir"]
+               )
        
-       io.imsave(dir, image_converted)
-
+       self.loading_frame.start()
+       
+       try:
+           if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "16 bit Fits"):
+               image_converted = img_as_uint(self.image_full_processed)
+           else:
+               image_converted = self.image_full_processed
+            
+           if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
+               io.imsave(dir, image_converted)
+           else:
+               if(len(image_converted.shape) == 3):
+                  image_converted = np.moveaxis(image_converted,-1,0)
+    
+               hdu = fits.PrimaryHDU(data=image_converted, header=self.fits_header)
+               hdu.writeto(dir, output_verify="warn")
+       except:
+           messagebox.showerror("Error", "Error occured when saving the image.")
+           
+       self.loading_frame.end()
        
     def save_background_image(self):
 
         if(self.background_model is None):
             return
          
-        dir = tk.filedialog.asksaveasfilename(
-            initialfile = "background.tiff",
-            filetypes = [("Tiff", ".tiff")],
-            defaultextension = ".tiff",
-            initialdir = os.getcwd()
-            )
-        
-        if(self.saveas_type.get() == "16 bit Tiff"):
-            background_model_converted = img_as_uint(self.background_model)
+        if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile = self.filename + "_background.tiff",
+                filetypes = [("Tiff", ".tiff")],
+                defaultextension = ".tiff",
+                initialdir = self.prefs["working_dir"]
+                )           
         else:
-            background_model_converted = self.background_model
-
-        io.imsave(dir, background_model_converted)
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile = self.filename + "_background.fits",
+                filetypes = [("Fits", ".fits")],
+                defaultextension = ".fits",
+                initialdir = os.getcwd()
+                )
+        
+        self.loading_frame.start()
+        
+        try:
+            if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "16 bit Fits"):
+                background_model_converted = img_as_uint(self.background_model)
+            else:
+                background_model_converted = self.background_model
+            
+            if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
+                io.imsave(dir, background_model_converted)
+            else:
+                if(len(background_model_converted.shape) == 3):
+                   background_model_converted = np.moveaxis(background_model_converted,-1,0)
+    
+                hdu = fits.PrimaryHDU(data=background_model_converted, header=self.fits_header)
+                hdu.writeto(dir, output_verify="warn")
+        except:
+            messagebox.showerror("Error", "Error occured when saving the image.")
+            
+        self.loading_frame.end()
         
     
     def reset_backgroundpts(self):
@@ -520,17 +612,17 @@ class Application(tk.Frame):
             x_im = background_points[i][0]
             y_im = background_points[i][1]
             
-            x = self.to_canvas_point(x_im, y_im)[0]
-            y = self.to_canvas_point(x_im, y_im)[1]
+            eventx_im = self.to_image_point(event.x, event.y)[0]
+            eventy_im = self.to_image_point(event.x, event.y)[1]
             
-            dist = np.sqrt((x-event.x)**2 + (y-event.y)**2)
+            dist = np.max(np.abs([x_im-eventx_im, y_im-eventy_im]))
             
             if(min_idx == -1 or dist < min_dist):
                 min_dist = dist
                 min_idx = i
         
         
-        if(min_idx != -1 and min_dist <= 10):
+        if(min_idx != -1 and min_dist <= 25):
             point = background_points[min_idx]
             self.cmd = Command(RM_POINT_HANDLER, self.cmd, idx=min_idx, point=point)
             self.cmd.execute()
@@ -552,7 +644,7 @@ class Application(tk.Frame):
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
-        if (self.pil_image == None):
+        if (self.pil_image is None):
             return
         self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
         self.redraw_image()
@@ -560,7 +652,7 @@ class Application(tk.Frame):
 
     def mouse_move(self, event):
 
-        if (self.pil_image == None):
+        if (self.pil_image is None):
             return
         
         image_point = self.to_image_point(event.x, event.y)
@@ -575,14 +667,14 @@ class Application(tk.Frame):
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
-        if self.pil_image == None:
+        if self.pil_image is None:
             return
         self.zoom_fit(self.pil_image.width, self.pil_image.height)
         self.redraw_image()
 
     def mouse_wheel(self, event):
 
-        if self.pil_image == None:
+        if self.pil_image is None:
             return
 
         if event.state != 9:
@@ -678,7 +770,7 @@ class Application(tk.Frame):
 
     def to_image_point(self, x, y):
 
-        if self.pil_image == None:
+        if self.pil_image is None:
             return []
 
         mat_inv = np.linalg.inv(self.mat_affine)
@@ -694,7 +786,7 @@ class Application(tk.Frame):
 
     def draw_image(self, pil_image):
 
-        if pil_image == None:
+        if pil_image is None:
             return
 
         self.pil_image = pil_image
@@ -731,21 +823,21 @@ class Application(tk.Frame):
 
         self.image = im
         
-        self.canvas.delete("oval")
-        ovalsize=10
+        self.canvas.delete("rectangle")
+        
+        rectsize=25
         background_points = self.cmd.app_state["background_points"]
 
-        for point in background_points:
-            canvas_point = self.to_canvas_point(point[0],point[1])
-            x = canvas_point[0]
-            y = canvas_point[1]
-            self.canvas.create_oval(x-ovalsize,y-ovalsize, x+ovalsize,y+ovalsize,outline="red", tags="oval")
+        for point in background_points:        
+            corner1 = self.to_canvas_point(point[0]-rectsize,point[1]-rectsize)
+            corner2 = self.to_canvas_point(point[0]+rectsize,point[1]+rectsize)
+            self.canvas.create_rectangle(corner1[0],corner1[1], corner2[0],corner2[1],outline="red", tags="rectangle")
             
         return
 
     def redraw_image(self):
 
-        if self.pil_image == None:
+        if self.pil_image is None:
             return
         self.draw_image(self.pil_image)
 
@@ -769,8 +861,25 @@ class Application(tk.Frame):
         self.loading_frame.start()
         self.stretch()
         self.loading_frame.end()
+    
+    def on_closing(self):
+        prefs_file = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
+        try:
+            os.makedirs(os.path.dirname(prefs_file), exist_ok=True)
+            with open(prefs_file, "w") as f:
+                self.prefs = app_state_2_prefs(self.prefs, self.cmd.app_state)
+                self.prefs["bg_pts_option"] = self.bg_pts.get()
+                self.prefs["stretch_option"] = self.stretch_option_current.get()
+                self.prefs["bg_tol_option"] = self.bg_tol.get()
+                self.prefs["interpol_type_option"] = self.interpol_type.get()
+                self.prefs["smoothing_option"] = self.smoothing.get()
+                self.prefs["saveas_option"] = self.saveas_type.get()
+                json.dump(self.prefs, f)
+        except OSError as err:
+            print("error serializing preferences: {0}".format(err))
+        root.destroy()
 
 if __name__ == "__main__":
-    root = tk.Tk()
     app = Application(master=root)
+    root.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()

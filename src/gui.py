@@ -435,7 +435,7 @@ class Application(tk.Frame):
 
 
         self.master.title(self.my_title + " - " + os.path.basename(filename))
-        self.filename = os.path.basename(filename)
+        self.filename = os.path.splitext(os.path.basename(filename))[0]
 
         self.label_image_info["text"] = f"{self.data_type} : {self.pil_image.width} x {self.pil_image.height} {self.pil_image.mode}"
 

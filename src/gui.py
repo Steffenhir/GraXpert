@@ -38,8 +38,10 @@ class Application(tk.Frame):
             self.master.state("zoomed")
         except:
             self.master.state("normal")
-
+        
+        self.filename = ""
         self.data_type = ""
+        self.fits_header = None
         self.pil_image = None
         self.image_full = None
         self.image_full_processed = None
@@ -258,7 +260,7 @@ class Application(tk.Frame):
         self.saveas_text.config(width=200, font=menu_font, fg=text_color)
         self.saveas_text.grid(column=0, row=15, pady=(5,0), padx=15, sticky="ews")
         
-        self.saveas_options = ["16 bit Tiff", "32 bit Tiff"]
+        self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits"]
         self.saveas_type = tk.StringVar()
         self.saveas_type.set(self.saveas_options[0])
         if "saveas_option" in self.prefs:
@@ -386,7 +388,11 @@ class Application(tk.Frame):
         
         
         if(self.data_type == ".fits" or self.data_type == ".fit"):
-            self.image_full = fits.open(filename)[0].data
+            hdul = fits.open(filename)
+            self.image_full = hdul[0].data
+            self.fits_header = hdul[0].header
+            hdul.close()
+            
             if(len(self.image_full.shape) == 3):
                self.image_full = np.moveaxis(self.image_full,0,-1)           
         else:
@@ -394,12 +400,18 @@ class Application(tk.Frame):
         
         
         if(self.image_full.dtype == "float32" or self.image_full.dtype == ">f4"):
-            self.saveas_type.set("32 bit Tiff")
+            if(self.data_type == ".fits" or self.data_type == ".fit"):
+                self.saveas_type.set("32 bit Fits")
+            else:
+                self.saveas_type.set("32 bit Tiff")
         
         elif(self.image_full.dtype == "uint16" or self.image_full.dtype == ">i2"):
-            self.saveas_type.set("16 bit Tiff")
+            if(self.data_type == ".fits" or self.data_type == ".fit"):
+                self.saveas_type.set("16 bit Fits")
+            else:
+                self.saveas_type.set("16 bit Tiff")
             
-        print(self.image_full.dtype)
+        print("Image data type:" + str(self.image_full.dtype))
        
         # Reshape greyscale picture to shape (y,x,1)
         if(len(self.image_full.shape) == 2):
@@ -423,6 +435,7 @@ class Application(tk.Frame):
 
 
         self.master.title(self.my_title + " - " + os.path.basename(filename))
+        self.filename = os.path.basename(filename)
 
         self.label_image_info["text"] = f"{self.data_type} : {self.pil_image.width} x {self.pil_image.height} {self.pil_image.mode}"
 
@@ -439,40 +452,83 @@ class Application(tk.Frame):
        
        if(self.image_full_processed is None):
            return
-        
-       dir = tk.filedialog.asksaveasfilename(
-           initialfile = "out.tiff",
-           filetypes = [("Tiff", ".tiff")],
-           defaultextension = ".tiff",
-           initialdir = os.getcwd()
-           )
        
-       if(self.saveas_type.get() == "16 bit Tiff"):
-           image_converted = img_as_uint(self.image_full_processed)
+       if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
+           dir = tk.filedialog.asksaveasfilename(
+               initialfile = self.filename + "_GraXpert.tiff",
+               filetypes = [("Tiff", ".tiff")],
+               defaultextension = ".tiff",
+               initialdir = self.prefs["working_dir"]
+               )           
        else:
-           image_converted = self.image_full_processed
+           dir = tk.filedialog.asksaveasfilename(
+               initialfile = self.filename + "_GraXpert.fits",
+               filetypes = [("Fits", ".fits")],
+               defaultextension = ".fits",
+               initialdir = self.prefs["working_dir"]
+               )
        
-       io.imsave(dir, image_converted)
-
+       self.loading_frame.start()
+       
+       try:
+           if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "16 bit Fits"):
+               image_converted = img_as_uint(self.image_full_processed)
+           else:
+               image_converted = self.image_full_processed
+            
+           if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
+               io.imsave(dir, image_converted)
+           else:
+               if(len(image_converted.shape) == 3):
+                  image_converted = np.moveaxis(image_converted,-1,0)
+    
+               hdu = fits.PrimaryHDU(data=image_converted, header=self.fits_header)
+               hdu.writeto(dir, output_verify="warn")
+       except:
+           messagebox.showerror("Error", "Error occured when saving the image.")
+           
+       self.loading_frame.end()
        
     def save_background_image(self):
 
         if(self.background_model is None):
             return
          
-        dir = tk.filedialog.asksaveasfilename(
-            initialfile = "background.tiff",
-            filetypes = [("Tiff", ".tiff")],
-            defaultextension = ".tiff",
-            initialdir = os.getcwd()
-            )
-        
-        if(self.saveas_type.get() == "16 bit Tiff"):
-            background_model_converted = img_as_uint(self.background_model)
+        if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile = self.filename + "_background.tiff",
+                filetypes = [("Tiff", ".tiff")],
+                defaultextension = ".tiff",
+                initialdir = self.prefs["working_dir"]
+                )           
         else:
-            background_model_converted = self.background_model
-
-        io.imsave(dir, background_model_converted)
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile = self.filename + "_background.fits",
+                filetypes = [("Fits", ".fits")],
+                defaultextension = ".fits",
+                initialdir = os.getcwd()
+                )
+        
+        self.loading_frame.start()
+        
+        try:
+            if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "16 bit Fits"):
+                background_model_converted = img_as_uint(self.background_model)
+            else:
+                background_model_converted = self.background_model
+            
+            if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
+                io.imsave(dir, background_model_converted)
+            else:
+                if(len(background_model_converted.shape) == 3):
+                   background_model_converted = np.moveaxis(background_model_converted,-1,0)
+    
+                hdu = fits.PrimaryHDU(data=background_model_converted, header=self.fits_header)
+                hdu.writeto(dir, output_verify="warn")
+        except:
+            messagebox.showerror("Error", "Error occured when saving the image.")
+            
+        self.loading_frame.end()
         
     
     def reset_backgroundpts(self):

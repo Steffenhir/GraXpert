@@ -1,4 +1,5 @@
 import tkinter as tk
+from PIL import ImageTk, Image
 from os import path
 import sys
 
@@ -68,10 +69,11 @@ class Help_Panel():
         
         self.help_panel = tk.Frame(self.canvas, bg=bg_color, relief=relief, borderwidth=0)
         
-        self.logo = tk.PhotoImage(file=resource_path("GraXpert_LOGO_Hauptvariante.png"))
-        self.logo = self.logo.subsample(6)
-        self.label = tk.Label(self.help_panel, image=self.logo, bg=bg_color)
-        self.label.image=self.logo
+        logo = Image.open(resource_path("GraXpert_LOGO_Hauptvariante.png"))
+        logo = logo.reduce(6)
+        logo = ImageTk.PhotoImage(logo)
+        self.label = tk.Label(self.help_panel, image=logo, bg=bg_color)
+        self.label.image= logo
         self.label.grid(column=0, row=0, padx=(40,30), pady=60)
         
         text = tk.Message(self.help_panel, text="Instructions", bg=bg_color, font=heading_font, fg=text_color, width=240)

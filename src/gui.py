@@ -483,7 +483,9 @@ class Application(tk.Frame):
                   image_converted = np.moveaxis(image_converted,-1,0)
     
                hdu = fits.PrimaryHDU(data=image_converted, header=self.fits_header)
-               hdu.writeto(dir, output_verify="warn")
+               hdul = fits.HDUList([hdu])
+               hdul.writeto(dir, output_verify="warn", overwrite=True)
+               hdul.close()
        except:
            messagebox.showerror("Error", "Error occured when saving the image.")
            
@@ -524,7 +526,9 @@ class Application(tk.Frame):
                    background_model_converted = np.moveaxis(background_model_converted,-1,0)
     
                 hdu = fits.PrimaryHDU(data=background_model_converted, header=self.fits_header)
-                hdu.writeto(dir, output_verify="warn")
+                hdul = fits.HDUList([hdu])
+                hdul.writeto(dir, output_verify="warn", overwrite=True)
+                hdul.close()
         except:
             messagebox.showerror("Error", "Error occured when saving the image.")
             

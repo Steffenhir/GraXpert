@@ -35,7 +35,6 @@ class Tooltip:
 
     def __init__(self, widget,
                  *,
-                 bg='#FFFFEA',
                  pad=(5, 3, 5, 3),
                  text='widget info',
                  waittime=1000,
@@ -48,7 +47,6 @@ class Tooltip:
         self.widget.bind("<Enter>", self.onEnter)
         self.widget.bind("<Leave>", self.onLeave)
         self.widget.bind("<ButtonPress>", self.onLeave)
-        self.bg = bg
         self.pad = pad
         self.id = None
         self.tw = None
@@ -117,7 +115,6 @@ class Tooltip:
 
             return x1, y1
 
-        bg = self.bg
         pad = self.pad
         widget = self.widget
 
@@ -128,12 +125,10 @@ class Tooltip:
         self.tw.wm_overrideredirect(True)
 
         win = tk.Frame(self.tw,
-                       background=bg,
                        borderwidth=0)
         label = tk.Label(win,
                           text=self.text,
                           justify=tk.LEFT,
-                          background=bg,
                           relief=tk.SOLID,
                           borderwidth=0,
                           wraplength=self.wraplength)

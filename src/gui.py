@@ -50,7 +50,7 @@ class Application(tk.Frame):
             "Processed": None
             }
         
-        self.my_title = "GraXpert"
+        self.my_title = "GraXpert V0.0.11"
         self.master.title(self.my_title)
 
         self.prefs: Prefs = DEFAULT_PREFS

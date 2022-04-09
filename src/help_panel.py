@@ -21,8 +21,8 @@ class Help_Panel():
         bg_color = "#474747"
         button_color = "#6a6a6a"
         text_color = "#F0F0F0"
-        menu_font = ('Segoe UI Semibold', 13, 'normal')
-        heading_font = ('Segoe UI Semibold', 24, 'normal')
+        menu_font = ('Verdana', 12, 'normal')
+        heading_font = ('Verdana', 24, 'normal')
         button_height = 2
         button_width = 16
         relief = "raised"
@@ -88,7 +88,7 @@ class Help_Panel():
         
         
         text = tk.Message(self.help_panel
-                          ,text="3. Select background points \n a) manually with right click \n b) automatically with grid selection \n"
+                          ,text="3. Select background points \n a) manually with right click \n b) automatically via grid (grid selection) \n"
                           "You can remove already set points by right clicking on them."
                           ,bg=bg_color, font=menu_font, fg=text_color, width=240)
         text.grid(column=0, row=4, padx=(40,30), pady=5, sticky="w")

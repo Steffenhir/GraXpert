@@ -40,7 +40,7 @@ namespace eval ttk::theme::forest-dark {
             -insertwidth 1 \
             -insertcolor $colors(-fg) \
             -fieldbackground $colors(-selectbg) \
-            -font {TkDefaultFont 10} \
+            -font {Verdana 10} \
             -borderwidth 1 \
             -relief flat
 
@@ -224,7 +224,7 @@ namespace eval ttk::theme::forest-dark {
         # Elements
 
         # Button
-        ttk::style configure TButton -padding {8 4 8 4} -width -10 -anchor center
+        ttk::style configure TButton -padding {8 12 8 12} -width -10 -anchor center
 
         ttk::style element create Button.button image \
             [list $I(rect-basic) \
@@ -265,7 +265,7 @@ namespace eval ttk::theme::forest-dark {
             ] -width 15 -sticky e
 
         # OptionMenu
-        ttk::style configure TOptionMenu -padding {8 4 4 4}
+        ttk::style configure TOptionMenu -padding {8 0 4 0}
 
         ttk::style element create OptionMenu.button image \
             [list $I(rect-basic) \

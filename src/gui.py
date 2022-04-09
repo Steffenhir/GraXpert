@@ -26,7 +26,7 @@ from appdirs import user_config_dir
 
 
 root = tk.Tk()
-root.tk.call("source", "forest-dark.tcl")
+root.tk.call("source", "../forest-dark.tcl")
 style = ttk.Style(root)
 style.theme_use("forest-dark")
 
@@ -121,25 +121,32 @@ class Application(tk.Frame):
         #Side menu
         
         self.side_menu = tk.Frame(self.master, borderwidth=0)
-        self.side_menu.pack(side=tk.LEFT, fill=tk.Y)
+        self.side_menu.pack(side=tk.TOP)
         
-        self.side_menu.grid_columnconfigure(0, weight=1)
+        self.side_menu.grid_columnconfigure(0)
         
-        for i in range(19):
+        for i in range(21):
             self.side_menu.grid_rowconfigure(i, weight=1)
         
-        #---Display---
+        heading_font = "Verdana 10 bold"
+        #---Open Image---
+        
+        text = tk.Message(self.side_menu, text="\u2460 Loading", font=heading_font)
+        text.config(width=200)
+        text.grid(column=0, row=0, pady=(20,5), padx=15, sticky="w")
         
         self.load_image_button = ttk.Button(self.side_menu, 
-                         text="Load",
+                         text="Load Image",
                          command=self.menu_open_clicked,
         )
         tt_load = tooltip.Tooltip(self.load_image_button, text=tooltip.load_text)
-        self.load_image_button.grid(column=0, row=1, pady=(15,5), padx=15, sticky="news")
+        self.load_image_button.grid(column=0, row=1, pady=(5,30), padx=15, sticky="news")
         
-        self.stretch_text = tk.Message(self.side_menu, text="Stretch Options:")
-        self.stretch_text.config(width=200)
-        self.stretch_text.grid(column=0, row=2, pady=(5,0), padx=15, sticky="ews")
+        #--Stretch Options--
+        
+        text = tk.Message(self.side_menu, text="\u2461 Stretch Options", font=heading_font)
+        text.config(width=200)
+        text.grid(column=0, row=2, pady=5, padx=15, sticky="w")
         
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
         self.stretch_option_current = tk.StringVar()
@@ -147,20 +154,18 @@ class Application(tk.Frame):
         if "stretch_option" in self.prefs:
             self.stretch_option_current.set(self.prefs["stretch_option"])
         self.stretch_menu = ttk.OptionMenu(self.side_menu, self.stretch_option_current, self.stretch_option_current.get(), *self.stretch_options, command=self.change_stretch)
-        self.stretch_menu.grid(column=0, row=3, pady=(0,5), padx=15, sticky="news")
+        self.stretch_menu.grid(column=0, row=3, pady=(5,30), padx=15, sticky="news")
         tt_stretch= tooltip.Tooltip(self.stretch_menu, text=tooltip.stretch_text)
         
       
-        #---Selection---
+        #---Sample Selection---
         
-        self.reset_button = ttk.Button(self.side_menu, 
-                         text="Reset Points",
-                         command=self.reset_backgroundpts)
-        self.reset_button.grid(column=0, row=4, pady=5, padx=15, sticky="news")
-        tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
+        text = tk.Message(self.side_menu, text="\u2462 Sample Selection", font=heading_font)
+        text.config(width=200)
+        text.grid(column=0, row=4, pady=5, padx=15, sticky="w")
         
         self.bg_pts = tk.IntVar()
-        self.bg_pts.set(15)
+        self.bg_pts.set(10)
         if "bg_pts_option" in self.prefs:
             self.bg_pts.set(self.prefs["bg_pts_option"])
         
@@ -178,7 +183,8 @@ class Application(tk.Frame):
             from_=4,
             to=20,
             var=self.bg_pts,
-            command=on_bg_pts_slider
+            command=on_bg_pts_slider,
+            length=150
             )
         self.bg_pts_slider.grid(column=0, row=6, pady=(0,0), padx=15)
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
@@ -199,25 +205,36 @@ class Application(tk.Frame):
         self.bg_tol_slider = ttk.Scale(
             self.side_menu,
             orient=tk.HORIZONTAL,
-            from_=-10,
+            from_=-5,
             to=10,
             var=self.bg_tol,
-            command=on_bg_tol_slider
+            command=on_bg_tol_slider,
+            length=150
             )
         self.bg_tol_slider.grid(column=0, row=8, pady=(0,0), padx=15)
         tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
         self.bg_selection_button = ttk.Button(self.side_menu, 
-                         text="Grid Selection",
+                         text="Create Grid",
                          command=self.select_background)
         self.bg_selection_button.grid(column=0, row=9, pady=5, padx=15, sticky="news")
         tt_bg_select = tooltip.Tooltip(self.bg_selection_button, text= tooltip.bg_select_text)
         
+        self.reset_button = ttk.Button(self.side_menu, 
+                         text="Reset Points",
+                         command=self.reset_backgroundpts)
+        self.reset_button.grid(column=0, row=10, pady=(5,30), padx=15, sticky="news")
+        tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
+        
         #---Calculation---
+        
+        text = tk.Message(self.side_menu, text="\u2463 Calculation", font=heading_font)
+        text.config(width=200)
+        text.grid(column=0, row=11, pady=5, padx=15, sticky="w")
         
         self.intp_type_text = tk.Message(self.side_menu, text="Method:")
         self.intp_type_text.config(width=200)
-        self.intp_type_text.grid(column=0, row=10, pady=(5,0), padx=15, sticky="ews")
+        self.intp_type_text.grid(column=0, row=12, pady=(5,0), padx=15, sticky="ews")
         
         self.interpol_options = ["RBF", "Splines", "Kriging"]
         self.interpol_type = tk.StringVar()
@@ -225,7 +242,7 @@ class Application(tk.Frame):
         if "interpol_type_option" in self.prefs:
             self.interpol_type.set(self.prefs["interpol_type_option"])
         self.interpol_menu = ttk.OptionMenu(self.side_menu, self.interpol_type, self.interpol_type.get(), *self.interpol_options)
-        self.interpol_menu.grid(column=0, row=11, pady=(0,5), padx=15, sticky="news")
+        self.interpol_menu.grid(column=0, row=13, pady=(0,5), padx=15, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.interpol_menu, text=tooltip.interpol_type_text)
         
         self.smoothing = tk.DoubleVar()
@@ -235,7 +252,7 @@ class Application(tk.Frame):
         
         self.smooth_text = tk.Message(self.side_menu, text="Smoothing: {}".format(self.smoothing.get()))
         self.smooth_text.config(width=200)
-        self.smooth_text.grid(column=0, row=12, pady=(5,0), padx=15, sticky="ews")
+        self.smooth_text.grid(column=0, row=14, pady=(5,0), padx=15, sticky="ews")
         
         def on_smoothing_slider(smoothing):
             self.smoothing.set(float("{:.2f}".format(float(smoothing))))
@@ -247,22 +264,23 @@ class Application(tk.Frame):
             from_=0,
             to=1,
             var=self.smoothing,
-            command=on_smoothing_slider
+            command=on_smoothing_slider,
+            length=150
             )
-        self.smoothing_slider.grid(column=0, row=13, pady=(0,5), padx=15)
+        self.smoothing_slider.grid(column=0, row=15, pady=(0,5), padx=15)
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
         self.calculate_button = ttk.Button(self.side_menu, 
                          text="Calculate",
                          command=self.calculate)
-        self.calculate_button.grid(column=0, row=14, pady=5, padx=15, sticky="news")
+        self.calculate_button.grid(column=0, row=16, pady=(5,30), padx=15, sticky="news")
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
         #---Saving---  
         
-        self.saveas_text = tk.Message(self.side_menu, text="Save as:")
+        self.saveas_text = tk.Message(self.side_menu, text="\u2464 Saving", font=heading_font)
         self.saveas_text.config(width=200)
-        self.saveas_text.grid(column=0, row=15, pady=(5,0), padx=15, sticky="ews")
+        self.saveas_text.grid(column=0, row=17, pady=5, padx=15, sticky="w")
         
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits"]
         self.saveas_type = tk.StringVar()
@@ -270,20 +288,20 @@ class Application(tk.Frame):
         if "saveas_option" in self.prefs:
             self.saveas_type.set(self.prefs["saveas_option"])
         self.saveas_menu = ttk.OptionMenu(self.side_menu, self.saveas_type, self.saveas_type.get(), *self.saveas_options)
-        self.saveas_menu.grid(column=0, row=16, pady=(0,5), padx=15, sticky="news")
+        self.saveas_menu.grid(column=0, row=18, pady=(5,20), padx=15, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
         
         self.save_background_button = ttk.Button(self.side_menu, 
                          text="Save Background",
                          command=self.save_background_image)
-        self.save_background_button.grid(column=0, row=17, pady=5, padx=15, sticky="news")
+        self.save_background_button.grid(column=0, row=19, pady=5, padx=15, sticky="news")
         tt_save_bg = tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
               
         
         self.save_button = ttk.Button(self.side_menu, 
                          text="Save Picture",
                          command=self.save_image)
-        self.save_button.grid(column=0, row=18, pady=5, padx=15, sticky="news")
+        self.save_button.grid(column=0, row=20, pady=(5,10), padx=15, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
     
     

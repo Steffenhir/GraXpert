@@ -53,11 +53,11 @@ class AstroImage:
     
     def update_display(self):
         img_display = self.stretch()
-
+        img_display = img_display*255
         if(img_display.shape[2] == 1):
-            self.img_display = Image.fromarray(img_as_ubyte(img_display[:,:,0]))
+            self.img_display = Image.fromarray(img_display[:,:,0].astype(np.uint8))
         else:
-            self.img_display = Image.fromarray(img_as_ubyte(img_display))
+            self.img_display = Image.fromarray(img_display.astype(np.uint8))
         
         return
     

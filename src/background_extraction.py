@@ -5,23 +5,24 @@ Created on Sat Feb 12 10:01:31 2022
 @author: Steffen
 """
 
-
-
 import numpy as np
 from scipy import interpolate
 from radialbasisinterpolation import RadialBasisInterpolation
-from scipy import linalg, stats, optimize
+from scipy import linalg
 from pykrige.ok import OrdinaryKriging
 from skimage.transform import resize
-import skyall
-from PIL import Image
-from skimage.util import img_as_ubyte
 from astropy.stats import sigma_clipped_stats
-from multiprocessing import Pool
 # from gpr_cuda import GPRegression
+import multiprocessing as mp
+import concurrent
 
 
+def clip(imarray, max):
+    imarray[:,:] = imarray.clip(min=0,max=np.max(imarray))
+    return imarray
 
+def subtract_background(imarray, background, mean):
+    return imarray[:,:] - background[:,:] + mean
 
 def extract_background(imarray, background_points,interpolation_type,smoothing,downscale_factor):
 
@@ -31,35 +32,65 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
     
     background = np.zeros((y_size,x_size,num_colors), dtype=np.float32)
     
-    parallel_compute = False
+    parallel_compute = True
 
-    if parallel_compute == False:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=3, mp_context=mp.get_context('spawn')) as executor:
 
-        print("Single Core")
-    
-        for c in range(num_colors):
-            
+        if parallel_compute == False:
+            print("interpolate single core")
+            for c in range(num_colors):
+                
+                x_sub = np.array(background_points[:,0],dtype=int)
+                y_sub = np.array(background_points[:,1],dtype=int)
+                subsample = calc_mode_dataset(imarray[:,:,c], x_sub, y_sub, 25)
+
+                background[:,:,c] = interpol(imarray[:,:,c],x_sub,y_sub,(y_size,x_size),interpolation_type,smoothing,downscale_factor)
+
+        else:
+            print("interpolate multi core")
             x_sub = np.array(background_points[:,0],dtype=int)
             y_sub = np.array(background_points[:,1],dtype=int)
-            subsample = calc_mode_dataset(imarray[:,:,c], x_sub, y_sub, 25)
+                
+            futures = []
+            for c in range(num_colors):
+                futures.insert(c, executor.submit(interpol, imarray[:,:,c],x_sub,y_sub, (y_size,x_size),interpolation_type,smoothing,downscale_factor))
+                print("submitted interpol {}".format(c))
+            for c in range(num_colors):
+                background[:,:,c] = futures[c].result()
+                print("received interpol {}".format(c))
+            
+        #Subtract background from image
+        mean = np.mean(background)
+        parallel_compute = False
+        if parallel_compute == False:
+            print("subtract single core")
+            imarray[:,:,:] = (imarray[:,:,:] - background[:,:,:] + mean).clip(min=0,max=np.max(imarray))
+        else:
+            print("subtract multi core")
 
-            background[:,:,c] = interpol(imarray,c,x_sub,y_sub,(y_size,x_size),interpolation_type,smoothing,downscale_factor)
+            futures = []
+            for c in range(num_colors):
+                futures.insert(c, executor.submit(subtract_background, imarray[:,:,c], background[:,:,c], mean))
+                print("submitted subtract_background {}".format(c))
+            for c in range(num_colors):
+                imarray[:,:,c] = futures[c].result()
+                print("received subtract_background {}".format(c))
 
-    else:
-        print("Multi Core")
-
-        x_sub = np.array(background_points[:,0],dtype=int)
-        y_sub = np.array(background_points[:,1],dtype=int)
-
-        pool = Pool(num_colors)
-
-        background = pool.starmap_async(interpol, [(imarray,c,x_sub,y_sub, (y_size,x_size),interpolation_type,smoothing,downscale_factor) for c in range(num_colors)])
-        background = background.get()
-        background = np.moveaxis(background, 0 ,-1)
-        
-    #Subtract background from image
-    mean = np.mean(background)
-    imarray[:,:,:] = (imarray[:,:,:] - background[:,:,:] + mean).clip(min=0,max=np.max(imarray))
+        #clip image
+        max=np.max(imarray)
+        parallel_compute = False
+        if parallel_compute == False:
+            print("clip single core")
+            imarray[:,:,:] = imarray.clip(min=0,max=np.max(imarray))
+        else:
+            print("clip multi core")
+            futures = []
+            for c in range(num_colors):
+                futures.insert(c, executor.submit(clip, imarray[:,:,c], max))
+                print("submitted clip {}".format(c))
+            for c in range(num_colors):
+                imarray[:,:,c] = futures[c].result()
+                print("received clip {}".format(c))
         
     return background
 
@@ -78,9 +109,9 @@ def calc_mode_dataset(data, x_sub, y_sub, halfsize):
 
 
 
-def interpol(imarray,channel,x_sub,y_sub,shape,kind,smoothing,downscale_factor):
+def interpol(imarray,x_sub,y_sub,shape,kind,smoothing,downscale_factor):
 
-    subsample = calc_mode_dataset(imarray[:,:,channel], x_sub, y_sub, 25)
+    subsample = calc_mode_dataset(imarray, x_sub, y_sub, 25)
     
     if(downscale_factor != 1):
         

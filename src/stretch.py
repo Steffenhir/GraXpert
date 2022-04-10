@@ -8,39 +8,54 @@ Created on Mon Feb 14 16:44:29 2022
 import numpy as np
 from astropy.visualization import AsinhStretch
 from scipy.optimize import root
+import concurrent
+import multiprocessing as mp
+
+def stretch_channel(channel, bg, sigma):
+    
+    indx_clip = np.logical_and(channel < 1.0, channel > 0.0)
+    median = np.median(channel[indx_clip])
+    mad = np.median(np.abs(channel[indx_clip]-median))
+
+
+    shadow_clipping = np.clip(median - sigma*mad, 0, 1.0)
+    highlight_clipping = 1.0
+
+    midtone = MTF((median-shadow_clipping)/(highlight_clipping - shadow_clipping), bg)
+
+    channel[channel <= shadow_clipping] = 0.0
+    channel[channel >= highlight_clipping] = 1.0
+
+    indx_inside = np.logical_and(channel > shadow_clipping, channel < highlight_clipping)
+
+    channel[indx_inside] = (channel[indx_inside]-shadow_clipping)/(highlight_clipping - shadow_clipping)
+
+    channel = MTF(channel, midtone)
+
+    return channel
 
 def stretch(data, bg, sigma):
 
     copy = np.copy(data)
+    #copy = data
     
-    for c in range(copy.shape[-1]):
-        
-        copy_color = copy[:,:,c]
-        
-        indx_clip = np.logical_and(copy_color < 1.0, copy_color > 0.0)
-        median = np.median(copy_color[indx_clip])
-        mad = np.median(np.abs(copy_color[indx_clip]-median))
+    with concurrent.futures.ProcessPoolExecutor(max_workers=3, mp_context=mp.get_context('spawn')) as executor:
 
-    
-        shadow_clipping = np.clip(median - sigma*mad, 0, 1.0)
-        highlight_clipping = 1.0
+        parallel_compute = False
 
-        midtone = MTF((median-shadow_clipping)/(highlight_clipping - shadow_clipping),bg)
+        if parallel_compute == False:
+            for c in range(copy.shape[-1]):
+                copy[:,:,c] = stretch_channel(copy[:,:,c], bg, sigma)
+        else:
+            futures = []
+            for c in range(copy.shape[-1]):
+                futures.insert(c, executor.submit(stretch_channel, copy[:,:,c], bg, sigma))
+                print("submitted stretch_channel {}".format(c))
+            for c in range(copy.shape[-1]):
+                copy[:,:,c] = futures[c].result()
+                print("received stretch_channel {}".format(c))
 
-
-        copy_color[copy_color <= shadow_clipping] = 0.0
-        copy_color[copy_color >= highlight_clipping] = 1.0
-    
-        indx_inside = np.logical_and(copy_color > shadow_clipping, copy_color < highlight_clipping)
-    
-        copy_color[indx_inside] = (copy_color[indx_inside]-shadow_clipping)/(highlight_clipping - shadow_clipping)
-    
-        copy_color = MTF(copy_color, midtone)
-    
-        copy[:,:,c] = copy_color
-    
     copy = copy.clip(min=0,max=1)
-
 
     return copy
     

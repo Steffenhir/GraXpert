@@ -41,6 +41,15 @@ style = ttk.Style(root)
 style.theme_use("forest-dark")
 root.iconbitmap(resource_path("img/Icon.ico"))
 
+def get_dpi(window):
+    MM_TO_IN = 1/25.4
+    pxw = window.winfo_screenwidth()
+    inw = window.winfo_screenmmwidth() * MM_TO_IN
+
+    return pxw/inw
+
+root.tk.call('tk', 'scaling', get_dpi(root)/72)
+
 class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)

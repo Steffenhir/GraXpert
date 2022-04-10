@@ -16,13 +16,10 @@ from app_state import INITIAL_STATE
 import background_extraction
 from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
 from preferences import DEFAULT_PREFS, Prefs, app_state_2_prefs, merge_json, prefs_2_app_state
-import stretch
 import tooltip
-from astropy.io import fits
-from skimage import io,img_as_float32, img_as_uint, exposure
-from skimage.util import img_as_ubyte
 from loadingframe import LoadingFrame
 from help_panel import Help_Panel
+from astroimage import AstroImage
 import json
 from appdirs import user_config_dir
 
@@ -41,11 +38,12 @@ class Application(tk.Frame):
         
         self.filename = ""
         self.data_type = ""
-        self.fits_header = None
-        self.pil_image = None
-        self.image_full = None
-        self.image_full_processed = None
-        self.background_model = None
+
+        self.images = {
+            "Original": None,
+            "Background": None,
+            "Processed": None
+            }
         
         self.my_title = "GraXpert"
         self.master.title(self.my_title)
@@ -309,21 +307,46 @@ class Application(tk.Frame):
         self.data_type = os.path.splitext(filename)[1]
         
         try:
-            self.set_image(filename)
+            image = AstroImage(self.stretch_option_current)
+            image.set_from_file(filename)
+            self.images["Original"] = image
             self.prefs["working_dir"] = os.path.dirname(filename)
         except:
             messagebox.showerror("Error", "An error occurred while loading your picture.")
         
-        self.loading_frame.end()
+        self.display_type.set("Original")
+        self.images["Processed"] = None
+        self.images["Background"] = None
         
+        self.master.title(self.my_title + " - " + os.path.basename(filename))
+        self.filename = os.path.splitext(os.path.basename(filename))[0]
+        
+        width = self.images["Original"].img_display.width
+        height = self.images["Original"].img_display.height
+        mode = self.images["Original"].img_display.mode
+        self.label_image_info["text"] = f"{self.data_type} : {width} x {height} {mode}"
+
+        os.chdir(os.path.dirname(filename))
+
+        if self.prefs["width"] != width or self.prefs["height"] != height:
+            self.reset_backgroundpts()
+
+        self.prefs["width"] = width
+        self.prefs["height"] = height
+        
+        self.zoom_fit(width, height)
+        self.redraw_image()
+        self.loading_frame.end()
+        return
+    
     def select_background(self,event=None):
         
-        if self.image_full is None:
+        if self.images["Original"] is None:
             messagebox.showerror("Error", "Please load your picture first.")
             return
         
         self.loading_frame.start()
-        self.cmd = Command(SEL_POINTS_HANDLER, self.cmd, data=self.image_full, num_pts=self.bg_pts.get(), tol=self.bg_tol.get())
+        self.cmd = Command(SEL_POINTS_HANDLER, self.cmd, data=self.images["Original"].img_array, num_pts=self.bg_pts.get(), tol=self.bg_tol.get())
         self.cmd.execute()
         self.redraw_image()
         self.loading_frame.end()
@@ -331,127 +354,18 @@ class Application(tk.Frame):
 
     def change_stretch(self,event=None):
         self.loading_frame.start()
-        self.stretch(event)
+        for key, img in self.images.items():
+            if(img is not None):
+                img.update_display()
         self.loading_frame.end()
-        return
-    
-    def stretch(self,event=None):
         
-        if(self.image_full is None):
-            return
-        
-        if(self.stretch_option_current.get() == "10% Bg, 3 sigma"):
-                bg, sigma = (0.1,3)
-               
-        if(self.stretch_option_current.get() == "15% Bg, 3 sigma"):
-                bg, sigma = (0.15,3)
-                
-        if(self.stretch_option_current.get() == "20% Bg, 3 sigma"):
-                bg, sigma = (0.2,3)
-                
-        if(self.stretch_option_current.get() == "25% Bg, 1.25 sigma"):
-                bg, sigma = (0.25,1.25)
-        
-        if(self.display_type.get() == "Original"):
-            image = self.image_full
-        elif(self.display_type.get() == "Background"):
-            image = self.background_model
-        else:
-            image = self.image_full_processed
-            
-
-        if(self.stretch_option_current.get() == "No Stretch"):
-            if(self.image_full.shape[2] == 1):
-                self.pil_image = Image.fromarray(img_as_ubyte(image[:,:,0]))
-            else:
-                self.pil_image = Image.fromarray(img_as_ubyte(image))
-        else:
-            if(self.image_full.shape[2] == 1):
-                self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(image,bg,sigma))[:,:,0])
-            else:
-                self.pil_image = Image.fromarray(img_as_ubyte(stretch.stretch(image,bg,sigma)))
-        
-        
-
         self.redraw_image()
+        return
 
-
-    def set_image(self, filename):
-
-        if not filename:
-            return
-
-        self.image_full = None
-        self.image_full_processed = None
-        self.background_model = None
-        self.display_type.set("Original")
-        
-        
-        if(self.data_type == ".fits" or self.data_type == ".fit"):
-            hdul = fits.open(filename)
-            self.image_full = hdul[0].data
-            self.fits_header = hdul[0].header
-            hdul.close()
-            
-            if(len(self.image_full.shape) == 3):
-               self.image_full = np.moveaxis(self.image_full,0,-1)           
-        else:
-            self.image_full = io.imread(filename)
-        
-        
-        if(self.image_full.dtype == "float32" or self.image_full.dtype == ">f4"):
-            if(self.data_type == ".fits" or self.data_type == ".fit"):
-                self.saveas_type.set("32 bit Fits")
-            else:
-                self.saveas_type.set("32 bit Tiff")
-        
-        elif(self.image_full.dtype == "uint16" or self.image_full.dtype == ">i2"):
-            if(self.data_type == ".fits" or self.data_type == ".fit"):
-                self.saveas_type.set("16 bit Fits")
-            else:
-                self.saveas_type.set("16 bit Tiff")
-            
-        print("Image data type:" + str(self.image_full.dtype))
-       
-        # Reshape greyscale picture to shape (y,x,1)
-        if(len(self.image_full.shape) == 2):
-            
-            self.image_full = np.array([self.image_full])
-            self.image_full = np.moveaxis(self.image_full,0,-1)
-       
-        # Use 32 bit float with range (0,1) for internal calculations
-        self.image_full = img_as_float32(self.image_full)
-        
-        
-        if(np.min(self.image_full) < 0 or np.max(self.image_full > 1)):
-            self.image_full = exposure.rescale_intensity(self.image_full, out_range=(0,1))
-
-        
-        self.stretch()
-              
-        self.zoom_fit(self.pil_image.width, self.pil_image.height)
-
-        self.draw_image(self.pil_image)
-
-
-        self.master.title(self.my_title + " - " + os.path.basename(filename))
-        self.filename = os.path.splitext(os.path.basename(filename))[0]
-
-        self.label_image_info["text"] = f"{self.data_type} : {self.pil_image.width} x {self.pil_image.height} {self.pil_image.mode}"
-
-        os.chdir(os.path.dirname(filename))
-
-        if self.prefs["width"] != self.pil_image.width or self.prefs["height"] != self.pil_image.height:
-            self.reset_backgroundpts()
-
-        self.prefs["width"] = self.pil_image.width
-        self.prefs["height"] = self.pil_image.height
     
    
     def save_image(self):
        
-       if(self.image_full_processed is None):
-           return
        
        if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
            dir = tk.filedialog.asksaveasfilename(
@@ -471,21 +385,7 @@ class Application(tk.Frame):
        self.loading_frame.start()
        
        try:
-           if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "16 bit Fits"):
-               image_converted = img_as_uint(self.image_full_processed)
-           else:
-               image_converted = self.image_full_processed
-            
-           if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
-               io.imsave(dir, image_converted)
-           else:
-               if(len(image_converted.shape) == 3):
-                  image_converted = np.moveaxis(image_converted,-1,0)
-    
-               hdu = fits.PrimaryHDU(data=image_converted, header=self.fits_header)
-               hdul = fits.HDUList([hdu])
-               hdul.writeto(dir, output_verify="warn", overwrite=True)
-               hdul.close()
+           self.images["Processed"].save(dir, self.saveas_type.get(), self.images["Original"].fits_header)
        except:
            messagebox.showerror("Error", "Error occured when saving the image.")
            
@@ -493,8 +393,6 @@ class Application(tk.Frame):
        
     def save_background_image(self):
 
-        if(self.background_model is None):
-            return
          
         if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
             dir = tk.filedialog.asksaveasfilename(
@@ -514,21 +412,7 @@ class Application(tk.Frame):
         self.loading_frame.start()
         
         try:
-            if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "16 bit Fits"):
-                background_model_converted = img_as_uint(self.background_model)
-            else:
-                background_model_converted = self.background_model
-            
-            if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
-                io.imsave(dir, background_model_converted)
-            else:
-                if(len(background_model_converted.shape) == 3):
-                   background_model_converted = np.moveaxis(background_model_converted,-1,0)
-    
-                hdu = fits.PrimaryHDU(data=background_model_converted, header=self.fits_header)
-                hdul = fits.HDUList([hdu])
-                hdul.writeto(dir, output_verify="warn", overwrite=True)
-                hdul.close()
+            self.images["Background"].save(dir, self.saveas_type.get(), self.images["Original"].fits_header)
         except:
             messagebox.showerror("Error", "Error occured when saving the image.")
             
@@ -561,24 +445,25 @@ class Application(tk.Frame):
         
         self.loading_frame.start()
         
-        imarray = np.array(self.image_full)
+        imarray = np.copy(self.images["Original"].img_array)
         
         downscale_factor = 1
         
         if(self.interpol_type.get() == "Kriging" or self.interpol_type.get() == "RBF"):
             downscale_factor = 4
 
-            
-        self.background_model = background_extraction.extract_background(
+        self.images["Background"] = AstroImage(self.stretch_option_current)
+        self.images["Background"].set_from_array(background_extraction.extract_background(
             imarray,np.array(background_points),
             self.interpol_type.get(),self.smoothing.get(),
             downscale_factor
-            )
-        
-        self.image_full_processed = imarray       
+            ))
+
+        self.images["Processed"] = AstroImage(self.stretch_option_current)
+        self.images["Processed"].set_from_array(imarray)       
         
         self.display_type.set("Processed")
-        self.stretch()
+        self.redraw_image()
         
         self.loading_frame.end()
         return
@@ -648,7 +533,7 @@ class Application(tk.Frame):
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
-        if (self.pil_image is None):
+        if (self.images[self.display_type.get()] is None):
             return
         self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
         self.redraw_image()
@@ -656,7 +541,7 @@ class Application(tk.Frame):
 
     def mouse_move(self, event):
 
-        if (self.pil_image is None):
+        if (self.images[self.display_type.get()] is None):
             return
         
         image_point = self.to_image_point(event.x, event.y)
@@ -671,14 +556,14 @@ class Application(tk.Frame):
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
-        if self.pil_image is None:
+        if self.images[self.display_type.get()] is None:
             return
-        self.zoom_fit(self.pil_image.width, self.pil_image.height)
+        self.zoom_fit(self.images[self.display_type.get()].width, self.images[self.display_type.get()].height)
         self.redraw_image()
 
     def mouse_wheel(self, event):
 
-        if self.pil_image is None:
+        if self.images[self.display_type.get()] is None:
             return
 
         if event.state != 9:
@@ -774,13 +659,12 @@ class Application(tk.Frame):
 
     def to_image_point(self, x, y):
 
-        if self.pil_image is None:
+        if self.images[self.display_type.get()] is None:
             return []
 
         mat_inv = np.linalg.inv(self.mat_affine)
         image_point = np.dot(mat_inv, (x, y, 1.))
-        if  image_point[0] < 0 or image_point[1] < 0 or image_point[0] > self.pil_image.width or image_point[1] > self.pil_image.height:
-            return []
+
 
         return image_point
 
@@ -792,8 +676,6 @@ class Application(tk.Frame):
 
         if pil_image is None:
             return
-
-        self.pil_image = pil_image
 
 
         canvas_width = self.canvas.winfo_width()
@@ -809,7 +691,7 @@ class Application(tk.Frame):
             )
 
 
-        dst = self.pil_image.transform(
+        dst = pil_image.transform(
                     (canvas_width, canvas_height),
                     Image.AFFINE,
                     affine_inv,
@@ -841,9 +723,9 @@ class Application(tk.Frame):
 
     def redraw_image(self):
 
-        if self.pil_image is None:
+        if self.images[self.display_type.get()] is None:
             return
-        self.draw_image(self.pil_image)
+        self.draw_image(self.images[self.display_type.get()].img_display)
 
     def undo(self, event):
         if not type(self.cmd.handler) is InitHandler:
@@ -858,12 +740,13 @@ class Application(tk.Frame):
             self.redraw_image()
             
     def switch_display(self, event):
-        if(self.image_full_processed is None and self.display_type.get() != "Original"):
+        if(self.images["Processed"] is None and self.display_type.get() != "Original"):
             self.display_type.set("Original")
             messagebox.showerror("Error", "Please select background points and press the Calculate button first")         
             return
+        
         self.loading_frame.start()
-        self.stretch()
+        self.redraw_image()
         self.loading_frame.end()
     
     def on_closing(self):

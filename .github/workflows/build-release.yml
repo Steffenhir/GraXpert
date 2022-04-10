@@ -22,6 +22,7 @@ jobs:
       - name: create GraXpert-linux bundle
         run: |
           pyinstaller \
+          --icon="./img/Icon.ico" \
           --add-data="./img/HELP.png:./img/" \
           --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
           --onefile \
@@ -52,6 +53,7 @@ jobs:
       - name: create GraXpert-win64 bundle
         run: |
           pyinstaller `
+          --icon="./img/Icon.ico" `
           --add-data="./img/HELP.png;./img/" `
           --add-data="./img/GraXpert_LOGO_Hauptvariante.png;./img/" `
           --onefile `
@@ -82,6 +84,7 @@ jobs:
       - name: create GraXpert-macos-x86_64 bundle
         run: |
           pyinstaller \
+          --icon="./img/Icon.ico" \
           --add-data="./img/HELP.png:./img/" \
           --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
           --onefile \

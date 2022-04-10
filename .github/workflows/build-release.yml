@@ -23,9 +23,9 @@ jobs:
         run: |
           pyinstaller \
           --icon="./img/Icon.ico" \
-          --add-data="./img/Icon.ico;./img/" \
-          --add-data="./forest-dark.tcl;./" \
-          --add-data="./forest-dark/*;./forest-dark/" \
+          --add-data="./img/Icon.ico:./img/" \
+          --add-data="./forest-dark.tcl:./" \
+          --add-data="./forest-dark/*:./forest-dark/" \
           --add-data="./img/HELP.png:./img/" \
           --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
           --onefile \
@@ -91,9 +91,9 @@ jobs:
         run: |
           pyinstaller \
           --icon="./img/Icon.ico" \
-          --add-data="./img/Icon.ico;./img/" \
-          --add-data="./forest-dark.tcl;./" \
-          --add-data="./forest-dark/*;./forest-dark/" \
+          --add-data="./img/Icon.ico:./img/" \
+          --add-data="./forest-dark.tcl:./" \
+          --add-data="./forest-dark/*:./forest-dark/" \
           --add-data="./img/HELP.png:./img/" \
           --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
           --onefile \

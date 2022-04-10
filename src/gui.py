@@ -23,6 +23,7 @@ from astroimage import AstroImage
 import json
 from appdirs import user_config_dir
 import cProfile, pstats
+from viztracer import VizTracer
 
 root = tk.Tk()
 
@@ -428,9 +429,8 @@ class Application(tk.Frame):
             self.redraw_image()
     
     def calculate(self):
-
-        profiler = cProfile.Profile()
-        profiler.enable()
+        tracer = VizTracer(min_duration=200)
+        tracer.start()
 
         background_points = self.cmd.app_state["background_points"]
         
@@ -471,10 +471,8 @@ class Application(tk.Frame):
         
         self.loading_frame.end()
 
-        profiler.disable()
-
-        stats = pstats.Stats(profiler).sort_stats('tottime')
-        stats.print_stats(10)
+        tracer.stop()
+        tracer.save()
 
         return
     

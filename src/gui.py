@@ -22,6 +22,7 @@ from help_panel import Help_Panel
 from astroimage import AstroImage
 import json
 from appdirs import user_config_dir
+import cProfile, pstats
 
 root = tk.Tk()
 
@@ -427,7 +428,10 @@ class Application(tk.Frame):
             self.redraw_image()
     
     def calculate(self):
-        
+
+        profiler = cProfile.Profile()
+        profiler.enable()
+
         background_points = self.cmd.app_state["background_points"]
         
         #Error messages if not enough points
@@ -466,6 +470,12 @@ class Application(tk.Frame):
         self.redraw_image()
         
         self.loading_frame.end()
+
+        profiler.disable()
+
+        stats = pstats.Stats(profiler).sort_stats('tottime')
+        stats.print_stats(10)
+
         return
     
     def enter_key(self,enter):
@@ -771,6 +781,8 @@ class Application(tk.Frame):
         root.destroy()
 
 if __name__ == "__main__":
+
     app = Application(master=root)
     root.protocol("WM_DELETE_WINDOW", app.on_closing)
+
     app.mainloop()

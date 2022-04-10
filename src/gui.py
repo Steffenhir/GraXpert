@@ -479,7 +479,7 @@ class Application(tk.Frame):
             return
         
 
-        if(not self.remove_pt(event) and self.to_image_point(event.x,event.y) != []):
+        if(self.to_image_point(event.x,event.y) != [] and not self.remove_pt(event)):
             point = self.to_image_point(event.x,event.y)
             self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
             self.cmd.execute()
@@ -491,6 +491,13 @@ class Application(tk.Frame):
         
         if len(self.cmd.app_state["background_points"]) == 0:
             return False
+            
+        point_im = self.to_image_point(event.x,event.y)
+        if point_im.size == []:
+            return False
+            
+        eventx_im = point_im[0]
+        eventy_im = point_im[1]
         
         background_points = self.cmd.app_state["background_points"]
         
@@ -500,10 +507,7 @@ class Application(tk.Frame):
         for i in range(len(background_points)):
             x_im = background_points[i][0]
             y_im = background_points[i][1]
-            
-            eventx_im = self.to_image_point(event.x, event.y)[0]
-            eventy_im = self.to_image_point(event.x, event.y)[1]
-            
+                        
             dist = np.max(np.abs([x_im-eventx_im, y_im-eventy_im]))
             
             if(min_idx == -1 or dist < min_dist):

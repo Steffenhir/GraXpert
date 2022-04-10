@@ -7,9 +7,9 @@ def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        base_path = path.abspath(path.join(path.dirname(__file__), "./img"))
+        base_path = path.abspath(path.dirname(__file__))
     else:
-        base_path = path.abspath(path.join(path.dirname(__file__), "../img"))
+        base_path = path.abspath(path.join(path.dirname(__file__), "../"))
 
     return path.join(base_path, relative_path)
 
@@ -38,7 +38,7 @@ class Help_Panel():
         
         
 
-        self.help_pic = tk.PhotoImage(file=resource_path("HELP.png"))
+        self.help_pic = tk.PhotoImage(file=resource_path("img/HELP.png"))
         
         self.toggle_button = tk.Button(self.button_frame, 
                          image=self.help_pic,
@@ -69,7 +69,7 @@ class Help_Panel():
         
         self.help_panel = tk.Frame(self.canvas, bg=bg_color, relief=relief, borderwidth=0)
         
-        logo = Image.open(resource_path("GraXpert_LOGO_Hauptvariante.png"))
+        logo = Image.open(resource_path("img/GraXpert_LOGO_Hauptvariante.png"))
         logo = logo.reduce(6)
         logo = ImageTk.PhotoImage(logo)
         self.label = tk.Label(self.help_panel, image=logo, bg=bg_color)

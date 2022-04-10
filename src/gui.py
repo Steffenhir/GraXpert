@@ -13,6 +13,7 @@ from PIL import Image, ImageTk
 import math                   
 import numpy as np            
 import os
+import sys
 from app_state import INITIAL_STATE
 import background_extraction
 from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
@@ -24,11 +25,21 @@ from astroimage import AstroImage
 import json
 from appdirs import user_config_dir
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        base_path = os.path.abspath(os.path.dirname(__file__))
+    else:
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+
+    return os.path.join(base_path, relative_path)
 
 root = tk.Tk()
-root.tk.call("source", "../forest-dark.tcl")
+root.tk.call("source", resource_path("forest-dark.tcl"))
 style = ttk.Style(root)
 style.theme_use("forest-dark")
+root.iconbitmap(resource_path("img/Icon.ico"))
 
 class Application(tk.Frame):
     def __init__(self, master=None):

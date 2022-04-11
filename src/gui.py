@@ -668,7 +668,12 @@ class Application(tk.Frame):
 
         mat_inv = np.linalg.inv(self.mat_affine)
         image_point = np.dot(mat_inv, (x, y, 1.))
-
+        
+        width = self.images[self.display_type.get()].img_array.shape[1]
+        height = self.images[self.display_type.get()].img_array.shape[0]
+        
+        if  image_point[0] < 0 or image_point[1] < 0 or image_point[0] > width or image_point[1] > height:
+            return []
 
         return image_point
 

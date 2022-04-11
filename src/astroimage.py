@@ -2,7 +2,7 @@ import os
 import numpy as np
 from astropy.io import fits
 from skimage import io, img_as_float32, exposure
-from skimage.util import img_as_uint
+from skimage.util import img_as_ubyte, img_as_uint
 from PIL import Image
 from stretch import stretch
 
@@ -54,7 +54,6 @@ class AstroImage:
     def update_display(self):
         img_display = self.stretch()
         img_display = img_display*255
-
         if(img_display.shape[2] == 1):
             self.img_display = Image.fromarray(img_display[:,:,0].astype(np.uint8))
         else:

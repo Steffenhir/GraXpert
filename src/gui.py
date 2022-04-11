@@ -27,6 +27,7 @@ import json
 from appdirs import user_config_dir
 from screeninfo import get_monitors
 
+
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     
@@ -460,7 +461,9 @@ class Application(tk.Frame):
             self.redraw_image()
     
     def calculate(self):
-        
+        tracer = VizTracer(min_duration=200)
+        tracer.start()
+
         background_points = self.cmd.app_state["background_points"]
         
         #Error messages if not enough points
@@ -499,6 +502,10 @@ class Application(tk.Frame):
         self.redraw_image()
         
         self.loading_frame.end()
+
+        tracer.stop()
+        tracer.save()
+
         return
     
     def enter_key(self,enter):
@@ -809,6 +816,8 @@ class Application(tk.Frame):
         root.destroy()
 
 if __name__ == "__main__":
+
     app = Application(master=root)
     root.protocol("WM_DELETE_WINDOW", app.on_closing)
+
     app.mainloop()

@@ -38,17 +38,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-root = hdpitk.HdpiTk()
-root.tk.call("source", resource_path("forest-dark.tcl"))
-style = ttk.Style(root)
-style.theme_use("forest-dark")
-root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
 
-monitors = get_monitors()
-primary_monitor = next(mon for mon in monitors if mon.is_primary)
-dpi = primary_monitor.width / (root.winfo_screenmmwidth() / 24.0)
-scaling_factor = dpi/72.0
-root.tk.call('tk', 'scaling', scaling_factor)
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -461,8 +451,6 @@ class Application(tk.Frame):
             self.redraw_image()
     
     def calculate(self):
-        tracer = VizTracer(min_duration=200)
-        tracer.start()
 
         background_points = self.cmd.app_state["background_points"]
         
@@ -503,8 +491,6 @@ class Application(tk.Frame):
         
         self.loading_frame.end()
 
-        tracer.stop()
-        tracer.save()
 
         return
     
@@ -816,7 +802,18 @@ class Application(tk.Frame):
         root.destroy()
 
 if __name__ == "__main__":
+    
+    root = hdpitk.HdpiTk()
+    root.tk.call("source", resource_path("forest-dark.tcl"))
+    style = ttk.Style(root)
+    style.theme_use("forest-dark")
+    root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
 
+    monitors = get_monitors()
+    primary_monitor = next(mon for mon in monitors if mon.is_primary)
+    dpi = primary_monitor.width / (root.winfo_screenmmwidth() / 24.0)
+    scaling_factor = dpi/72.0
+    root.tk.call('tk', 'scaling', scaling_factor)
     app = Application(master=root)
     root.protocol("WM_DELETE_WINDOW", app.on_closing)
 

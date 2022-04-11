@@ -24,6 +24,7 @@ jobs:
           pyinstaller \
           --icon="./img/Icon.ico" \
           --add-data="./img/Icon.ico:./img/" \
+          --add-data="./img/Icon.png:./img/" \
           --add-data="./forest-dark.tcl:./" \
           --add-data="./forest-dark/*:./forest-dark/" \
           --add-data="./img/HELP.png:./img/" \
@@ -58,6 +59,7 @@ jobs:
           pyinstaller `
           --icon="./img/Icon.ico" `
           --add-data="./img/Icon.ico;./img/" `
+          --add-data="./img/Icon.png;./img/" `
           --add-data="./forest-dark.tcl;./" `
           --add-data="./forest-dark/*;./forest-dark/" `
           --add-data="./img/HELP.png;./img/" `
@@ -92,6 +94,7 @@ jobs:
           pyinstaller \
           --icon="./img/Icon.ico" \
           --add-data="./img/Icon.ico:./img/" \
+          --add-data="./img/Icon.png:./img/" \
           --add-data="./forest-dark.tcl:./" \
           --add-data="./forest-dark/*:./forest-dark/" \
           --add-data="./img/HELP.png:./img/" \

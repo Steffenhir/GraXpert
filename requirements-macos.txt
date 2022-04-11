@@ -1,5 +1,6 @@
 appdirs
 astropy
+hdpitkinter
 Pillow
 pykrige
 scikit-image

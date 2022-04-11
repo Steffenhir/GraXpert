@@ -6,6 +6,7 @@ Created on Sun Feb 13 10:05:08 2022
 
 # macos
 import tkinter as tk
+import hdpitkinter as hdpitk
 from tkinter import ttk
 from tkinter import filedialog
 from tkinter import messagebox
@@ -35,18 +36,11 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-root = tk.Tk()
+root = hdpitk.HdpiTk()
 root.tk.call("source", resource_path("forest-dark.tcl"))
 style = ttk.Style(root)
 style.theme_use("forest-dark")
-root.iconbitmap(resource_path("img/Icon.ico"))
-
-def get_dpi(window):
-    return window.winfo_fpixels('1i')
-
-
-
-root.tk.call('tk', 'scaling', get_dpi(root)/72)
+root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
 
 class Application(tk.Frame):
     def __init__(self, master=None):

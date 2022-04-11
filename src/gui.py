@@ -25,6 +25,7 @@ from help_panel import Help_Panel
 from astroimage import AstroImage
 import json
 from appdirs import user_config_dir
+from screeninfo import get_monitors
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -41,6 +42,12 @@ root.tk.call("source", resource_path("forest-dark.tcl"))
 style = ttk.Style(root)
 style.theme_use("forest-dark")
 root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
+
+monitors = get_monitors()
+primary_monitor = next(mon for mon in monitors if mon.is_primary)
+dpi = primary_monitor.width / (primary_monitor.width_mm / 24.0)
+scaling_factor = dpi/72.0
+root.tk.call('tk', 'scaling', dpi/72.0)
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -233,7 +240,7 @@ class Application(tk.Frame):
         tt_bg_select = tooltip.Tooltip(self.bg_selection_button, text= tooltip.bg_select_text)
         
         self.reset_button = ttk.Button(self.side_menu, 
-                         text="Reset Points",
+                         text="Reset Sample Points",
                          command=self.reset_backgroundpts)
         self.reset_button.grid(column=0, row=10, pady=(5,30), padx=15, sticky="news")
         tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
@@ -244,7 +251,7 @@ class Application(tk.Frame):
         text.config(width=200)
         text.grid(column=0, row=11, pady=5, padx=15, sticky="w")
         
-        self.intp_type_text = tk.Message(self.side_menu, text="Method:")
+        self.intp_type_text = tk.Message(self.side_menu, text="Interpolation Method:")
         self.intp_type_text.config(width=200)
         self.intp_type_text.grid(column=0, row=12, pady=(5,0), padx=15, sticky="ews")
         
@@ -283,7 +290,7 @@ class Application(tk.Frame):
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
         self.calculate_button = ttk.Button(self.side_menu, 
-                         text="Calculate",
+                         text="Calculate Background",
                          command=self.calculate)
         self.calculate_button.grid(column=0, row=16, pady=(5,30), padx=15, sticky="news")
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
@@ -311,7 +318,7 @@ class Application(tk.Frame):
               
         
         self.save_button = ttk.Button(self.side_menu, 
-                         text="Save Picture",
+                         text="Save Processed",
                          command=self.save_image)
         self.save_button.grid(column=0, row=20, pady=(5,10), padx=15, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)

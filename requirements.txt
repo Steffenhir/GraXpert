@@ -5,3 +5,4 @@ Pillow
 pykrige
 scikit-image
 scipy
+screeninfo

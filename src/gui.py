@@ -26,6 +26,7 @@ from astroimage import AstroImage
 import json
 from appdirs import user_config_dir
 from screeninfo import get_monitors
+import multiprocessing
 
 
 def resource_path(relative_path):
@@ -802,7 +803,7 @@ class Application(tk.Frame):
         root.destroy()
 
 if __name__ == "__main__":
-    
+    multiprocessing.freeze_support()
     root = hdpitk.HdpiTk()
     root.tk.call("source", resource_path("forest-dark.tcl"))
     style = ttk.Style(root)

@@ -17,8 +17,8 @@ import multiprocessing as mp
 import concurrent
 
 
-def clip(imarray, max):
-    imarray[:,:] = imarray.clip(min=0,max=np.max(imarray))
+def clip(imarray):
+    imarray[:,:] = imarray.clip(min=0.0,max=1.0)
     return imarray
 
 def subtract_background(imarray, background, mean):
@@ -64,7 +64,7 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
         parallel_compute = False
         if parallel_compute == False:
             print("subtract single core")
-            imarray[:,:,:] = (imarray[:,:,:] - background[:,:,:] + mean).clip(min=0,max=np.max(imarray))
+            imarray[:,:,:] = imarray[:,:,:] - background[:,:,:] + mean
         else:
             print("subtract multi core")
 
@@ -77,16 +77,15 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
                 print("received subtract_background {}".format(c))
 
         #clip image
-        max=np.max(imarray)
         parallel_compute = False
         if parallel_compute == False:
             print("clip single core")
-            imarray[:,:,:] = imarray.clip(min=0,max=np.max(imarray))
+            imarray[:,:,:] = imarray.clip(min=0.0,max=1.0)
         else:
             print("clip multi core")
             futures = []
             for c in range(num_colors):
-                futures.insert(c, executor.submit(clip, imarray[:,:,c], max))
+                futures.insert(c, executor.submit(clip, imarray[:,:,c]))
                 print("submitted clip {}".format(c))
             for c in range(num_colors):
                 imarray[:,:,c] = futures[c].result()

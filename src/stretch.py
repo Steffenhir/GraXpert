@@ -55,8 +55,6 @@ def stretch(data, bg, sigma):
                 copy[:,:,c] = futures[c].result()
                 print("received stretch_channel {}".format(c))
 
-    copy = copy.clip(min=0,max=1)
-
     return copy
     
 

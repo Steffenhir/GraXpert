@@ -45,9 +45,9 @@ root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/I
 
 monitors = get_monitors()
 primary_monitor = next(mon for mon in monitors if mon.is_primary)
-dpi = primary_monitor.width / (primary_monitor.width_mm / 24.0)
+dpi = primary_monitor.width / (root.winfo_screenmmwidth() / 24.0)
 scaling_factor = dpi/72.0
-root.tk.call('tk', 'scaling', dpi/72.0)
+root.tk.call('tk', 'scaling', scaling_factor)
 
 class Application(tk.Frame):
     def __init__(self, master=None):

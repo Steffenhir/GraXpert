@@ -7,9 +7,9 @@ def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        base_path = path.abspath(path.join(path.dirname(__file__), "./img"))
+        base_path = path.abspath(path.dirname(__file__))
     else:
-        base_path = path.abspath(path.join(path.dirname(__file__), "../img"))
+        base_path = path.abspath(path.join(path.dirname(__file__), "../"))
 
     return path.join(base_path, relative_path)
 
@@ -21,8 +21,8 @@ class Help_Panel():
         bg_color = "#474747"
         button_color = "#6a6a6a"
         text_color = "#F0F0F0"
-        menu_font = ('Segoe UI Semibold', 13, 'normal')
-        heading_font = ('Segoe UI Semibold', 24, 'normal')
+        menu_font = ('Verdana', 12, 'normal')
+        heading_font = ('Verdana', 24, 'normal')
         button_height = 2
         button_width = 16
         relief = "raised"
@@ -38,7 +38,7 @@ class Help_Panel():
         
         
 
-        self.help_pic = tk.PhotoImage(file=resource_path("HELP.png"))
+        self.help_pic = tk.PhotoImage(file=resource_path("img/HELP.png"))
         
         self.toggle_button = tk.Button(self.button_frame, 
                          image=self.help_pic,
@@ -69,7 +69,7 @@ class Help_Panel():
         
         self.help_panel = tk.Frame(self.canvas, bg=bg_color, relief=relief, borderwidth=0)
         
-        logo = Image.open(resource_path("GraXpert_LOGO_Hauptvariante.png"))
+        logo = Image.open(resource_path("img/GraXpert_LOGO_Hauptvariante.png"))
         logo = logo.reduce(6)
         logo = ImageTk.PhotoImage(logo)
         self.label = tk.Label(self.help_panel, image=logo, bg=bg_color)
@@ -88,7 +88,7 @@ class Help_Panel():
         
         
         text = tk.Message(self.help_panel
-                          ,text="3. Select background points \n a) manually with right click \n b) automatically with grid selection \n"
+                          ,text="3. Select background points \n a) manually with right click \n b) automatically via grid (grid selection) \n"
                           "You can remove already set points by right clicking on them."
                           ,bg=bg_color, font=menu_font, fg=text_color, width=240)
         text.grid(column=0, row=4, padx=(40,30), pady=5, sticky="w")

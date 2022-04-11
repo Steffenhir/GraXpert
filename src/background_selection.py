@@ -24,7 +24,7 @@ def background_selection(data, num_pts_per_row, tol):
     global_median = np.median(data_mono)
     
     background_pts = []
-    dist = data_mono.shape[0] / num_pts_per_row
+    dist = data_mono.shape[1] / num_pts_per_row
     
     # Create grid
     x_start = int(0.5 * dist)

@@ -82,6 +82,7 @@ class Application(tk.Frame):
         
 
     def create_widget(self):
+        
 
         frame_statusbar = tk.Frame(self.master, bd=1, relief = tk.SUNKEN)
         self.label_image_info = ttk.Label(frame_statusbar, text="image info", anchor=tk.E)
@@ -112,8 +113,9 @@ class Application(tk.Frame):
         
         self.loading_frame = LoadingFrame(self.canvas, self.master)
 
-
-        self.master.bind("<Button-1>", self.mouse_down_left)                   # Left Mouse Button
+        self.left_drag = False
+        self.master.bind("<Button-1>", self.mouse_down_left)  
+        self.master.bind("<ButtonRelease-1>", self.mouse_release_left)         # Left Mouse Button
         self.master.bind("<Button-2>", self.mouse_down_right)                  # Middle Mouse Button (Right Mouse Button on macs)
         self.master.bind("<Button-3>", self.mouse_down_right)                  # Right Mouse Button (Middle Mouse Button on macs)
         self.master.bind("<B1-Motion>", self.mouse_move_left)                  # Left Mouse Button Drag
@@ -141,10 +143,10 @@ class Application(tk.Frame):
         
         heading_font = "Verdana 10 bold"
         #---Open Image---
-        
-        text = tk.Message(self.side_menu, text="\u2460 Loading", font=heading_font)
-        text.config(width=200)
-        text.grid(column=0, row=0, pady=(20,5), padx=15, sticky="w")
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_1.png"))
+        text = tk.Label(self.side_menu, text=" Loading", image=num_pic, font=heading_font, compound="left")
+        text.image = num_pic
+        text.grid(column=0, row=0, pady=(20,5), padx=0, sticky="w")
         
         self.load_image_button = ttk.Button(self.side_menu, 
                          text="Load Image",
@@ -154,10 +156,10 @@ class Application(tk.Frame):
         self.load_image_button.grid(column=0, row=1, pady=(5,30), padx=15, sticky="news")
         
         #--Stretch Options--
-        
-        text = tk.Message(self.side_menu, text="\u2461 Stretch Options", font=heading_font)
-        text.config(width=200)
-        text.grid(column=0, row=2, pady=5, padx=15, sticky="w")
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_2.png"))
+        text = tk.Label(self.side_menu, text=" Stretch Options", image=num_pic, font=heading_font, compound="left")
+        text.image = num_pic
+        text.grid(column=0, row=2, pady=5, padx=0, sticky="w")
         
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
         self.stretch_option_current = tk.StringVar()
@@ -170,10 +172,10 @@ class Application(tk.Frame):
         
       
         #---Sample Selection---
-        
-        text = tk.Message(self.side_menu, text="\u2462 Sample Selection", font=heading_font)
-        text.config(width=200)
-        text.grid(column=0, row=4, pady=5, padx=15, sticky="w")
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_3.png"))
+        text = tk.Label(self.side_menu, text=" Sample Selection", image=num_pic, font=heading_font, compound="left")
+        text.image = num_pic
+        text.grid(column=0, row=4, pady=5, padx=0, sticky="w")
         
         self.bg_pts = tk.IntVar()
         self.bg_pts.set(10)
@@ -181,7 +183,7 @@ class Application(tk.Frame):
             self.bg_pts.set(self.prefs["bg_pts_option"])
         
         self.bg_selection_text = tk.Message(self.side_menu, text="Points per row: {}".format(self.bg_pts.get()))
-        self.bg_selection_text.config(width=300)
+        self.bg_selection_text.config(width=500)
         self.bg_selection_text.grid(column=0, row=5, pady=(5,0), padx=15, sticky="ews")
         
         def on_bg_pts_slider(bgs_points):
@@ -206,7 +208,7 @@ class Application(tk.Frame):
             self.bg_tol.set(self.prefs["bg_tol_option"])
         
         self.bg_selection_tol = tk.Message(self.side_menu, text="Grid Tolerance: {}".format(self.bg_tol.get()))
-        self.bg_selection_tol.config(width=300)
+        self.bg_selection_tol.config(width=500)
         self.bg_selection_tol.grid(column=0, row=7, pady=(0,0), padx=15, sticky="ews")
         
         def on_bg_tol_slider(bg_tol):
@@ -238,13 +240,13 @@ class Application(tk.Frame):
         tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
         
         #---Calculation---
-        
-        text = tk.Message(self.side_menu, text="\u2463 Calculation", font=heading_font)
-        text.config(width=200)
-        text.grid(column=0, row=11, pady=5, padx=15, sticky="w")
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_4.png"))
+        text = tk.Label(self.side_menu, text=" Calculation", image=num_pic, font=heading_font, compound="left")
+        text.image = num_pic
+        text.grid(column=0, row=11, pady=5, padx=0, sticky="w")
         
         self.intp_type_text = tk.Message(self.side_menu, text="Interpolation Method:")
-        self.intp_type_text.config(width=200)
+        self.intp_type_text.config(width=500)
         self.intp_type_text.grid(column=0, row=12, pady=(5,0), padx=15, sticky="ews")
         
         self.interpol_options = ["RBF", "Splines", "Kriging"]
@@ -262,7 +264,7 @@ class Application(tk.Frame):
             self.smoothing.set(self.prefs["smoothing_option"])
         
         self.smooth_text = tk.Message(self.side_menu, text="Smoothing: {}".format(self.smoothing.get()))
-        self.smooth_text.config(width=200)
+        self.smooth_text.config(width=500)
         self.smooth_text.grid(column=0, row=14, pady=(5,0), padx=15, sticky="ews")
         
         def on_smoothing_slider(smoothing):
@@ -288,10 +290,10 @@ class Application(tk.Frame):
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
         #---Saving---  
-        
-        self.saveas_text = tk.Message(self.side_menu, text="\u2464 Saving", font=heading_font)
-        self.saveas_text.config(width=200)
-        self.saveas_text.grid(column=0, row=17, pady=5, padx=15, sticky="w")
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_5.png"))
+        self.saveas_text = tk.Label(self.side_menu, text=" Saving", image=num_pic, font=heading_font, compound="left")
+        self.saveas_text.image = num_pic
+        self.saveas_text.grid(column=0, row=17, pady=5, padx=0, sticky="w")
         
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits"]
         self.saveas_type = tk.StringVar()
@@ -509,19 +511,42 @@ class Application(tk.Frame):
         self.calculate()
         
     
-    def mouse_down_right(self,event):
+    def mouse_down_left(self,event):
         
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
+        self.__old_event = event
+        self.left_drag = False
+        
+    def mouse_release_left(self,event):
+        
+        if(str(event.widget).split(".")[-1] != "picture"):
+            return
+        
+        if(self.left_drag):
+            return
 
-        if(self.to_image_point(event.x,event.y) != [] and not self.remove_pt(event)):
+        if(self.to_image_point(event.x,event.y) != []):
             point = self.to_image_point(event.x,event.y)
             self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
             self.cmd.execute()
 
         self.redraw_image()
         self.__old_event = event
+        self.left_drag = False
+        
+    def mouse_move_left(self, event):
+        
+        if(str(event.widget).split(".")[-1] != "picture"):
+            return
+        
+        if (self.images[self.display_type.get()] is None):
+            return
+        self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
+        self.redraw_image()
+        self.__old_event = event
+        self.left_drag = True
         
     def remove_pt(self,event):
         
@@ -560,24 +585,17 @@ class Application(tk.Frame):
             return False
             
         
-    def mouse_down_left(self, event):
+    def mouse_down_right(self, event):
         
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
-        self.__old_event = event
-
-
-    def mouse_move_left(self, event):
-        
-        if(str(event.widget).split(".")[-1] != "picture"):
-            return
-        
-        if (self.images[self.display_type.get()] is None):
-            return
-        self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
+        self.remove_pt(event)
         self.redraw_image()
         self.__old_event = event
+
+
+
 
     def mouse_move(self, event):
 
@@ -606,20 +624,14 @@ class Application(tk.Frame):
         if self.images[self.display_type.get()] is None:
             return
 
-        if event.state != 9:
-            if (event.delta > 0 or event.num == 4):
 
-                self.scale_at(6/5, event.x, event.y)
-            else:
+        if (event.delta > 0 or event.num == 4):
 
-                self.scale_at(5/6, event.x, event.y)
+            self.scale_at(6/5, event.x, event.y)
         else:
-            if (event.delta < 0):
 
-                self.rotate_at(-5, event.x, event.y)
-            else:
-
-                self.rotate_at(5, event.x, event.y)     
+            self.scale_at(5/6, event.x, event.y)
+   
         self.redraw_image()
         
 
@@ -651,22 +663,7 @@ class Application(tk.Frame):
         self.scale(scale)
         self.translate(cx, cy)
 
-    def rotate(self, deg:float):
 
-        mat = np.eye(3)
-        mat[0, 0] = math.cos(math.pi * deg / 180)
-        mat[1, 0] = math.sin(math.pi * deg / 180)
-        mat[0, 1] = -mat[1, 0]
-        mat[1, 1] = mat[0, 0]
-
-        self.mat_affine = np.dot(mat, self.mat_affine)
-
-    def rotate_at(self, deg:float, cx:float, cy:float):
-
-
-        self.translate(-cx, -cy)
-        self.rotate(deg)
-        self.translate(cx, cy)
 
     def zoom_fit(self, image_width, image_height):
 

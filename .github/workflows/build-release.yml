@@ -23,12 +23,9 @@ jobs:
         run: |
           pyinstaller \
           --icon="./img/Icon.ico" \
-          --add-data="./img/Icon.ico:./img/" \
-          --add-data="./img/Icon.png:./img/" \
+          --add-data="./img/*:./img/" \
           --add-data="./forest-dark.tcl:./" \
           --add-data="./forest-dark/*:./forest-dark/" \
-          --add-data="./img/HELP.png:./img/" \
-          --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
           --collect-all pykrige \
@@ -58,12 +55,9 @@ jobs:
         run: |
           pyinstaller `
           --icon="./img/Icon.ico" `
-          --add-data="./img/Icon.ico;./img/" `
-          --add-data="./img/Icon.png;./img/" `
+          --add-data="./img/*;./img/" `
           --add-data="./forest-dark.tcl;./" `
           --add-data="./forest-dark/*;./forest-dark/" `
-          --add-data="./img/HELP.png;./img/" `
-          --add-data="./img/GraXpert_LOGO_Hauptvariante.png;./img/" `
           --onefile `
           --hidden-import='PIL._tkinter_finder' `
           --collect-all pykrige `
@@ -91,12 +85,9 @@ jobs:
         run: |
           pyinstaller \
           --icon="./img/Icon.ico" \
-          --add-data="./img/Icon.ico:./img/" \
-          --add-data="./img/Icon.png:./img/" \
+          --add-data="./img/*:./img/" \
           --add-data="./forest-dark.tcl:./" \
           --add-data="./forest-dark/*:./forest-dark/" \
-          --add-data="./img/HELP.png:./img/" \
-          --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
           --collect-all pykrige \

@@ -144,7 +144,7 @@ class Application(tk.Frame):
         #---Open Image---
         
         text = tk.Message(self.side_menu, text="\u2460 Loading", font=heading_font)
-        text.config(width=200)
+        text.config(width=400)
         text.grid(column=0, row=0, pady=(20,5), padx=15, sticky="w")
         
         self.load_image_button = ttk.Button(self.side_menu, 
@@ -157,7 +157,7 @@ class Application(tk.Frame):
         #--Stretch Options--
         
         text = tk.Message(self.side_menu, text="\u2461 Stretch Options", font=heading_font)
-        text.config(width=200)
+        text.config(width=400)
         text.grid(column=0, row=2, pady=5, padx=15, sticky="w")
         
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
@@ -173,7 +173,7 @@ class Application(tk.Frame):
         #---Sample Selection---
         
         text = tk.Message(self.side_menu, text="\u2462 Sample Selection", font=heading_font)
-        text.config(width=200)
+        text.config(width=400)
         text.grid(column=0, row=4, pady=5, padx=15, sticky="w")
         
         self.bg_pts = tk.IntVar()
@@ -241,11 +241,11 @@ class Application(tk.Frame):
         #---Calculation---
         
         text = tk.Message(self.side_menu, text="\u2463 Calculation", font=heading_font)
-        text.config(width=200)
+        text.config(width=400)
         text.grid(column=0, row=11, pady=5, padx=15, sticky="w")
         
         self.intp_type_text = tk.Message(self.side_menu, text="Interpolation Method:")
-        self.intp_type_text.config(width=200)
+        self.intp_type_text.config(width=400)
         self.intp_type_text.grid(column=0, row=12, pady=(5,0), padx=15, sticky="ews")
         
         self.interpol_options = ["RBF", "Splines", "Kriging"]
@@ -263,7 +263,7 @@ class Application(tk.Frame):
             self.smoothing.set(self.prefs["smoothing_option"])
         
         self.smooth_text = tk.Message(self.side_menu, text="Smoothing: {}".format(self.smoothing.get()))
-        self.smooth_text.config(width=200)
+        self.smooth_text.config(width=400)
         self.smooth_text.grid(column=0, row=14, pady=(5,0), padx=15, sticky="ews")
         
         def on_smoothing_slider(smoothing):
@@ -291,7 +291,7 @@ class Application(tk.Frame):
         #---Saving---  
         
         self.saveas_text = tk.Message(self.side_menu, text="\u2464 Saving", font=heading_font)
-        self.saveas_text.config(width=200)
+        self.saveas_text.config(width=400)
         self.saveas_text.grid(column=0, row=17, pady=5, padx=15, sticky="w")
         
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits"]

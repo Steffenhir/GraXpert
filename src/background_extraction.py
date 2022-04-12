@@ -37,7 +37,7 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
     with concurrent.futures.ProcessPoolExecutor(max_workers=3, mp_context=mp.get_context('spawn')) as executor:
 
         if parallel_compute == False:
-            print("interpolate single core")
+            
             for c in range(num_colors):
                 
                 x_sub = np.array(background_points[:,0],dtype=int)
@@ -47,49 +47,48 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
                 background[:,:,c] = interpol(imarray[:,:,c],x_sub,y_sub,(y_size,x_size),interpolation_type,smoothing,downscale_factor)
 
         else:
-            print("interpolate multi core")
+            
             x_sub = np.array(background_points[:,0],dtype=int)
             y_sub = np.array(background_points[:,1],dtype=int)
                 
             futures = []
             for c in range(num_colors):
                 futures.insert(c, executor.submit(interpol, imarray[:,:,c],x_sub,y_sub, (y_size,x_size),interpolation_type,smoothing,downscale_factor))
-                print("submitted interpol {}".format(c))
+
             for c in range(num_colors):
                 background[:,:,c] = futures[c].result()
-                print("received interpol {}".format(c))
+
             
         #Subtract background from image
         mean = np.mean(background)
         parallel_compute = False
         if parallel_compute == False:
-            print("subtract single core")
             imarray[:,:,:] = imarray[:,:,:] - background[:,:,:] + mean
         else:
-            print("subtract multi core")
+
 
             futures = []
             for c in range(num_colors):
                 futures.insert(c, executor.submit(subtract_background, imarray[:,:,c], background[:,:,c], mean))
-                print("submitted subtract_background {}".format(c))
+
             for c in range(num_colors):
                 imarray[:,:,c] = futures[c].result()
-                print("received subtract_background {}".format(c))
+
 
         #clip image
         parallel_compute = False
         if parallel_compute == False:
-            print("clip single core")
+
             imarray[:,:,:] = imarray.clip(min=0.0,max=1.0)
         else:
-            print("clip multi core")
+
             futures = []
             for c in range(num_colors):
                 futures.insert(c, executor.submit(clip, imarray[:,:,c]))
-                print("submitted clip {}".format(c))
+
             for c in range(num_colors):
                 imarray[:,:,c] = futures[c].result()
-                print("received clip {}".format(c))
+
         
     return background
 

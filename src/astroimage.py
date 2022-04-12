@@ -13,7 +13,7 @@ class AstroImage:
         self.img_format = None
         self.fits_header = None
         self.stretch_option = stretch_option
-        self.witdh = 0
+        self.width = 0
         self.height = 0
         
     def set_from_file(self, directory):
@@ -52,6 +52,8 @@ class AstroImage:
     
     def set_from_array(self, array):
         self.img_array = array
+        self.width = self.img_array.shape[1]
+        self.height = self.img_array.shape[0]
         self.update_display()
         return
     

@@ -418,7 +418,7 @@ class Application(tk.Frame):
        self.loading_frame.start()
        
        try:
-           self.images["Processed"].save(dir, self.saveas_type.get(), self.images["Original"].fits_header)
+           self.images["Processed"].save(dir, self.saveas_type.get())
        except:
            messagebox.showerror("Error", "Error occured when saving the image.")
            
@@ -448,7 +448,7 @@ class Application(tk.Frame):
         self.loading_frame.start()
         
         try:
-            self.images["Background"].save(dir, self.saveas_type.get(), self.images["Original"].fits_header)
+            self.images["Background"].save(dir, self.saveas_type.get())
         except:
             messagebox.showerror("Error", "Error occured when saving the image.")
             
@@ -497,6 +497,11 @@ class Application(tk.Frame):
 
         self.images["Processed"] = AstroImage(self.stretch_option_current)
         self.images["Processed"].set_from_array(imarray)       
+        
+        # Update fits header
+        background_mean = np.mean(self.images["Background"].img_array)
+        self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean)
+        self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean)
         
         self.display_type.set("Processed")
         self.redraw_image()

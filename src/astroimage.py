@@ -87,7 +87,14 @@ class AstroImage:
         
         return stretch(self.img_array, bg, sigma)
     
-    def save(self, dir, saveas_type, fits_header=None):
+    def update_fits_header(self, original_header, background_mean):
+        self.fits_header = original_header
+        self.fits_header["BG-EXTR"] = "GraXpert"
+        self.fits_header["CBG-1"] = background_mean
+        self.fits_header["CBG-2"] = background_mean
+        self.fits_header["CBG-3"] = background_mean
+                
+    def save(self, dir, saveas_type):
         if(self.img_array is None):
             return
         
@@ -102,7 +109,7 @@ class AstroImage:
             if(len(image_converted.shape) == 3):
                image_converted = np.moveaxis(image_converted,-1,0)
  
-            hdu = fits.PrimaryHDU(data=image_converted, header=fits_header)
+            hdu = fits.PrimaryHDU(data=image_converted, header=self.fits_header)
             hdul = fits.HDUList([hdu])
             hdul.writeto(dir, output_verify="warn", overwrite=True)
             hdul.close()

@@ -112,8 +112,9 @@ class Application(tk.Frame):
         
         self.loading_frame = LoadingFrame(self.canvas, self.master)
 
-
-        self.master.bind("<Button-1>", self.mouse_down_left)                   # Left Mouse Button
+        self.left_drag = False
+        self.master.bind("<Button-1>", self.mouse_down_left)  
+        self.master.bind("<ButtonRelease-1>", self.mouse_release_left)         # Left Mouse Button
         self.master.bind("<Button-2>", self.mouse_down_right)                  # Middle Mouse Button (Right Mouse Button on macs)
         self.master.bind("<Button-3>", self.mouse_down_right)                  # Right Mouse Button (Middle Mouse Button on macs)
         self.master.bind("<B1-Motion>", self.mouse_move_left)                  # Left Mouse Button Drag
@@ -509,19 +510,42 @@ class Application(tk.Frame):
         self.calculate()
         
     
-    def mouse_down_right(self,event):
+    def mouse_down_left(self,event):
         
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
+        self.__old_event = event
+        self.left_drag = False
+        
+    def mouse_release_left(self,event):
+        
+        if(str(event.widget).split(".")[-1] != "picture"):
+            return
+        
+        if(self.left_drag):
+            return
 
-        if(self.to_image_point(event.x,event.y) != [] and not self.remove_pt(event)):
+        if(self.to_image_point(event.x,event.y) != []):
             point = self.to_image_point(event.x,event.y)
             self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
             self.cmd.execute()
 
         self.redraw_image()
         self.__old_event = event
+        self.left_drag = False
+        
+    def mouse_move_left(self, event):
+        
+        if(str(event.widget).split(".")[-1] != "picture"):
+            return
+        
+        if (self.images[self.display_type.get()] is None):
+            return
+        self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
+        self.redraw_image()
+        self.__old_event = event
+        self.left_drag = True
         
     def remove_pt(self,event):
         
@@ -560,24 +584,17 @@ class Application(tk.Frame):
             return False
             
         
-    def mouse_down_left(self, event):
+    def mouse_down_right(self, event):
         
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
-        self.__old_event = event
-
-
-    def mouse_move_left(self, event):
-        
-        if(str(event.widget).split(".")[-1] != "picture"):
-            return
-        
-        if (self.images[self.display_type.get()] is None):
-            return
-        self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
+        self.remove_pt(event)
         self.redraw_image()
         self.__old_event = event
+
+
+
 
     def mouse_move(self, event):
 
@@ -606,20 +623,14 @@ class Application(tk.Frame):
         if self.images[self.display_type.get()] is None:
             return
 
-        if event.state != 9:
-            if (event.delta > 0 or event.num == 4):
 
-                self.scale_at(6/5, event.x, event.y)
-            else:
+        if (event.delta > 0 or event.num == 4):
 
-                self.scale_at(5/6, event.x, event.y)
+            self.scale_at(6/5, event.x, event.y)
         else:
-            if (event.delta < 0):
 
-                self.rotate_at(-5, event.x, event.y)
-            else:
-
-                self.rotate_at(5, event.x, event.y)     
+            self.scale_at(5/6, event.x, event.y)
+   
         self.redraw_image()
         
 
@@ -651,22 +662,7 @@ class Application(tk.Frame):
         self.scale(scale)
         self.translate(cx, cy)
 
-    def rotate(self, deg:float):
 
-        mat = np.eye(3)
-        mat[0, 0] = math.cos(math.pi * deg / 180)
-        mat[1, 0] = math.sin(math.pi * deg / 180)
-        mat[0, 1] = -mat[1, 0]
-        mat[1, 1] = mat[0, 0]
-
-        self.mat_affine = np.dot(mat, self.mat_affine)
-
-    def rotate_at(self, deg:float, cx:float, cy:float):
-
-
-        self.translate(-cx, -cy)
-        self.rotate(deg)
-        self.translate(cx, cy)
 
     def zoom_fit(self, image_width, image_height):
 

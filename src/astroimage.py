@@ -88,7 +88,11 @@ class AstroImage:
         return stretch(self.img_array, bg, sigma)
     
     def update_fits_header(self, original_header, background_mean):
-        self.fits_header = original_header
+        if(original_header is None):
+            self.fits_header = fits.Header()
+        else:
+            self.fits_header = original_header
+            
         self.fits_header["BG-EXTR"] = "GraXpert"
         self.fits_header["CBG-1"] = background_mean
         self.fits_header["CBG-2"] = background_mean

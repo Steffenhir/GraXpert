@@ -328,6 +328,9 @@ class Application(tk.Frame):
             initialdir = initialdir
             )
         
+        if filename == "":
+            return
+        
         self.loading_frame.start()
         self.data_type = os.path.splitext(filename)[1]
         
@@ -407,6 +410,9 @@ class Application(tk.Frame):
                initialdir = self.prefs["working_dir"]
                )
        
+       if(dir == ""):
+           return
+        
        self.loading_frame.start()
        
        try:
@@ -433,6 +439,9 @@ class Application(tk.Frame):
                 defaultextension = ".fits",
                 initialdir = os.getcwd()
                 )
+        
+        if(dir == ""):
+            return
         
         self.loading_frame.start()
         

@@ -826,6 +826,7 @@ if __name__ == "__main__":
     dpi = primary_monitor.width / (root.winfo_screenmmwidth() / 24.0)
     scaling_factor = dpi/72.0
     root.tk.call('tk', 'scaling', scaling_factor)
+    root.option_add("*TkFDialog*foreground", "black")
     app = Application(master=root)
     root.protocol("WM_DELETE_WINDOW", app.on_closing)
 

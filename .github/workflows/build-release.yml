@@ -133,7 +133,7 @@ jobs:
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: snapshot
+          tag_name: v0.1.0
           files: |
             GraXpert-linux
             GraXpert-win64.exe

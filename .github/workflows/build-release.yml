@@ -19,19 +19,23 @@ jobs:
         run: |
           pip install setuptools wheel pyinstaller && \
           pip install -r requirements.txt
-      - name: create background-extraction-linux bundle
+      - name: create GraXpert-linux bundle
         run: |
           pyinstaller \
+          --icon="./img/Icon.ico" \
+          --add-data="./img/*:./img/" \
+          --add-data="./forest-dark.tcl:./" \
+          --add-data="./forest-dark/*:./forest-dark/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
           --collect-all pykrige \
-          -n background-extraction-linux \
+          -n GraXpert-linux \
           ./src/gui.py
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: background-extraction-linux
-          path: ./dist/background-extraction-linux
+          name: GraXpert-linux
+          path: ./dist/GraXpert-linux
           retention-days: 5
 
   build-windows:
@@ -47,48 +51,67 @@ jobs:
         run: |
           pip install setuptools wheel pyinstaller && `
           pip install -r requirements.txt
-      - name: create background-extraction-win64 bundle
+      - name: create GraXpert-win64 bundle
         run: |
           pyinstaller `
+          --icon="./img/Icon.ico" `
+          --add-data="./img/*;./img/" `
+          --add-data="./forest-dark.tcl;./" `
+          --add-data="./forest-dark/*;./forest-dark/" `
           --onefile `
           --hidden-import='PIL._tkinter_finder' `
           --collect-all pykrige `
-          -n background-extraction-win64 `
+          -n GraXpert-win64 `
           ./src/gui.py
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: background-extraction-win64.exe
-          path: ./dist/background-extraction-win64.exe
+          name: GraXpert-win64.exe
+          path: ./dist/GraXpert-win64.exe
           retention-days: 5
 
   build-macos-x86_64:
-    runs-on: macos-latest
+    runs-on: macos-10.15
     steps:
       - name: setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
+        run: brew install python-tk@3.9
       - name: checkout repository
         uses: actions/checkout@v2
       - name: install dependencies
         run: |
-          pip install setuptools wheel pyinstaller && \
-          pip install -r requirements-macos.txt
-      - name: create background-extraction-macos-x86_64 bundle
+          pip3 install setuptools wheel pyinstaller && \
+          pip3 install -r requirements.txt
+      - name: create GraXpert-macos-x86_64 bundle
         run: |
           pyinstaller \
+          --icon="./img/Icon.ico" \
+          --add-data="./img/*:./img/" \
+          --add-data="./forest-dark.tcl:./" \
+          --add-data="./forest-dark/*:./forest-dark/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
           --collect-all pykrige \
           --target-architecture x86_64 \
-          -n background-extraction-macos-x86_64 \
+          --windowed \
+          -n GraXpert-macos-x86_64 \
           ./src/gui.py
+      - name: install create-dmg
+        run: brew install create-dmg
+      - name: create .dmg
+        run: |
+          create-dmg \
+          --volname "GraXpert-macos-x86_64" \
+          --window-pos 50 50 \
+          --window-size 1920 1080 \
+          --icon-size 100 \
+          --icon "GraXpert-macos-x86_64.app" 200 190 \
+          "dist/GraXpert-macos-x86_64.dmg" \
+          "dist/GraXpert-macos-x86_64.app/"
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: background-extraction-macos-x86_64
-          path: ./dist/background-extraction-macos-x86_64
+          name: GraXpert-macos-x86_64.dmg
+          path: ./dist/GraXpert-macos-x86_64.dmg
           retention-days: 5
 
   release:
@@ -98,20 +121,20 @@ jobs:
       - name: download linux artifacts
         uses: actions/download-artifact@v2
         with:
-          name: background-extraction-linux
+          name: GraXpert-linux
       - name: download windows artifacts
         uses: actions/download-artifact@v2
         with:
-          name: background-extraction-win64.exe
+          name: GraXpert-win64.exe
       - name: download macos artifacts
         uses: actions/download-artifact@v2
         with:
-          name: background-extraction-macos-x86_64
+          name: GraXpert-macos-x86_64.dmg
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v0.0.1
+          tag_name: snapshot
           files: |
-            background-extraction-linux
-            background-extraction-win64.exe
-            background-extraction-macos-x86_64
+            GraXpert-linux
+            GraXpert-win64.exe
+            GraXpert-macos-x86_64.dmg

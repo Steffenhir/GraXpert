@@ -28,7 +28,7 @@ jobs:
           --add-data="./forest-dark/*:./forest-dark/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
-          --collect-all pykrige \
+          --additional-hooks-dir=./releng \
           -n GraXpert-linux \
           ./src/gui.py
       - name: store artifacts
@@ -60,7 +60,7 @@ jobs:
           --add-data="./forest-dark/*;./forest-dark/" `
           --onefile `
           --hidden-import='PIL._tkinter_finder' `
-          --collect-all pykrige `
+          --additional-hooks-dir=./releng `
           -n GraXpert-win64 `
           ./src/gui.py
       - name: store artifacts
@@ -90,7 +90,7 @@ jobs:
           --add-data="./forest-dark/*:./forest-dark/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
-          --collect-all pykrige \
+          --additional-hooks-dir=./releng \
           --target-architecture x86_64 \
           --windowed \
           -n GraXpert-macos-x86_64 \

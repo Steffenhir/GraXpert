@@ -28,7 +28,7 @@ def background_selection(data, num_pts_per_row, tol):
     
     # Create grid
     x_start = int(0.5 * dist)
-    y_start = int(0.5 * dist)
+    y_start = int(0.5 * (data_mono.shape[0] % dist))
     x = x_start
     y = y_start
     

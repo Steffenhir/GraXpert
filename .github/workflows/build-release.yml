@@ -22,11 +22,13 @@ jobs:
       - name: create GraXpert-linux bundle
         run: |
           pyinstaller \
-          --add-data="./img/HELP.png:./img/" \
-          --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
+          --icon="./img/Icon.ico" \
+          --add-data="./img/*:./img/" \
+          --add-data="./forest-dark.tcl:./" \
+          --add-data="./forest-dark/*:./forest-dark/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
-          --collect-all pykrige \
+          --additional-hooks-dir=./releng \
           -n GraXpert-linux \
           ./src/gui.py
       - name: store artifacts
@@ -52,11 +54,13 @@ jobs:
       - name: create GraXpert-win64 bundle
         run: |
           pyinstaller `
-          --add-data="./img/HELP.png;./img/" `
-          --add-data="./img/GraXpert_LOGO_Hauptvariante.png;./img/" `
+          --icon="./img/Icon.ico" `
+          --add-data="./img/*;./img/" `
+          --add-data="./forest-dark.tcl;./" `
+          --add-data="./forest-dark/*;./forest-dark/" `
           --onefile `
           --hidden-import='PIL._tkinter_finder' `
-          --collect-all pykrige `
+          --additional-hooks-dir=./releng `
           -n GraXpert-win64 `
           ./src/gui.py
       - name: store artifacts
@@ -67,34 +71,47 @@ jobs:
           retention-days: 5
 
   build-macos-x86_64:
-    runs-on: macos-latest
+    runs-on: macos-10.15
     steps:
       - name: setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
+        run: brew install python-tk@3.9
       - name: checkout repository
         uses: actions/checkout@v2
       - name: install dependencies
         run: |
-          pip install setuptools wheel pyinstaller && \
-          pip install -r requirements-macos.txt
+          pip3 install setuptools wheel pyinstaller && \
+          pip3 install -r requirements.txt
       - name: create GraXpert-macos-x86_64 bundle
         run: |
           pyinstaller \
-          --add-data="./img/HELP.png:./img/" \
-          --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
+          --icon="./img/Icon.ico" \
+          --add-data="./img/*:./img/" \
+          --add-data="./forest-dark.tcl:./" \
+          --add-data="./forest-dark/*:./forest-dark/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
-          --collect-all pykrige \
+          --additional-hooks-dir=./releng \
           --target-architecture x86_64 \
+          --windowed \
           -n GraXpert-macos-x86_64 \
           ./src/gui.py
+      - name: install create-dmg
+        run: brew install create-dmg
+      - name: create .dmg
+        run: |
+          create-dmg \
+          --volname "GraXpert-macos-x86_64" \
+          --window-pos 50 50 \
+          --window-size 1920 1080 \
+          --icon-size 100 \
+          --icon "GraXpert-macos-x86_64.app" 200 190 \
+          "dist/GraXpert-macos-x86_64.dmg" \
+          "dist/GraXpert-macos-x86_64.app/"
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: GraXpert-macos-x86_64
-          path: ./dist/GraXpert-macos-x86_64
+          name: GraXpert-macos-x86_64.dmg
+          path: ./dist/GraXpert-macos-x86_64.dmg
           retention-days: 5
 
   release:
@@ -112,12 +129,12 @@ jobs:
       - name: download macos artifacts
         uses: actions/download-artifact@v2
         with:
-          name: GraXpert-macos-x86_64
+          name: GraXpert-macos-x86_64.dmg
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v0.0.8
+          tag_name: v0.1.0
           files: |
             GraXpert-linux
             GraXpert-win64.exe
-            GraXpert-macos-x86_64
+            GraXpert-macos-x86_64.dmg

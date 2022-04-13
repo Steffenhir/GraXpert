@@ -36,22 +36,15 @@ class Help_Panel():
         
         self.toggle_button.grid(row=0,column=0)
         
-        #self.advanced_pic = tk.PhotoImage(file=resource_path("advanced.png"))
-        
-        #self.advanced_button = tk.Button(self.button_frame, 
-                         #image=self.advanced_pic,
-                         #font=menu_font,
-                         #bg="black",
-                         #borderwidth=0,
-                         #activebackground="black",
-                         #command=self.advanced)
-        
+        #self.advanced_pic = tk.PhotoImage(file=resource_path("img/advanced.png"))
+        #self.advanced_button = tk.Button(self.button_frame, image=self.advanced_pic, command=self.advanced, borderwidth=0)
         #self.advanced_button.grid(row=1, column=0)
         
         
         self.button_frame.pack(side=tk.RIGHT)
         
         # Help Panel
+        heading_font = "Verdana 18 bold"
         
         self.help_panel = tk.Frame(self.canvas)
         
@@ -62,7 +55,7 @@ class Help_Panel():
         self.label.image= logo
         self.label.grid(column=0, row=0, padx=(40,30), pady=60)
         
-        text = tk.Message(self.help_panel, text="Instructions", width=240)
+        text = tk.Message(self.help_panel, text="Instructions", width=240, font=heading_font)
         text.grid(column=0, row=1, padx=(40,30), pady=(0,5), sticky="w")
         
         text = tk.Message(self.help_panel, text="1. Load your image",width=240)

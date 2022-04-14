@@ -23,15 +23,12 @@ jobs:
         run: |
           pyinstaller \
           --icon="./img/Icon.ico" \
-          --add-data="./img/Icon.ico:./img/" \
-          --add-data="./img/Icon.png:./img/" \
+          --add-data="./img/*:./img/" \
           --add-data="./forest-dark.tcl:./" \
           --add-data="./forest-dark/*:./forest-dark/" \
-          --add-data="./img/HELP.png:./img/" \
-          --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
-          --collect-all pykrige \
+          --additional-hooks-dir=./releng \
           -n GraXpert-linux \
           ./src/gui.py
       - name: store artifacts
@@ -58,15 +55,12 @@ jobs:
         run: |
           pyinstaller `
           --icon="./img/Icon.ico" `
-          --add-data="./img/Icon.ico;./img/" `
-          --add-data="./img/Icon.png;./img/" `
+          --add-data="./img/*;./img/" `
           --add-data="./forest-dark.tcl;./" `
           --add-data="./forest-dark/*;./forest-dark/" `
-          --add-data="./img/HELP.png;./img/" `
-          --add-data="./img/GraXpert_LOGO_Hauptvariante.png;./img/" `
           --onefile `
           --hidden-import='PIL._tkinter_finder' `
-          --collect-all pykrige `
+          --additional-hooks-dir=./releng `
           -n GraXpert-win64 `
           ./src/gui.py
       - name: store artifacts
@@ -91,15 +85,12 @@ jobs:
         run: |
           pyinstaller \
           --icon="./img/Icon.ico" \
-          --add-data="./img/Icon.ico:./img/" \
-          --add-data="./img/Icon.png:./img/" \
+          --add-data="./img/*:./img/" \
           --add-data="./forest-dark.tcl:./" \
           --add-data="./forest-dark/*:./forest-dark/" \
-          --add-data="./img/HELP.png:./img/" \
-          --add-data="./img/GraXpert_LOGO_Hauptvariante.png:./img/" \
           --onefile \
           --hidden-import='PIL._tkinter_finder' \
-          --collect-all pykrige \
+          --additional-hooks-dir=./releng \
           --target-architecture x86_64 \
           --windowed \
           -n GraXpert-macos-x86_64 \
@@ -142,7 +133,7 @@ jobs:
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: snapshot
+          tag_name: v0.1.0
           files: |
             GraXpert-linux
             GraXpert-win64.exe

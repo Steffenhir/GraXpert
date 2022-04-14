@@ -25,6 +25,7 @@ import json
 from appdirs import user_config_dir
 import multiprocessing
 from ui_scaling import get_scaling_factor
+import traceback
 
 
 def resource_path(relative_path):
@@ -339,7 +340,9 @@ class Application(tk.Frame):
             image.set_from_file(filename)
             self.images["Original"] = image
             self.prefs["working_dir"] = os.path.dirname(filename)
-        except:
+        except Exception as e:
+            print("An error occurred while loading your picture")
+            print(traceback.format_exc())
             messagebox.showerror("Error", "An error occurred while loading your picture.")
         
         self.display_type.set("Original")

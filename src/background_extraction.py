@@ -13,8 +13,7 @@ from pykrige.ok import OrdinaryKriging
 from skimage.transform import resize
 from astropy.stats import sigma_clipped_stats
 # from gpr_cuda import GPRegression
-import multiprocessing as mp
-import concurrent
+from parallel_processing import executor
 
 
 def clip(imarray):
@@ -34,60 +33,58 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
     
     parallel_compute = True
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=3, mp_context=mp.get_context('spawn')) as executor:
-
-        if parallel_compute == False:
-            
-            for c in range(num_colors):
-                
-                x_sub = np.array(background_points[:,0],dtype=int)
-                y_sub = np.array(background_points[:,1],dtype=int)
-                subsample = calc_mode_dataset(imarray[:,:,c], x_sub, y_sub, 25)
-
-                background[:,:,c] = interpol(imarray[:,:,c],x_sub,y_sub,(y_size,x_size),interpolation_type,smoothing,downscale_factor)
-
-        else:
+    if parallel_compute == False:
+        
+        for c in range(num_colors):
             
             x_sub = np.array(background_points[:,0],dtype=int)
             y_sub = np.array(background_points[:,1],dtype=int)
-                
-            futures = []
-            for c in range(num_colors):
-                futures.insert(c, executor.submit(interpol, imarray[:,:,c],x_sub,y_sub, (y_size,x_size),interpolation_type,smoothing,downscale_factor))
+            subsample = calc_mode_dataset(imarray[:,:,c], x_sub, y_sub, 25)
 
-            for c in range(num_colors):
-                background[:,:,c] = futures[c].result()
+            background[:,:,c] = interpol(imarray[:,:,c],x_sub,y_sub,(y_size,x_size),interpolation_type,smoothing,downscale_factor)
 
+    else:
+        
+        x_sub = np.array(background_points[:,0],dtype=int)
+        y_sub = np.array(background_points[:,1],dtype=int)
             
-        #Subtract background from image
-        mean = np.mean(background)
-        parallel_compute = False
-        if parallel_compute == False:
-            imarray[:,:,:] = imarray[:,:,:] - background[:,:,:] + mean
-        else:
+        futures = []
+        for c in range(num_colors):
+            futures.insert(c, executor.submit(interpol, imarray[:,:,c],x_sub,y_sub, (y_size,x_size),interpolation_type,smoothing,downscale_factor))
+
+        for c in range(num_colors):
+            background[:,:,c] = futures[c].result()
+
+        
+    #Subtract background from image
+    mean = np.mean(background)
+    parallel_compute = False
+    if parallel_compute == False:
+        imarray[:,:,:] = imarray[:,:,:] - background[:,:,:] + mean
+    else:
 
 
-            futures = []
-            for c in range(num_colors):
-                futures.insert(c, executor.submit(subtract_background, imarray[:,:,c], background[:,:,c], mean))
+        futures = []
+        for c in range(num_colors):
+            futures.insert(c, executor.submit(subtract_background, imarray[:,:,c], background[:,:,c], mean))
 
-            for c in range(num_colors):
-                imarray[:,:,c] = futures[c].result()
+        for c in range(num_colors):
+            imarray[:,:,c] = futures[c].result()
 
 
-        #clip image
-        parallel_compute = False
-        if parallel_compute == False:
+    #clip image
+    parallel_compute = False
+    if parallel_compute == False:
 
-            imarray[:,:,:] = imarray.clip(min=0.0,max=1.0)
-        else:
+        imarray[:,:,:] = imarray.clip(min=0.0,max=1.0)
+    else:
 
-            futures = []
-            for c in range(num_colors):
-                futures.insert(c, executor.submit(clip, imarray[:,:,c]))
+        futures = []
+        for c in range(num_colors):
+            futures.insert(c, executor.submit(clip, imarray[:,:,c]))
 
-            for c in range(num_colors):
-                imarray[:,:,c] = futures[c].result()
+        for c in range(num_colors):
+            imarray[:,:,c] = futures[c].result()
 
         
     return background

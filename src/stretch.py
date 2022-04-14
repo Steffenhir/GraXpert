@@ -5,62 +5,72 @@ Created on Mon Feb 14 16:44:29 2022
 @author: steff
 """
 
+import traceback
 import numpy as np
 from astropy.visualization import AsinhStretch
 from scipy.optimize import root
-import concurrent
-import multiprocessing as mp
+from concurrent.futures import wait
+from multiprocessing import shared_memory
+from parallel_processing import executor
 
-def stretch_channel(channel, bg, sigma):
+
+
+def stretch_channel(shm_name, c, bg, sigma, shape, dtype):
+
+    existing_shm = shared_memory.SharedMemory(name=shm_name)
+    channels = np.ndarray(shape, dtype, buffer=existing_shm.buf) #[:,:,channel_idx]
+    channel = channels[:,:,c]
     
-    indx_clip = np.logical_and(channel < 1.0, channel > 0.0)
-    median = np.median(channel[indx_clip])
-    mad = np.median(np.abs(channel[indx_clip]-median))
+    try:
+        indx_clip = np.logical_and(channel < 1.0, channel > 0.0)
+        median = np.median(channel[indx_clip])
+        mad = np.median(np.abs(channel[indx_clip]-median))
 
+        shadow_clipping = np.clip(median - sigma*mad, 0, 1.0)
+        highlight_clipping = 1.0
 
-    shadow_clipping = np.clip(median - sigma*mad, 0, 1.0)
-    highlight_clipping = 1.0
+        midtone = MTF((median-shadow_clipping)/(highlight_clipping - shadow_clipping), bg)
 
-    midtone = MTF((median-shadow_clipping)/(highlight_clipping - shadow_clipping), bg)
+        channel[channel <= shadow_clipping] = 0.0
+        channel[channel >= highlight_clipping] = 1.0
 
-    channel[channel <= shadow_clipping] = 0.0
-    channel[channel >= highlight_clipping] = 1.0
+        indx_inside = np.logical_and(channel > shadow_clipping, channel < highlight_clipping)
 
-    indx_inside = np.logical_and(channel > shadow_clipping, channel < highlight_clipping)
+        channel[indx_inside] = (channel[indx_inside]-shadow_clipping)/(highlight_clipping - shadow_clipping)
 
-    channel[indx_inside] = (channel[indx_inside]-shadow_clipping)/(highlight_clipping - shadow_clipping)
+        channel = MTF(channel, midtone)
 
-    channel = MTF(channel, midtone)
-
-    return channel
+    except Exception as e:
+        print("An error occured while stretching a color channel")
+        print(traceback.format_exc(e))
+    finally:
+        existing_shm.close()
 
 def stretch(data, bg, sigma):
 
-    copy = np.copy(data)
-    #copy = data
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=3, mp_context=mp.get_context('spawn')) as executor:
+    shm = shared_memory.SharedMemory(create=True, size=data.nbytes, name="shm_stretch")
+    copy = np.ndarray(data.shape, dtype=data.dtype, buffer=shm.buf)
+    np.copyto(copy, data)
 
-        parallel_compute = False
+    futures = []
+    for c in range(copy.shape[-1]):
+        futures.insert(c, executor.submit(stretch_channel, shm.name, c, bg, sigma, copy.shape, copy.dtype))
+    wait(futures)
 
-        if parallel_compute == False:
-            for c in range(copy.shape[-1]):
-                copy[:,:,c] = stretch_channel(copy[:,:,c], bg, sigma)
-        else:
-            futures = []
-            for c in range(copy.shape[-1]):
-                futures.insert(c, executor.submit(stretch_channel, copy[:,:,c], bg, sigma))
-                print("submitted stretch_channel {}".format(c))
-            for c in range(copy.shape[-1]):
-                copy[:,:,c] = futures[c].result()
-                print("received stretch_channel {}".format(c))
+    copy = np.copy(copy)
+
+    shm.close()
+    shm.unlink()
 
     return copy
     
 
 def MTF(data, midtone):
-    
-    data = (midtone-1)*data/((2*midtone-1)*data-midtone)
+
+    if type(data) is np.ndarray:
+        data[:] = (midtone-1)*data[:]/((2*midtone-1)*data[:]-midtone)
+    else:
+        data = (midtone-1) * data / ((2*midtone-1) * data - midtone)
 
     return data
 

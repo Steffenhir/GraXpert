@@ -1,5 +1,6 @@
 import tkinter as tk
 import tkinter.ttk as ttk
+from ui_scaling import get_scaling_factor
 
 
 class Tooltip:
@@ -41,7 +42,7 @@ class Tooltip:
                  wraplength=250):
 
         self.waittime = waittime  # in miliseconds, originally 500
-        self.wraplength = wraplength  # in pixels, originally 180
+        self.wraplength = wraplength * get_scaling_factor(widget.master.master)  # in pixels, originally 180
         self.widget = widget
         self.text = text
         self.widget.bind("<Enter>", self.onEnter)
@@ -151,7 +152,7 @@ class Tooltip:
 
 load_text = ("Load your image you would like to correct. \n"
              "\n"
-             "Supported formats: .tiff, .fits \n"
+             "Supported formats: .tiff, .fits, .png, .jpg \n"
              "Supported bitdepths: 16 bit integer, 32 bit float")
 
 stretch_text = ("Automatically stretch the picture to make gradients more visible. "

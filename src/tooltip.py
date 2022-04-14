@@ -160,7 +160,7 @@ stretch_text = ("Automatically stretch the picture to make gradients more visibl
 
 reset_text = ("Reset all the chosen background points.")
 
-bg_select_text = ("Creates a grid with the specified amount of points per row"
+bg_select_text = ("Creates a grid with the specified amount of points per row "
                   "and rejects points below a threshold defined by the tolerance.")
 
 bg_tol_text = ("The tolerance adjusts the threshold for rejection of background points " 
@@ -181,8 +181,8 @@ calculate_text = ("Use the specified interpolation method to calculate a backgro
 
 saveas_text = ("Choose the bitdepth of the saved pictures. The default value "
                "is automatically set to be equal to the input picture.")
-save_bg_text = ("Save the background model as a .tiff")
-save_pic_text = ("Save your picture as a .tiff")
+save_bg_text = ("Save the background model")
+save_pic_text = ("Save the processed picture")
 
 display_text = ("Switch display between \n"
                 "\n"

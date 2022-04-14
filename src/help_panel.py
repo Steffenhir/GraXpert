@@ -82,7 +82,7 @@ class Help_Panel():
 
         text = tk.Message(
             self.help_panel,
-            text= "3.\nSelect background points\n  a) manually with right click\n  b) automatically via grid (grid selection)"+
+            text= "3.\nSelect background points\n  a) manually with left click\n  b) automatically via grid (grid selection)"+
                 "\nYou can remove already set points by right clicking on them.", 
             width=240 * get_scaling_factor(master)
         )

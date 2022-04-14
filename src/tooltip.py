@@ -179,8 +179,9 @@ smoothing_text = ("Adjust the smoothing parameter for the interpolation method. 
 calculate_text = ("Use the specified interpolation method to calculate a background model "
                   "and subtract it from the picture. This may take a while.")
 
-saveas_text = ("Choose the bitdepth of the saved pictures. The default value "
-               "is automatically set to be equal to the input picture.")
+saveas_text = ("Choose the bitdepth of the saved pictures and the file format. "
+               "If you are working with a .fits image the fits header will "
+               "be preserved.")
 save_bg_text = ("Save the background model")
 save_pic_text = ("Save the processed picture")
 

@@ -88,7 +88,7 @@ class Help_Panel():
         )
         text.grid(column=0, row=4, padx=(40,30), pady=5, sticky="w")
         
-        text = tk.Message(self.help_panel, text="4.\nClick on Calculate to get the processed image.", width=240 * get_scaling_factor(master))
+        text = tk.Message(self.help_panel, text="4.\nClick on Calculate Background to get the processed image.", width=240 * get_scaling_factor(master))
         text.grid(column=0, row=5, padx=(40,30), pady=5, sticky="w")
         
         text = tk.Message(self.help_panel, text="5.\nSave the processed image.", width=240 * get_scaling_factor(master))

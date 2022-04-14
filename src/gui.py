@@ -4,14 +4,12 @@ Created on Sun Feb 13 10:05:08 2022
 @author: steff
 """
 
-# macos
 import tkinter as tk
 import hdpitkinter as hdpitk
 from tkinter import ttk
 from tkinter import filedialog
 from tkinter import messagebox
-from PIL import Image, ImageTk 
-import math                   
+from PIL import Image, ImageTk               
 import numpy as np            
 import os
 import sys
@@ -25,8 +23,8 @@ from help_panel import Help_Panel
 from astroimage import AstroImage
 import json
 from appdirs import user_config_dir
-from screeninfo import get_monitors
 import multiprocessing
+from ui_scaling import get_scaling_factor
 
 
 def resource_path(relative_path):
@@ -113,7 +111,7 @@ class Application(tk.Frame):
         
         self.loading_frame = LoadingFrame(self.canvas, self.master)
 
-        self.left_drag = False
+        self.left_drag_timer = -1
         self.master.bind("<Button-1>", self.mouse_down_left)  
         self.master.bind("<ButtonRelease-1>", self.mouse_release_left)         # Left Mouse Button
         self.master.bind("<Button-2>", self.mouse_down_right)                  # Middle Mouse Button (Right Mouse Button on macs)
@@ -183,7 +181,7 @@ class Application(tk.Frame):
             self.bg_pts.set(self.prefs["bg_pts_option"])
         
         self.bg_selection_text = tk.Message(self.side_menu, text="Points per row: {}".format(self.bg_pts.get()))
-        self.bg_selection_text.config(width=500)
+        self.bg_selection_text.config(width=500 * get_scaling_factor(self.master))
         self.bg_selection_text.grid(column=0, row=5, pady=(5,0), padx=15, sticky="ews")
         
         def on_bg_pts_slider(bgs_points):
@@ -199,7 +197,7 @@ class Application(tk.Frame):
             command=on_bg_pts_slider,
             length=150
             )
-        self.bg_pts_slider.grid(column=0, row=6, pady=(0,0), padx=15)
+        self.bg_pts_slider.grid(column=0, row=6, pady=(0,0), padx=15, sticky="ew")
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
         
         self.bg_tol = tk.DoubleVar()
@@ -224,7 +222,7 @@ class Application(tk.Frame):
             command=on_bg_tol_slider,
             length=150
             )
-        self.bg_tol_slider.grid(column=0, row=8, pady=(0,0), padx=15)
+        self.bg_tol_slider.grid(column=0, row=8, pady=(0,0), padx=15, sticky="ew")
         tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
         self.bg_selection_button = ttk.Button(self.side_menu, 
@@ -280,7 +278,7 @@ class Application(tk.Frame):
             command=on_smoothing_slider,
             length=150
             )
-        self.smoothing_slider.grid(column=0, row=15, pady=(0,5), padx=15)
+        self.smoothing_slider.grid(column=0, row=15, pady=(0,5), padx=15, sticky="ew")
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
         self.calculate_button = ttk.Button(self.side_menu, 
@@ -522,24 +520,22 @@ class Application(tk.Frame):
             return
         
         self.__old_event = event
-        self.left_drag = False
+
         
     def mouse_release_left(self,event):
         
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
-        if(self.left_drag):
-            return
 
-        if(self.to_image_point(event.x,event.y) != []):
+        if(self.to_image_point(event.x,event.y) != [] and (event.time - self.left_drag_timer < 100 or self.left_drag_timer == -1)):
             point = self.to_image_point(event.x,event.y)
             self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
             self.cmd.execute()
 
-        self.redraw_image()
+        self.redraw_points()
         self.__old_event = event
-        self.left_drag = False
+        self.left_drag_timer = -1
         
     def mouse_move_left(self, event):
         
@@ -548,10 +544,17 @@ class Application(tk.Frame):
         
         if (self.images[self.display_type.get()] is None):
             return
-        self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
-        self.redraw_image()
+        
+        if(self.left_drag_timer == -1):
+            self.left_drag_timer = event.time
+        
+        if(event.time - self.left_drag_timer >= 100):
+            self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
+            self.redraw_image()
+        
         self.__old_event = event
-        self.left_drag = True
+        return        
+
         
     def remove_pt(self,event):
         
@@ -596,7 +599,7 @@ class Application(tk.Frame):
             return
         
         self.remove_pt(event)
-        self.redraw_image()
+        self.redraw_points()
         self.__old_event = event
 
 
@@ -755,9 +758,11 @@ class Application(tk.Frame):
                 )
 
         self.image = im
-        
-        self.canvas.delete("rectangle")
-        
+        self.redraw_points()
+        return
+    
+    def redraw_points(self):
+        self.canvas.delete("rectangle")      
         rectsize=25
         background_points = self.cmd.app_state["background_points"]
 
@@ -820,12 +825,8 @@ if __name__ == "__main__":
     style = ttk.Style(root)
     style.theme_use("forest-dark")
     root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
-
-    monitors = get_monitors()
-    primary_monitor = next(mon for mon in monitors if mon.is_primary)
-    dpi = primary_monitor.width / (root.winfo_screenmmwidth() / 24.0)
-    scaling_factor = dpi/72.0
-    root.tk.call('tk', 'scaling', scaling_factor)
+    scaling = get_scaling_factor(root)
+    root.tk.call('tk', 'scaling', scaling)
     root.option_add("*TkFDialog*foreground", "black")
     app = Application(master=root)
     root.protocol("WM_DELETE_WINDOW", app.on_closing)

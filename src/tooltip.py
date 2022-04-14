@@ -1,5 +1,6 @@
 import tkinter as tk
 import tkinter.ttk as ttk
+from ui_scaling import get_scaling_factor
 
 
 class Tooltip:
@@ -41,7 +42,7 @@ class Tooltip:
                  wraplength=250):
 
         self.waittime = waittime  # in miliseconds, originally 500
-        self.wraplength = wraplength  # in pixels, originally 180
+        self.wraplength = wraplength * get_scaling_factor(widget.master.master)  # in pixels, originally 180
         self.widget = widget
         self.text = text
         self.widget.bind("<Enter>", self.onEnter)
@@ -151,7 +152,7 @@ class Tooltip:
 
 load_text = ("Load your image you would like to correct. \n"
              "\n"
-             "Supported formats: .tiff, .fits \n"
+             "Supported formats: .tiff, .fits, .png, .jpg \n"
              "Supported bitdepths: 16 bit integer, 32 bit float")
 
 stretch_text = ("Automatically stretch the picture to make gradients more visible. "
@@ -159,7 +160,7 @@ stretch_text = ("Automatically stretch the picture to make gradients more visibl
 
 reset_text = ("Reset all the chosen background points.")
 
-bg_select_text = ("Creates a grid with the specified amount of points per row"
+bg_select_text = ("Creates a grid with the specified amount of points per row "
                   "and rejects points below a threshold defined by the tolerance.")
 
 bg_tol_text = ("The tolerance adjusts the threshold for rejection of background points " 
@@ -178,10 +179,11 @@ smoothing_text = ("Adjust the smoothing parameter for the interpolation method. 
 calculate_text = ("Use the specified interpolation method to calculate a background model "
                   "and subtract it from the picture. This may take a while.")
 
-saveas_text = ("Choose the bitdepth of the saved pictures. The default value "
-               "is automatically set to be equal to the input picture.")
-save_bg_text = ("Save the background model as a .tiff")
-save_pic_text = ("Save your picture as a .tiff")
+saveas_text = ("Choose the bitdepth of the saved pictures and the file format. "
+               "If you are working with a .fits image the fits header will "
+               "be preserved.")
+save_bg_text = ("Save the background model")
+save_pic_text = ("Save the processed picture")
 
 display_text = ("Switch display between \n"
                 "\n"

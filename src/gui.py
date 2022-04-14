@@ -111,7 +111,7 @@ class Application(tk.Frame):
         
         self.loading_frame = LoadingFrame(self.canvas, self.master)
 
-        self.left_drag = False
+        self.left_drag_counter = 0
         self.master.bind("<Button-1>", self.mouse_down_left)  
         self.master.bind("<ButtonRelease-1>", self.mouse_release_left)         # Left Mouse Button
         self.master.bind("<Button-2>", self.mouse_down_right)                  # Middle Mouse Button (Right Mouse Button on macs)
@@ -520,14 +520,14 @@ class Application(tk.Frame):
             return
         
         self.__old_event = event
-        self.left_drag = False
+        self.left_drag_counter = 0
         
     def mouse_release_left(self,event):
         
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
-        if(self.left_drag):
+        if(self.left_drag_counter >= 70):
             return
 
         if(self.to_image_point(event.x,event.y) != []):
@@ -535,9 +535,9 @@ class Application(tk.Frame):
             self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
             self.cmd.execute()
 
-        self.redraw_image()
+        self.redraw_points()
         self.__old_event = event
-        self.left_drag = False
+        self.left_drag_counter = 0
         
     def mouse_move_left(self, event):
         
@@ -546,10 +546,12 @@ class Application(tk.Frame):
         
         if (self.images[self.display_type.get()] is None):
             return
-        self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
-        self.redraw_image()
-        self.__old_event = event
-        self.left_drag = True
+        
+        if(self.left_drag_counter >= 70):
+            self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
+            self.redraw_image()
+        self.__old_event = event         
+        self.left_drag_counter += 1
         
     def remove_pt(self,event):
         
@@ -594,7 +596,7 @@ class Application(tk.Frame):
             return
         
         self.remove_pt(event)
-        self.redraw_image()
+        self.redraw_points()
         self.__old_event = event
 
 
@@ -753,9 +755,11 @@ class Application(tk.Frame):
                 )
 
         self.image = im
-        
-        self.canvas.delete("rectangle")
-        
+        self.redraw_points()
+        return
+    
+    def redraw_points(self):
+        self.canvas.delete("rectangle")      
         rectsize=25
         background_points = self.cmd.app_state["background_points"]
 

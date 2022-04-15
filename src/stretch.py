@@ -48,7 +48,7 @@ def stretch_channel(shm_name, c, bg, sigma, shape, dtype):
 
 def stretch(data, bg, sigma):
 
-    shm = shared_memory.SharedMemory(create=True, size=data.nbytes, name="shm_stretch")
+    shm = shared_memory.SharedMemory(create=True, size=data.nbytes)
     copy = np.ndarray(data.shape, dtype=data.dtype, buffer=shm.buf)
     np.copyto(copy, data)
 

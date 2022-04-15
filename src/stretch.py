@@ -63,6 +63,35 @@ def stretch(data, bg, sigma):
     shm.unlink()
 
     return copy
+
+def stretch_all(datas, stretch_params):
+
+    bg = stretch_params[0]
+    sigma = stretch_params[1]
+    futures = []
+    shms = []
+    copies = []
+    result = []
+
+    for data in datas:
+        shm = shared_memory.SharedMemory(create=True, size=data.nbytes)
+        copy = np.ndarray(data.shape, dtype=data.dtype, buffer=shm.buf)
+        np.copyto(copy, data)
+        shms.append(shm)
+        copies.append(copy)
+        for c in range(copy.shape[-1]):
+            futures.insert(c, executor.submit(stretch_channel, shm.name, c, bg, sigma, copy.shape, copy.dtype))
+    wait(futures)
+
+    for copy in copies:
+        copy = np.copy(copy)
+        result.append(copy)
+    
+    for shm in shms:
+        shm.close()
+        shm.unlink()
+    
+    return result
     
 
 def MTF(data, midtone):

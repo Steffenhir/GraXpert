@@ -17,6 +17,7 @@ from app_state import INITIAL_STATE
 import background_extraction
 from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
 from preferences import DEFAULT_PREFS, Prefs, app_state_2_prefs, merge_json, prefs_2_app_state
+from stretch import stretch, stretch_all
 import tooltip
 from loadingframe import LoadingFrame
 from help_panel import Help_Panel
@@ -385,9 +386,18 @@ class Application(tk.Frame):
 
     def change_stretch(self,event=None):
         self.loading_frame.start()
-        for key, img in self.images.items():
+        
+        all_images = []
+        stretches = []
+        for img in self.images.values():    
             if(img is not None):
-                img.update_display()
+                all_images.append(img.img_array)
+        if len(all_images) > 0:
+            stretch_params = self.images["Original"].get_stretch()
+            stretches = stretch_all(all_images, stretch_params)
+        for idx, img in enumerate(self.images.values()):
+            if(img is not None):
+                img.update_display_from_array(stretches[idx])
         self.loading_frame.end()
         
         self.redraw_image()
@@ -465,6 +475,10 @@ class Application(tk.Frame):
     
     def calculate(self):
 
+        if self.images["Original"] is None:
+            messagebox.showerror("Error", "Please load your picture first.")
+            return
+
         background_points = self.cmd.app_state["background_points"]
         
         #Error messages if not enough points
@@ -497,18 +511,23 @@ class Application(tk.Frame):
             ))
 
         self.images["Processed"] = AstroImage(self.stretch_option_current)
-        self.images["Processed"].set_from_array(imarray)       
+        self.images["Processed"].set_from_array(imarray)
         
         # Update fits header
         background_mean = np.mean(self.images["Background"].img_array)
         self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean)
         self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean)
+
+        all_images = [self.images["Original"].img_array, self.images["Processed"].img_array, self.images["Background"].img_array]
+        stretches = stretch_all(all_images, self.images["Original"].get_stretch())
+        self.images["Original"].update_display_from_array(stretches[0])
+        self.images["Processed"].update_display_from_array(stretches[1])
+        self.images["Background"].update_display_from_array(stretches[2])
         
         self.display_type.set("Processed")
         self.redraw_image()
         
         self.loading_frame.end()
-
 
         return
     

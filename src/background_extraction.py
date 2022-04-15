@@ -32,7 +32,7 @@ def extract_background(imarray, background_points,interpolation_type,smoothing,d
     
     background = np.zeros((y_size,x_size,num_colors), dtype=np.float32)
     
-    parallel_compute = True
+    parallel_compute = False
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=3, mp_context=mp.get_context('spawn')) as executor:
 
@@ -129,7 +129,7 @@ def interpol(imarray,x_sub,y_sub,shape,kind,smoothing,downscale_factor):
     
     if(kind=='RBF'):
         points_stacked = np.stack([x_sub,y_sub],-1)
-        interp = RadialBasisInterpolation(points_stacked,subsample,kernel="thin_plate",smooth=smoothing*linalg.norm(subsample)/np.sqrt(len(subsample)))   
+        interp = RadialBasisInterpolation(points_stacked,subsample,kernel="thin_plate",smooth=smoothing*0.02)   
     
         # Create background from interpolation
         x_new = np.arange(0,shape_scaled[1],1)

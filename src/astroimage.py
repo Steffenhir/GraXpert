@@ -110,8 +110,10 @@ class AstroImage:
         if(saveas_type == "16 bit Tiff" or saveas_type == "32 bit Tiff"):
             io.imsave(dir, image_converted)
         else:
-            if(len(image_converted.shape) == 3):
+            if(image_converted.shape[-1] == 3):
                image_converted = np.moveaxis(image_converted,-1,0)
+            else:
+                image_converted = image_converted[:,:,0]
  
             hdu = fits.PrimaryHDU(data=image_converted, header=self.fits_header)
             hdul = fits.HDUList([hdu])

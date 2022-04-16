@@ -15,7 +15,7 @@ import os
 import sys
 from app_state import INITIAL_STATE
 import background_extraction
-from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
+from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, MOVE_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
 from preferences import DEFAULT_PREFS, Prefs, app_state_2_prefs, merge_json, prefs_2_app_state
 from stretch import stretch, stretch_all
 import tooltip
@@ -113,7 +113,11 @@ class Application(tk.Frame):
         
         self.loading_frame = LoadingFrame(self.canvas, self.master)
 
-        self.left_drag_timer = -1
+        self.left_drag_timer = -1 
+        self.clicked_inside_pt = False
+        self.clicked_inside_pt_idx = 0
+        self.clicked_inside_pt_coord = None
+        
         self.master.bind("<Button-1>", self.mouse_down_left)  
         self.master.bind("<ButtonRelease-1>", self.mouse_release_left)         # Left Mouse Button
         self.master.bind("<Button-2>", self.mouse_down_right)                  # Middle Mouse Button (Right Mouse Button on macs)
@@ -541,6 +545,35 @@ class Application(tk.Frame):
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
+        self.clicked_inside_pt = False
+        
+        if len(self.cmd.app_state["background_points"]) != 0:
+            point_im = self.to_image_point(event.x,event.y)
+            
+            eventx_im = point_im[0]
+            eventy_im = point_im[1]
+            
+            background_points = self.cmd.app_state["background_points"]
+            
+            min_idx = -1
+            min_dist = -1
+            
+            for i in range(len(background_points)):
+                x_im = background_points[i][0]
+                y_im = background_points[i][1]
+                            
+                dist = np.max(np.abs([x_im-eventx_im, y_im-eventy_im]))
+                
+                if(min_idx == -1 or dist < min_dist):
+                    min_dist = dist
+                    min_idx = i
+            
+            
+            if(min_idx != -1 and min_dist <= 25):
+                self.clicked_inside_pt = True
+                self.clicked_inside_pt_idx = min_idx
+                self.clicked_inside_pt_coord = self.cmd.app_state["background_points"][min_idx]
+                
         self.__old_event = event
 
         
@@ -549,11 +582,18 @@ class Application(tk.Frame):
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
-
-        if(self.to_image_point(event.x,event.y) != [] and (event.time - self.left_drag_timer < 100 or self.left_drag_timer == -1)):
+        if self.clicked_inside_pt:            
+            new_point = self.to_image_point(event.x,event.y)
+            self.cmd.app_state["background_points"][self.clicked_inside_pt_idx] = self.clicked_inside_pt_coord
+            self.cmd = Command(MOVE_POINT_HANDLER, prev=self.cmd, new_point=new_point, idx=self.clicked_inside_pt_idx)
+            self.cmd.execute()
+               
+            
+        elif(self.to_image_point(event.x,event.y) != [] and (event.time - self.left_drag_timer < 100 or self.left_drag_timer == -1)):
             point = self.to_image_point(event.x,event.y)
             self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
             self.cmd.execute()
+            
 
         self.redraw_points()
         self.__old_event = event
@@ -570,9 +610,19 @@ class Application(tk.Frame):
         if(self.left_drag_timer == -1):
             self.left_drag_timer = event.time
         
-        if(event.time - self.left_drag_timer >= 100):
-            self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
-            self.redraw_image()
+        if self.clicked_inside_pt:         
+            new_point = self.to_image_point(event.x, event.y)
+            if len(new_point) != 0:
+                self.cmd.app_state["background_points"][self.clicked_inside_pt_idx] = new_point
+                
+            self.redraw_points()
+            
+        else:
+            if(event.time - self.left_drag_timer >= 100):            
+                self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
+                self.redraw_image()
+        
+        
         
         self.__old_event = event
         return        
@@ -584,7 +634,7 @@ class Application(tk.Frame):
             return False
             
         point_im = self.to_image_point(event.x,event.y)
-        if point_im.size == []:
+        if len(point_im) == 0:
             return False
             
         eventx_im = point_im[0]
@@ -805,13 +855,13 @@ class Application(tk.Frame):
         if not type(self.cmd.handler) is InitHandler:
             undo = self.cmd.undo()
             self.cmd = undo
-            self.redraw_image()
+            self.redraw_points()
     
     def redo(self, event):
         if self.cmd.next is not None:
             redo = self.cmd.redo()
             self.cmd = redo
-            self.redraw_image()
+            self.redraw_points()
             
     def switch_display(self, event):
         if(self.images["Processed"] is None and self.display_type.get() != "Original"):

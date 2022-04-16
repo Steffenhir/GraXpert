@@ -100,7 +100,7 @@ def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind
             # Create background from interpolation
             x_new = np.arange(0,shape_scaled[1],1)
             y_new = np.arange(0,shape_scaled[0],1)
-        
+   
             xx, yy = np.meshgrid(x_new,y_new)
             points_new_stacked = np.stack([xx.ravel(),yy.ravel()],-1)
         

@@ -615,7 +615,16 @@ class Application(tk.Frame):
         
         image_point = self.to_image_point(event.x, event.y)
         if image_point != []:
-            self.label_image_pixel["text"] = "x=" + f"{image_point[0]:.2f}" + ",y=" + f"{image_point[1]:.2f}"
+            text = "x=" + f"{image_point[0]:.2f}" + ",y=" + f"{image_point[1]:.2f}  "
+            if(self.images[self.display_type.get()].img_array.shape[2] == 3):
+                R, G, B = self.images[self.display_type.get()].get_local_median(image_point)            
+                text = text + "RGB = (" + f"{R:.4f}," + f"{G:.4f}," + f"{B:.4f})"
+            
+            if(self.images[self.display_type.get()].img_array.shape[2] == 1):
+                L = self.images[self.display_type.get()].get_local_median(image_point)
+                text = text + "L= " + f"{L:.4f}"
+            
+            self.label_image_pixel["text"] = text
         else:
             self.label_image_pixel["text"] = ("(--, --)")
 

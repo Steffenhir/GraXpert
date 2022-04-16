@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from astropy.io import fits
+from astropy.stats import sigma_clipped_stats
 from skimage import io, img_as_float32, exposure
 from skimage.util import img_as_ubyte, img_as_uint
 from PIL import Image
@@ -120,3 +121,24 @@ class AstroImage:
             
         return
         
+    def get_local_median(self, img_point):
+        sample_radius = 25
+        y1 = int(np.amax([img_point[1] - sample_radius, 0]))
+        y2 = int(np.amin([img_point[1] + sample_radius, self.width]))
+        x1 = int(np.amax([img_point[0] - sample_radius, 0]))
+        x2 = int(np.amin([img_point[0] + sample_radius, self.height]))
+        
+        
+        if self.img_array.shape[-1] == 3:
+            R = sigma_clipped_stats(data=self.img_array[x1:x2, y1:y2, 0], cenfunc="median", stdfunc="std", grow=4)[1]
+            G = sigma_clipped_stats(data=self.img_array[x1:x2, y1:y2, 1], cenfunc="median", stdfunc="std", grow=4)[1]
+            B = sigma_clipped_stats(data=self.img_array[x1:x2, y1:y2, 2], cenfunc="median", stdfunc="std", grow=4)[1]
+            
+            return [R,G,B]
+        
+        if self.img_array.shape[-1] == 1:
+            L = sigma_clipped_stats(data=self.img_array[x1:x2, y1:y2, 0], cenfunc="median", stdfunc="std", grow=4)[1]
+            
+            return L
+        
+            

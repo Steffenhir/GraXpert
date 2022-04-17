@@ -139,7 +139,7 @@ class Application(tk.Frame):
         
         
         #Side menu
-        scal = get_scaling_factor(self.master)
+        scal = get_scaling_factor(self.master)*0.8
         self.side_menu = tk.Frame(self.master, borderwidth=0)
         self.side_menu.pack(side=tk.TOP)
         

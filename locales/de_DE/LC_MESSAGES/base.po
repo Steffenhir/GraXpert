@@ -65,11 +65,11 @@ msgstr " Speichern"
 
 #: src/gui.py:308
 msgid "Save Background"
-msgstr "Speichere Hintergrundmodell"
+msgstr "Speichere Hintergrund"
 
 #: src/gui.py:315
 msgid "Save Processed"
-msgstr "Speichere bearbeitetes Bild"
+msgstr "Speichere Bild"
 
 #: src/gui.py:345
 msgid "An error occurred while loading your picture."

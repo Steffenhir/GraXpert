@@ -16,6 +16,10 @@ def resource_path(relative_path):
 
 lang = None
 lang, enc = locale.getdefaultlocale()
+
+if lang.startswith("de"):
+    lang = "de_DE"
+
 lang = gettext.translation('base', localedir=resource_path("locales"), languages=[lang], fallback=True)
 lang.install()
 

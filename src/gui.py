@@ -531,7 +531,7 @@ class Application(tk.Frame):
             return
         
 
-        if(self.to_image_point(event.x,event.y) != [] and (event.time - self.left_drag_timer < 100 or self.left_drag_timer == -1)):
+        if(len(self.to_image_point(event.x,event.y)) != 0 and (event.time - self.left_drag_timer < 100 or self.left_drag_timer == -1)):
             point = self.to_image_point(event.x,event.y)
             self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
             self.cmd.execute()
@@ -614,7 +614,7 @@ class Application(tk.Frame):
             return
         
         image_point = self.to_image_point(event.x, event.y)
-        if image_point != []:
+        if len(image_point) != 0:
             text = "x=" + f"{image_point[0]:.2f}" + ",y=" + f"{image_point[1]:.2f}  "
             if(self.images[self.display_type.get()].img_array.shape[2] == 3):
                 R, G, B = self.images[self.display_type.get()].get_local_median(image_point)            

@@ -22,12 +22,7 @@ jobs:
       - name: create GraXpert-linux bundle
         run: |
           pyinstaller \
-          ./GraXpert.spec \
-          --onefile \
-          --hidden-import='PIL._tkinter_finder' \
-          --additional-hooks-dir=./releng \
-          -n GraXpert-linux \
-          ./src/gui.py
+          ./GraXpert-linux.spec \
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -51,12 +46,7 @@ jobs:
       - name: create GraXpert-win64 bundle
         run: |
           pyinstaller `
-          ./GraXpert.spec \ `
-          --onefile `
-          --hidden-import='PIL._tkinter_finder' `
-          --additional-hooks-dir=./releng `
-          -n GraXpert-win64 `
-          ./src/gui.py
+          ./GraXpert-win64.spec `
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -78,14 +68,7 @@ jobs:
       - name: create GraXpert-macos-x86_64 bundle
         run: |
           pyinstaller \
-          ./GraXpert.spec \
-          --onefile \
-          --hidden-import='PIL._tkinter_finder' \
-          --additional-hooks-dir=./releng \
-          --target-architecture x86_64 \
-          --windowed \
-          -n GraXpert-macos-x86_64 \
-          ./src/gui.py
+          ./GraXpert-macos-x86_64.spec \
       - name: install create-dmg
         run: brew install create-dmg
       - name: create .dmg

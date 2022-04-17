@@ -4,7 +4,7 @@
 block_cipher = None
 
 
-a = Analysis(['src\\gui.py'],
+a = Analysis(['./src/gui.py'],
              pathex=[],
              binaries=[],
              datas=[('./img/*', './img/'), ('./forest-dark.tcl', './'), ('./forest-dark/*', './forest-dark/')],
@@ -23,11 +23,11 @@ pyz = PYZ(a.pure, a.zipped_data,
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
-          Tree('locales', prefix='locales\\'),
+          Tree('locales', prefix='locales/'),
           a.zipfiles,
           a.datas,  
           [],
-          name='GraXpert-win64',
+          name='GraXpert-macos-x86_64',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
@@ -36,6 +36,11 @@ exe = EXE(pyz,
           runtime_tmpdir=None,
           console=True,
           disable_windowed_traceback=False,
-          target_arch=None,
+          target_arch='x86_64',
           codesign_identity=None,
-          entitlements_file=None , icon='img\\Icon.ico')
+          entitlements_file=None , icon='./img/Icon.ico')
+
+app = BUNDLE(exe,
+         name='GraXpert-macos-x86_64.app',
+         icon=None,
+         bundle_identifier=None)

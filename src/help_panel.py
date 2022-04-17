@@ -9,6 +9,7 @@ from PIL import Image, ImageTk
 
 from ui_scaling import get_scaling_factor
 
+import localization
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -33,7 +34,7 @@ class Help_Panel():
         self.button_frame = tk.Frame(self.canvas)
 
         self.toggle_button = tk.Button(self.button_frame,
-            text="H\nE\nL\nP",
+            text=_("H\nE\nL\nP"),
             command=self.help,
             borderwidth=0,
             font = ('Verdana','12','bold'),
@@ -70,28 +71,28 @@ class Help_Panel():
         self.label.image= logo
         self.label.grid(column=0, row=0, padx=(40,30), pady=60)
         
-        text = tk.Message(self.help_panel, text="Instructions", width=240 * get_scaling_factor(master), font=heading_font)
+        text = tk.Message(self.help_panel, text=_("Instructions"), width=240 * get_scaling_factor(master), font=heading_font)
         text.grid(column=0, row=1, padx=(40,30), pady=(0,5), sticky="w")
         
-        text = tk.Message(self.help_panel, text="1.\nLoad your image.", width=240 * get_scaling_factor(master))
+        text = tk.Message(self.help_panel, text=_("1.\nLoad your image."), width=240 * get_scaling_factor(master))
         text.grid(column=0, row=2, padx=(40,30), pady=5, sticky="w")
         
         
-        text = tk.Message(self.help_panel, text="2.\nStretch your image if necessary to reveal gradients.", width=240 * get_scaling_factor(master))
+        text = tk.Message(self.help_panel, text=_("2.\nStretch your image if necessary to reveal gradients."), width=240 * get_scaling_factor(master))
         text.grid(column=0, row=3, padx=(40,30), pady=5, sticky="w")
 
         text = tk.Message(
             self.help_panel,
-            text= "3.\nSelect background points\n  a) manually with left click\n  b) automatically via grid (grid selection)"+
-                "\nYou can remove already set points by right clicking on them.", 
+            text= _("3.\nSelect background points\n  a) manually with left click\n  b) automatically via grid (grid selection)"
+                "\nYou can remove already set points by right clicking on them."), 
             width=240 * get_scaling_factor(master)
         )
         text.grid(column=0, row=4, padx=(40,30), pady=5, sticky="w")
         
-        text = tk.Message(self.help_panel, text="4.\nClick on Calculate Background to get the processed image.", width=240 * get_scaling_factor(master))
+        text = tk.Message(self.help_panel, text=_("4.\nClick on Calculate Background to get the processed image."), width=240 * get_scaling_factor(master))
         text.grid(column=0, row=5, padx=(40,30), pady=5, sticky="w")
         
-        text = tk.Message(self.help_panel, text="5.\nSave the processed image.", width=240 * get_scaling_factor(master))
+        text = tk.Message(self.help_panel, text=_("5.\nSave the processed image."), width=240 * get_scaling_factor(master))
         text.grid(column=0, row=6, padx=(40,30), pady=5, sticky="w")
     
         # Advanced Panel

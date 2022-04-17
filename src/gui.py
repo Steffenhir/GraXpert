@@ -26,7 +26,10 @@ import json
 from appdirs import user_config_dir
 import multiprocessing
 from ui_scaling import get_scaling_factor
+import localization
+from localization import _
 import traceback
+
 
 
 def resource_path(relative_path):
@@ -148,12 +151,12 @@ class Application(tk.Frame):
         heading_font = "Verdana 10 bold"
         #---Open Image---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_1.png"))
-        text = tk.Label(self.side_menu, text=" Loading", image=num_pic, font=heading_font, compound="left")
+        text = tk.Label(self.side_menu, text=_(" Loading"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=0, pady=(20,5), padx=0, sticky="w")
         
         self.load_image_button = ttk.Button(self.side_menu, 
-                         text="Load Image",
+                         text=_("Load Image"),
                          command=self.menu_open_clicked,
         )
         tt_load = tooltip.Tooltip(self.load_image_button, text=tooltip.load_text)
@@ -161,7 +164,7 @@ class Application(tk.Frame):
         
         #--Stretch Options--
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_2.png"))
-        text = tk.Label(self.side_menu, text=" Stretch Options", image=num_pic, font=heading_font, compound="left")
+        text = tk.Label(self.side_menu, text=_(" Stretch Options"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=2, pady=5, padx=0, sticky="w")
         
@@ -177,7 +180,7 @@ class Application(tk.Frame):
       
         #---Sample Selection---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_3.png"))
-        text = tk.Label(self.side_menu, text=" Sample Selection", image=num_pic, font=heading_font, compound="left")
+        text = tk.Label(self.side_menu, text=_(" Sample Selection"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=4, pady=5, padx=0, sticky="w")
         
@@ -186,13 +189,13 @@ class Application(tk.Frame):
         if "bg_pts_option" in self.prefs:
             self.bg_pts.set(self.prefs["bg_pts_option"])
         
-        self.bg_selection_text = tk.Message(self.side_menu, text="Points per row: {}".format(self.bg_pts.get()))
+        self.bg_selection_text = tk.Message(self.side_menu, text=_("Points per row: {}").format(self.bg_pts.get()))
         self.bg_selection_text.config(width=500 * get_scaling_factor(self.master))
         self.bg_selection_text.grid(column=0, row=5, pady=(5,0), padx=15, sticky="ews")
         
         def on_bg_pts_slider(bgs_points):
             self.bg_pts.set(int(float(bgs_points)))
-            self.bg_selection_text.configure(text="Points per row: {}".format(self.bg_pts.get()))
+            self.bg_selection_text.configure(text=_("Points per row: {}").format(self.bg_pts.get()))
 
         self.bg_pts_slider = ttk.Scale(
             self.side_menu,
@@ -211,13 +214,13 @@ class Application(tk.Frame):
         if "bg_tol_option" in self.prefs:
             self.bg_tol.set(self.prefs["bg_tol_option"])
         
-        self.bg_selection_tol = tk.Message(self.side_menu, text="Grid Tolerance: {}".format(self.bg_tol.get()))
+        self.bg_selection_tol = tk.Message(self.side_menu, text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
         self.bg_selection_tol.config(width=500)
         self.bg_selection_tol.grid(column=0, row=7, pady=(0,0), padx=15, sticky="ews")
         
         def on_bg_tol_slider(bg_tol):
             self.bg_tol.set(float("{:.1f}".format(float(bg_tol))))
-            self.bg_selection_tol.configure(text="Grid Tolerance: {}".format(self.bg_tol.get()))
+            self.bg_selection_tol.configure(text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
         
         self.bg_tol_slider = ttk.Scale(
             self.side_menu,
@@ -232,24 +235,24 @@ class Application(tk.Frame):
         tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
         self.bg_selection_button = ttk.Button(self.side_menu, 
-                         text="Create Grid",
+                         text=_("Create Grid"),
                          command=self.select_background)
         self.bg_selection_button.grid(column=0, row=9, pady=5, padx=15, sticky="news")
         tt_bg_select = tooltip.Tooltip(self.bg_selection_button, text= tooltip.bg_select_text)
         
         self.reset_button = ttk.Button(self.side_menu, 
-                         text="Reset Sample Points",
+                         text=_("Reset Sample Points"),
                          command=self.reset_backgroundpts)
         self.reset_button.grid(column=0, row=10, pady=(5,30), padx=15, sticky="news")
         tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
         
         #---Calculation---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_4.png"))
-        text = tk.Label(self.side_menu, text=" Calculation", image=num_pic, font=heading_font, compound="left")
+        text = tk.Label(self.side_menu, text=_(" Calculation"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=11, pady=5, padx=0, sticky="w")
         
-        self.intp_type_text = tk.Message(self.side_menu, text="Interpolation Method:")
+        self.intp_type_text = tk.Message(self.side_menu, text=_("Interpolation Method:"))
         self.intp_type_text.config(width=500)
         self.intp_type_text.grid(column=0, row=12, pady=(5,0), padx=15, sticky="ews")
         
@@ -288,14 +291,14 @@ class Application(tk.Frame):
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
         self.calculate_button = ttk.Button(self.side_menu, 
-                         text="Calculate Background",
+                         text=_("Calculate Background"),
                          command=self.calculate)
         self.calculate_button.grid(column=0, row=16, pady=(5,30), padx=15, sticky="news")
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
         #---Saving---  
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_5.png"))
-        self.saveas_text = tk.Label(self.side_menu, text=" Saving", image=num_pic, font=heading_font, compound="left")
+        self.saveas_text = tk.Label(self.side_menu, text=_(" Saving"), image=num_pic, font=heading_font, compound="left")
         self.saveas_text.image = num_pic
         self.saveas_text.grid(column=0, row=17, pady=5, padx=0, sticky="w")
         
@@ -309,14 +312,14 @@ class Application(tk.Frame):
         tt_interpol_type= tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
         
         self.save_background_button = ttk.Button(self.side_menu, 
-                         text="Save Background",
+                         text=_("Save Background"),
                          command=self.save_background_image)
         self.save_background_button.grid(column=0, row=19, pady=5, padx=15, sticky="news")
         tt_save_bg = tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
               
         
         self.save_button = ttk.Button(self.side_menu, 
-                         text="Save Processed",
+                         text=_("Save Processed"),
                          command=self.save_image)
         self.save_button.grid(column=0, row=20, pady=(5,10), padx=15, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
@@ -345,10 +348,12 @@ class Application(tk.Frame):
             image.set_from_file(filename)
             self.images["Original"] = image
             self.prefs["working_dir"] = os.path.dirname(filename)
+            
         except Exception as e:
             print("An error occurred while loading your picture")
             print(traceback.format_exc())
-            messagebox.showerror("Error", "An error occurred while loading your picture.")
+            messagebox.showerror("Error", _("An error occurred while loading your picture."))
+
         
         self.display_type.set("Original")
         self.images["Processed"] = None
@@ -378,7 +383,7 @@ class Application(tk.Frame):
     def select_background(self,event=None):
         
         if self.images["Original"] is None:
-            messagebox.showerror("Error", "Please load your picture first.")
+            messagebox.showerror("Error", _("Please load your picture first."))
             return
         
         self.loading_frame.start()
@@ -435,7 +440,7 @@ class Application(tk.Frame):
        try:
            self.images["Processed"].save(dir, self.saveas_type.get())
        except:
-           messagebox.showerror("Error", "Error occured when saving the image.")
+           messagebox.showerror("Error", _("Error occured when saving the image."))
            
        self.loading_frame.end()
        
@@ -465,7 +470,7 @@ class Application(tk.Frame):
         try:
             self.images["Background"].save(dir, self.saveas_type.get())
         except:
-            messagebox.showerror("Error", "Error occured when saving the image.")
+            messagebox.showerror("Error", _("Error occured when saving the image."))
             
         self.loading_frame.end()
         
@@ -487,15 +492,15 @@ class Application(tk.Frame):
         
         #Error messages if not enough points
         if(len(background_points) == 0):
-            messagebox.showerror("Error", "Please load your picture and select background points with right click.")
+            messagebox.showerror("Error", _("Please load your picture and select background points with right click."))
             return
         
         if(len(background_points) < 2 and self.interpol_type.get() == "Kriging"):
-            messagebox.showerror("Error", "Please select at least 2 background points with right click for the Kriging method.")
+            messagebox.showerror("Error", _("Please select at least 2 background points with right click for the Kriging method."))
             return
         
         if(len(background_points) < 16 and self.interpol_type.get() == "Splines"):
-            messagebox.showerror("Error", "Please select at least 16 background points with right click for the Splines method.")
+            messagebox.showerror("Error", _("Please select at least 16 background points with right click for the Splines method."))
             return
         
         self.loading_frame.start()
@@ -582,6 +587,7 @@ class Application(tk.Frame):
         if(str(event.widget).split(".")[-1] != "picture"):
             return
         
+
         if self.clicked_inside_pt:            
             new_point = self.to_image_point(event.x,event.y)
             self.cmd.app_state["background_points"][self.clicked_inside_pt_idx] = self.clicked_inside_pt_coord
@@ -589,7 +595,8 @@ class Application(tk.Frame):
             self.cmd.execute()
                
             
-        elif(self.to_image_point(event.x,event.y) != [] and (event.time - self.left_drag_timer < 100 or self.left_drag_timer == -1)):
+        elif(len(self.to_image_point(event.x,event.y)) != 0 and (event.time - self.left_drag_timer < 100 or self.left_drag_timer == -1)):
+
             point = self.to_image_point(event.x,event.y)
             self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
             self.cmd.execute()
@@ -683,8 +690,17 @@ class Application(tk.Frame):
             return
         
         image_point = self.to_image_point(event.x, event.y)
-        if image_point != []:
-            self.label_image_pixel["text"] = "x=" + f"{image_point[0]:.2f}" + ",y=" + f"{image_point[1]:.2f}"
+        if len(image_point) != 0:
+            text = "x=" + f"{image_point[0]:.2f}" + ",y=" + f"{image_point[1]:.2f}  "
+            if(self.images[self.display_type.get()].img_array.shape[2] == 3):
+                R, G, B = self.images[self.display_type.get()].get_local_median(image_point)            
+                text = text + "RGB = (" + f"{R:.4f}," + f"{G:.4f}," + f"{B:.4f})"
+            
+            if(self.images[self.display_type.get()].img_array.shape[2] == 1):
+                L = self.images[self.display_type.get()].get_local_median(image_point)
+                text = text + "L= " + f"{L:.4f}"
+            
+            self.label_image_pixel["text"] = text
         else:
             self.label_image_pixel["text"] = ("(--, --)")
 
@@ -866,7 +882,7 @@ class Application(tk.Frame):
     def switch_display(self, event):
         if(self.images["Processed"] is None and self.display_type.get() != "Original"):
             self.display_type.set("Original")
-            messagebox.showerror("Error", "Please select background points and press the Calculate button first")         
+            messagebox.showerror("Error", _("Please select background points and press the Calculate button first"))         
             return
         
         self.loading_frame.start()

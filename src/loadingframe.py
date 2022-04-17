@@ -6,6 +6,7 @@ Created on Thu Mar 17 18:16:05 2022
 """
 
 import tkinter as tk
+import localization
 
 class LoadingFrame():
     def __init__(self, widget, toplevel):
@@ -14,7 +15,7 @@ class LoadingFrame():
       
 
         self.toplevel = toplevel
-        self.text = tk.Message(widget, text="Calculating...", width=500 ,font=font)
+        self.text = tk.Message(widget, text=_("Calculating..."), width=500 ,font=font)
 
         
     def start(self):

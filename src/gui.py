@@ -630,7 +630,7 @@ class Application(tk.Frame):
                 self.redraw_image()
         
         
-        
+        self.mouse_move(event)
         self.__old_event = event
         return        
 

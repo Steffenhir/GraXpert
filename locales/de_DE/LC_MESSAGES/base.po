@@ -17,7 +17,7 @@ msgstr ""
 
 #: src/gui.py:147
 msgid " Loading"
-msgstr "Laden"
+msgstr " Laden"
 
 #: src/gui.py:152
 msgid "Load Image"
@@ -33,19 +33,19 @@ msgstr " Punktauswahl"
 
 #: src/gui.py:185 src/gui.py:191
 msgid "Points per row: {}"
-msgstr " Punkte pro Reihe: {}"
+msgstr "Punkte pro Reihe: {}"
 
 #: src/gui.py:210 src/gui.py:216
 msgid "Grid Tolerance: {}"
-msgstr " Gittertoleranz: {}"
+msgstr "Gittertoleranz: {}"
 
 #: src/gui.py:231
 msgid "Create Grid"
-msgstr " Erstelle Gitter"
+msgstr "Erstelle Gitter"
 
 #: src/gui.py:237
 msgid "Reset Sample Points"
-msgstr " Punkte zurücksetzen"
+msgstr "Punkte zurücksetzen"
 
 #: src/gui.py:244
 msgid " Calculation"
@@ -53,11 +53,11 @@ msgstr " Berechnung"
 
 #: src/gui.py:248
 msgid "Interpolation Method:"
-msgstr " Interpolationsmethode"
+msgstr "Interpolationsmethode"
 
 #: src/gui.py:287
 msgid "Calculate Background"
-msgstr " Berechne Hintergrundmodell"
+msgstr "Berechne Hintergrundmodell"
 
 #: src/gui.py:294
 msgid " Saving"

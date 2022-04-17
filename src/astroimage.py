@@ -55,7 +55,6 @@ class AstroImage:
         self.img_array = array
         self.width = self.img_array.shape[1]
         self.height = self.img_array.shape[0]
-        self.update_display()
         return
     
     def update_display(self):
@@ -65,7 +64,14 @@ class AstroImage:
             self.img_display = Image.fromarray(img_display[:,:,0].astype(np.uint8))
         else:
             self.img_display = Image.fromarray(img_display.astype(np.uint8))
-        
+        return
+    
+    def update_display_from_array(self, img_display):
+        img_display = img_display*255
+        if(img_display.shape[2] == 1):
+            self.img_display = Image.fromarray(img_display[:,:,0].astype(np.uint8))
+        else:
+            self.img_display = Image.fromarray(img_display.astype(np.uint8))
         return
     
     def stretch(self):
@@ -87,6 +93,18 @@ class AstroImage:
             
         
         return stretch(self.img_array, bg, sigma)
+    
+    def get_stretch(self):
+        if(self.stretch_option.get() == "No Stretch"):
+            return None
+        elif(self.stretch_option.get() == "10% Bg, 3 sigma"):
+            return (0.1, 3)
+        elif(self.stretch_option.get() == "15% Bg, 3 sigma"):
+            return (0.15, 3)
+        elif(self.stretch_option.get() == "20% Bg, 3 sigma"):
+            return (0.2, 3)
+        elif(self.stretch_option.get() == "25% Bg, 1.25 sigma"):
+            return (0.25, 1.25)
     
     def update_fits_header(self, original_header, background_mean):
         if(original_header is None):
@@ -111,8 +129,10 @@ class AstroImage:
         if(saveas_type == "16 bit Tiff" or saveas_type == "32 bit Tiff"):
             io.imsave(dir, image_converted)
         else:
-            if(len(image_converted.shape) == 3):
+            if(image_converted.shape[-1] == 3):
                image_converted = np.moveaxis(image_converted,-1,0)
+            else:
+                image_converted = image_converted[:,:,0]
  
             hdu = fits.PrimaryHDU(data=image_converted, header=self.fits_header)
             hdul = fits.HDUList([hdu])

@@ -132,6 +132,23 @@ class RemovePointHandler(PointHandler):
         return 1.0
 
 
+class MovePointHandler(PointHandler):
+    def execute(self, app_state: AppState, cmd_args: Dict) -> AppState:
+        app_state_copy = deepcopy(app_state)
+        idx = cmd_args["idx"]
+        new_point = cmd_args["new_point"]
+        
+        if len(new_point) == 0:
+            app_state_copy["background_points"].pop(idx)
+        else:
+            app_state_copy["background_points"][idx] = new_point
+        
+        return app_state_copy
+        
+    def progress(self) -> float:
+        return 1.0
+    
+    
 class SelectPointsHandler(PointHandler):
     def execute(self, app_state: AppState, cmd_args: Dict) -> AppState:
         app_state_copy = deepcopy(app_state)
@@ -173,5 +190,6 @@ class ResetPointsHandler(PointHandler):
 INIT_HANDLER = InitHandler()
 ADD_POINT_HANDLER = AddPointHandler()
 RM_POINT_HANDLER = RemovePointHandler()
+MOVE_POINT_HANDLER = MovePointHandler()
 SEL_POINTS_HANDLER = SelectPointsHandler()
 RESET_POINTS_HANDLER = ResetPointsHandler()

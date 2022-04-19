@@ -57,7 +57,7 @@ msgstr "Interpolationsmethode"
 
 #: src/gui.py:287
 msgid "Calculate Background"
-msgstr "Berechne Hintergrundmodell"
+msgstr "Berechne Hintergrund"
 
 #: src/gui.py:294
 msgid " Saving"

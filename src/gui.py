@@ -29,8 +29,8 @@ from ui_scaling import get_scaling_factor
 import localization
 from localization import _
 import traceback
-
-
+from skimage import io
+from skimage.transform import resize
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -49,6 +49,7 @@ class Application(tk.Frame):
         super().__init__(master)
 
         self.master.geometry("1920x1080")
+        self.master.minsize(height=768 ,width=1024)
         
         try:
             self.master.state("zoomed")
@@ -139,9 +140,16 @@ class Application(tk.Frame):
         
         
         #Side menu
-        scal = get_scaling_factor(self.master)*0.8
-        self.side_menu = tk.Frame(self.master, borderwidth=0)
-        self.side_menu.pack(side=tk.TOP)
+        self.side_canvas = tk.Canvas(self.master, borderwidth=0,  bd=0, highlightthickness=0)
+        self.side_canvas.pack(side=tk.TOP, fill=tk.Y, expand=True)
+        
+        self.scrollbar = ttk.Scrollbar(self.canvas, orient=tk.VERTICAL, command=self.side_canvas.yview)
+        self.scrollbar.pack(side=tk.LEFT, fill=tk.Y)
+        
+ 
+        scal = get_scaling_factor(self.master)*0.75
+        self.side_menu = tk.Frame(self.side_canvas, borderwidth=0)
+
         
         self.side_menu.grid_columnconfigure(0)
         
@@ -150,7 +158,7 @@ class Application(tk.Frame):
         
         heading_font = "Verdana 10 bold"
         #---Open Image---
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_1.png"))
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_1-scaled.png"))
         text = tk.Label(self.side_menu, text=_(" Loading"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=0, pady=(20*scal,5*scal), padx=0, sticky="w")
@@ -163,7 +171,7 @@ class Application(tk.Frame):
         self.load_image_button.grid(column=0, row=1, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
         
         #--Stretch Options--
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_2.png"))
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_2-scaled.png"))
         text = tk.Label(self.side_menu, text=_(" Stretch Options"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=2, pady=5*scal, padx=0, sticky="w")
@@ -179,7 +187,7 @@ class Application(tk.Frame):
         
       
         #---Sample Selection---
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_3.png"))
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_3-scaled.png"))
         text = tk.Label(self.side_menu, text=_(" Sample Selection"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=4, pady=5*scal, padx=0, sticky="w")
@@ -191,7 +199,7 @@ class Application(tk.Frame):
         
         self.bg_selection_text = tk.Message(self.side_menu, text=_("Points per row: {}").format(self.bg_pts.get()))
         self.bg_selection_text.config(width=500 * scal)
-        self.bg_selection_text.grid(column=0, row=5, pady=(5*scal,0), padx=15*scal, sticky="ews")
+        self.bg_selection_text.grid(column=0, row=5, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         def on_bg_pts_slider(bgs_points):
             self.bg_pts.set(int(float(bgs_points)))
@@ -201,11 +209,12 @@ class Application(tk.Frame):
             self.side_menu,
             orient=tk.HORIZONTAL,
             from_=4,
-            to=20,
+            to=25,
             var=self.bg_pts,
             command=on_bg_pts_slider,
             length=150
             )
+        
         self.bg_pts_slider.grid(column=0, row=6, pady=(0,0), padx=15*scal, sticky="ew")
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
         
@@ -216,7 +225,7 @@ class Application(tk.Frame):
         
         self.bg_selection_tol = tk.Message(self.side_menu, text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
         self.bg_selection_tol.config(width=500)
-        self.bg_selection_tol.grid(column=0, row=7, pady=(0,0), padx=15*scal, sticky="ews")
+        self.bg_selection_tol.grid(column=0, row=7, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         def on_bg_tol_slider(bg_tol):
             self.bg_tol.set(float("{:.1f}".format(float(bg_tol))))
@@ -225,13 +234,13 @@ class Application(tk.Frame):
         self.bg_tol_slider = ttk.Scale(
             self.side_menu,
             orient=tk.HORIZONTAL,
-            from_=-5,
+            from_=-2,
             to=10,
             var=self.bg_tol,
             command=on_bg_tol_slider,
             length=150
             )
-        self.bg_tol_slider.grid(column=0, row=8, pady=(0,0), padx=15*scal, sticky="ew")
+        self.bg_tol_slider.grid(column=0, row=8, pady=(0,10*scal), padx=15*scal, sticky="ew")
         tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
         self.bg_selection_button = ttk.Button(self.side_menu, 
@@ -247,14 +256,14 @@ class Application(tk.Frame):
         tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
         
         #---Calculation---
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_4.png"))
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_4-scaled.png"))
         text = tk.Label(self.side_menu, text=_(" Calculation"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=11, pady=5*scal, padx=0, sticky="w")
         
         self.intp_type_text = tk.Message(self.side_menu, text=_("Interpolation Method:"))
         self.intp_type_text.config(width=500)
-        self.intp_type_text.grid(column=0, row=12, pady=(5*scal,0), padx=15*scal, sticky="ews")
+        self.intp_type_text.grid(column=0, row=12, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         self.interpol_options = ["RBF", "Splines", "Kriging"]
         self.interpol_type = tk.StringVar()
@@ -272,7 +281,7 @@ class Application(tk.Frame):
         
         self.smooth_text = tk.Message(self.side_menu, text="Smoothing: {}".format(self.smoothing.get()))
         self.smooth_text.config(width=500)
-        self.smooth_text.grid(column=0, row=14, pady=(5*scal,0), padx=15*scal, sticky="ews")
+        self.smooth_text.grid(column=0, row=14, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         def on_smoothing_slider(smoothing):
             self.smoothing.set(float("{:.2f}".format(float(smoothing))))
@@ -287,7 +296,7 @@ class Application(tk.Frame):
             command=on_smoothing_slider,
             length=150
             )
-        self.smoothing_slider.grid(column=0, row=15, pady=(0,5*scal), padx=15*scal, sticky="ew")
+        self.smoothing_slider.grid(column=0, row=15, pady=(0,10*scal), padx=15*scal, sticky="ew")
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
         self.calculate_button = ttk.Button(self.side_menu, 
@@ -297,7 +306,7 @@ class Application(tk.Frame):
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
         #---Saving---  
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_5.png"))
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_5-scaled.png"))
         self.saveas_text = tk.Label(self.side_menu, text=_(" Saving"), image=num_pic, font=heading_font, compound="left")
         self.saveas_text.image = num_pic
         self.saveas_text.grid(column=0, row=17, pady=5*scal, padx=0, sticky="w")
@@ -323,7 +332,14 @@ class Application(tk.Frame):
                          command=self.save_image)
         self.save_button.grid(column=0, row=20, pady=(5*scal,10*scal), padx=15*scal, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
-    
+        
+        
+        self.side_canvas.create_window((0,0), window=self.side_menu)
+        self.side_canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.side_canvas.bind('<Configure>', lambda e: self.side_canvas.configure(scrollregion=self.side_canvas.bbox("all")))
+        self.side_menu.update()
+        width = self.side_menu.winfo_width()
+        self.side_canvas.configure(width=width)
     
     def menu_open_clicked(self, event=None):
 
@@ -906,17 +922,39 @@ class Application(tk.Frame):
             print("error serializing preferences: {0}".format(err))
         root.destroy()
 
+def scale_img(path, scaling, shape):
+    img = io.imread(resource_path(path))
+    img = resize(img, (int(shape[0]*scaling),int(shape[1]*scaling)))
+    io.imsave(resource_path(resource_path(path.replace('.png', '-scaled.png'))), img, check_contrast=False)
+
 if __name__ == "__main__":
     multiprocessing.freeze_support()
     root = hdpitk.HdpiTk()
-    root.tk.call("source", resource_path("forest-dark.tcl"))
+    scaling = get_scaling_factor(root)
+    
+    scale_img("./forest-dark/vert-hover.png", scaling*0.9, (20,10))
+    scale_img("./forest-dark/vert-basic.png", scaling*0.9, (20,10))
+    
+    scale_img("./forest-dark/thumb-hor-accent.png", scaling*0.9, (20,8))
+    scale_img("./forest-dark/thumb-hor-hover.png", scaling*0.9, (20,8))
+    scale_img("./forest-dark/thumb-hor-basic.png", scaling*0.9, (20,8))
+    scale_img("./forest-dark/scale-hor.png", scaling, (20,20))
+    
+    scale_img("./img/gfx_number_1.png", scaling*0.7, (25,25))
+    scale_img("./img/gfx_number_2.png", scaling*0.7, (25,25))
+    scale_img("./img/gfx_number_3.png", scaling*0.7, (25,25))
+    scale_img("./img/gfx_number_4.png", scaling*0.7, (25,25))
+    scale_img("./img/gfx_number_5.png", scaling*0.7, (25,25))
+    
+    root.tk.call("source", resource_path("forest-dark.tcl"))   
     style = ttk.Style(root)
+    style.configure("Scale.slider", sliderlength=100, sliderthickness=100)
     style.theme_use("forest-dark")
     root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
-    scaling = get_scaling_factor(root)
     root.tk.call('tk', 'scaling', scaling)
     root.option_add("*TkFDialog*foreground", "black")
     app = Application(master=root)
     root.protocol("WM_DELETE_WINDOW", app.on_closing)
 
     app.mainloop()
+    

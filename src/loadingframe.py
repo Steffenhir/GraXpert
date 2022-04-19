@@ -6,7 +6,7 @@ Created on Thu Mar 17 18:16:05 2022
 """
 
 import tkinter as tk
-import localization
+from localization import _
 
 class LoadingFrame():
     def __init__(self, widget, toplevel):

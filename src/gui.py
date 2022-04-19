@@ -925,6 +925,8 @@ class Application(tk.Frame):
 def scale_img(path, scaling, shape):
     img = io.imread(resource_path(path))
     img = resize(img, (int(shape[0]*scaling),int(shape[1]*scaling)))
+    img = img*255
+    img = img.astype(dtype=np.uint8)
     io.imsave(resource_path(resource_path(path.replace('.png', '-scaled.png'))), img, check_contrast=False)
 
 if __name__ == "__main__":

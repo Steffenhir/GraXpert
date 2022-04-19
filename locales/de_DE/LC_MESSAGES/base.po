@@ -117,50 +117,32 @@ msgid "Instructions"
 msgstr "Anleitung"
 
 #: src/help_panel.py:78
-msgid ""
-"1.\n"
-"Load your image."
-msgstr ""
-"1.\n"
-"Lade dein Bild."
+msgid "Load your image."
+msgstr "Lade dein Bild."
 
 #: src/help_panel.py:82
-msgid ""
-"2.\n"
-"Stretch your image if necessary to reveal gradients."
-msgstr ""
-"2.\n"
-"Stretche dein Bild um Gradienten deutlicher zu machen."
+msgid "Stretch your image if necessary to reveal gradients."
+msgstr "Stretche dein Bild um Gradienten deutlicher zu machen."
 
 #: src/help_panel.py:87
 msgid ""
-"3.\n"
 "Select background points\n"
 "  a) manually with left click\n"
 "  b) automatically via grid (grid selection)\n"
 "You can remove already set points by right clicking on them."
 msgstr ""
-"3.\n"
 "Wähle Hintergrundpunkte aus\n"
 "  a) automatisch mit Linksklick\n"
 "  b) automatisch mit einem Gitter\n"
 "Bereits gesetzte Punkte können mit Rechtsklick entfernt werden."
 
 #: src/help_panel.py:93
-msgid ""
-"4.\n"
-"Click on Calculate Background to get the processed image."
-msgstr ""
-"4.\n"
-"Klicke auf Hintergrundmodell berechnen um das bearbeitete Bild zu erhalten."
+msgid "Click on Calculate Background to get the processed image."
+msgstr "Klicke auf Hintergrundmodell berechnen um das bearbeitete Bild zu erhalten."
 
 #: src/help_panel.py:96
-msgid ""
-"5.\n"
-"Save the processed image."
-msgstr ""
-"5.\n"
-"Speichere das bearbeitete Bild."
+msgid "Save the processed image."
+msgstr "Speichere das bearbeitete Bild."
 
 #: src/loadingframe.py:18
 msgid "Calculating..."

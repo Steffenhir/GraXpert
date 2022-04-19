@@ -8,8 +8,7 @@ from numpy import pad
 from PIL import Image, ImageTk
 
 from ui_scaling import get_scaling_factor
-
-import localization
+from localization import _
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -26,7 +25,7 @@ class Help_Panel():
         
         
         self.visible = True
-        self.master = canvas
+        self.master = master
         self.canvas = canvas
         
         self.visible_panel = "None"
@@ -42,11 +41,13 @@ class Help_Panel():
             foreground = '#ffffff'
         )
         
+        scaling = get_scaling_factor(master)
+        
         self.toggle_button.grid(
             row=0,
             column=0,
-            ipadx=int(3 * get_scaling_factor(master)),
-            ipady=int(25 * get_scaling_factor(master))
+            ipadx=int(3 * scaling),
+            ipady=int(25 * scaling)
         )
         
         #self.advanced_pic = tk.PhotoImage(file=resource_path("img/advanced.png"))
@@ -57,48 +58,73 @@ class Help_Panel():
         
         # Help Panel
         heading_font = "Verdana 18 bold"
+        heading_font2 = "Verdana 10 bold"
+        
         
         self.help_panel = tk.Frame(self.canvas)
         
         logo = Image.open(resource_path("img/GraXpert_LOGO_Hauptvariante.png"))
         logo = logo.resize((
-            int(logo.width * get_scaling_factor(master)),
-            int(logo.height * get_scaling_factor(master))
+            int(logo.width/6 * scaling),
+            int(logo.height/6 * scaling)
         ))
-        logo = logo.reduce(6)
+
         logo = ImageTk.PhotoImage(logo)
         self.label = tk.Label(self.help_panel, image=logo)
         self.label.image= logo
-        self.label.grid(column=0, row=0, padx=(40,30), pady=60)
+        self.label.grid(column=0, row=0, padx=(40,30), pady=50*scaling)
         
-        text = tk.Message(self.help_panel, text=_("Instructions"), width=240 * get_scaling_factor(master), font=heading_font)
-        text.grid(column=0, row=1, padx=(40,30), pady=(0,5), sticky="w")
+        text = tk.Message(self.help_panel, text=_("Instructions"), width=240 * scaling, font=heading_font, anchor="center")
+        text.grid(column=0, row=1, padx=(40,30), pady=(0,10*scaling), sticky="ew")
         
-        text = tk.Message(self.help_panel, text=_("1.\nLoad your image."), width=240 * get_scaling_factor(master))
-        text.grid(column=0, row=2, padx=(40,30), pady=5, sticky="w")
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_1-scaled.png"))
+        text = tk.Label(self.help_panel, text=_(" Loading"), image=num_pic, compound="left", font=heading_font2)
+        text.image = num_pic
+        text.grid(column=0, row=2, padx=(40,30), pady=(5*scaling,0), sticky="w")
+        text = tk.Message(self.help_panel, text=_("Load your image."), width=240 * scaling)
+        text.grid(column=0, row=3, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
         
         
-        text = tk.Message(self.help_panel, text=_("2.\nStretch your image if necessary to reveal gradients."), width=240 * get_scaling_factor(master))
-        text.grid(column=0, row=3, padx=(40,30), pady=5, sticky="w")
-
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_2-scaled.png"))
+        text = tk.Label(self.help_panel, text=_(" Stretch Options"), image=num_pic, compound="left", font=heading_font2)
+        text.image = num_pic
+        text.grid(column=0, row=4, padx=(40,30), pady=(5*scaling,0), sticky="w")
+        text = tk.Message(self.help_panel, text=_("Stretch your image if necessary to reveal gradients."), width=240 * scaling)
+        text.grid(column=0, row=5, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
+        
+        
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_3-scaled.png"))
+        text = tk.Label(self.help_panel, text=_(" Sample Selection"), image=num_pic, compound="left", font=heading_font2)
+        text.image = num_pic
+        text.grid(column=0, row=6, padx=(40,30), pady=(5*scaling,0), sticky="w")
         text = tk.Message(
             self.help_panel,
-            text= _("3.\nSelect background points\n  a) manually with left click\n  b) automatically via grid (grid selection)"
+            text= _("Select background points\n  a) manually with left click\n  b) automatically via grid (grid selection)"
                 "\nYou can remove already set points by right clicking on them."), 
-            width=240 * get_scaling_factor(master)
+            width=240 * scaling
         )
-        text.grid(column=0, row=4, padx=(40,30), pady=5, sticky="w")
+        text.grid(column=0, row=7, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
         
-        text = tk.Message(self.help_panel, text=_("4.\nClick on Calculate Background to get the processed image."), width=240 * get_scaling_factor(master))
-        text.grid(column=0, row=5, padx=(40,30), pady=5, sticky="w")
         
-        text = tk.Message(self.help_panel, text=_("5.\nSave the processed image."), width=240 * get_scaling_factor(master))
-        text.grid(column=0, row=6, padx=(40,30), pady=5, sticky="w")
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_4-scaled.png"))
+        text = tk.Label(self.help_panel, text=_(" Calculation"), image=num_pic, compound="left", font=heading_font2)
+        text.image = num_pic
+        text.grid(column=0, row=8, padx=(40,30), pady=(5*scaling,0), sticky="w")
+        text = tk.Message(self.help_panel, text=_("Click on Calculate Background to get the processed image."), width=240 * scaling)
+        text.grid(column=0, row=9, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
+        
+        
+        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_5-scaled.png"))
+        text = tk.Label(self.help_panel, text=_(" Saving"), image=num_pic, compound="left", font=heading_font2)
+        text.image = num_pic
+        text.grid(column=0, row=10, padx=(40,30), pady=(5*scaling,0), sticky="w")
+        text = tk.Message(self.help_panel, text=_("Save the processed image."), width=240 * scaling)
+        text.grid(column=0, row=11, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
     
         # Advanced Panel
         
         self.advanced_panel = tk.Frame(self.canvas)
-        text = tk.Message(self.advanced_panel, text="Advanced", width=240 * get_scaling_factor(master))
+        text = tk.Message(self.advanced_panel, text="Advanced", width=240 * scaling)
         text.grid(column=0, row=0, padx=3, pady=3)
         
     def help(self):

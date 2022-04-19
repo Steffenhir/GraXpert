@@ -564,7 +564,7 @@ class Application(tk.Frame):
     
     def mouse_down_left(self,event):
         
-        if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"].image is None):
+        if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"] is None):
             return
         
         self.clicked_inside_pt = False
@@ -601,7 +601,7 @@ class Application(tk.Frame):
         
     def mouse_release_left(self,event):
         
-        if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"].image is None):
+        if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"] is None):
             return
         
 
@@ -625,7 +625,7 @@ class Application(tk.Frame):
         
     def mouse_move_left(self, event):
         
-        if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"].image is None):
+        if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"] is None):
             return
         
         if (self.images[self.display_type.get()] is None):
@@ -691,7 +691,7 @@ class Application(tk.Frame):
         
     def mouse_down_right(self, event):
         
-        if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"].image is None):
+        if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"] is None):
             return
         
         self.remove_pt(event)

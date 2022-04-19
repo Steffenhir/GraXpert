@@ -340,6 +340,7 @@ class Application(tk.Frame):
         self.side_menu.update()
         width = self.side_menu.winfo_width()
         self.side_canvas.configure(width=width)
+        self.side_canvas.yview_moveto("0.0")
     
     def menu_open_clicked(self, event=None):
 

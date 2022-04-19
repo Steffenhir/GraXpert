@@ -65,7 +65,10 @@ def stretch(data, bg, sigma):
     return copy
 
 def stretch_all(datas, stretch_params):
-
+    
+    if stretch_params is None:
+        return datas
+    
     bg = stretch_params[0]
     sigma = stretch_params[1]
     futures = []

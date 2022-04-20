@@ -17,6 +17,8 @@ def resource_path(relative_path):
 lang = None
 lang, enc = locale.getdefaultlocale()
 
+if lang is None:
+    lang = "en_EN"
 if lang.startswith("de"):
     lang = "de_DE"
 

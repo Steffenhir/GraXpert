@@ -1,6 +1,7 @@
 import sys
 import textwrap
 import tkinter as tk
+from tkinter import ttk
 from cProfile import label
 from os import path
 
@@ -31,23 +32,40 @@ class Help_Panel():
         self.visible_panel = "None"
         
         self.button_frame = tk.Frame(self.canvas)
-
-        self.toggle_button = tk.Button(self.button_frame,
-            text=_("H\nE\nL\nP"),
-            command=self.help,
-            borderwidth=0,
-            font = ('Verdana','12','bold'),
-            background = '#c46f1a', 
-            foreground = '#ffffff'
-        )
         
         scaling = get_scaling_factor(master)
         
-        self.toggle_button.grid(
-            row=0,
-            column=0,
+        s = ttk.Style(master)
+        s.configure("Help.TButton", 
+            borderwidth=0,
+        )
+        s.configure("Help.TLabel",
+            font=('Verdana','12','bold'),
+            foreground="#ffffff",
+            background="#c46f1a"
+        )
+        self.toggle_button = ttk.Button(self.button_frame,
+            text="",
+            style="Help.TButton"
+        )
+        self.toggle_button.pack(
             ipadx=int(3 * scaling),
             ipady=int(25 * scaling)
+        )
+        self.toggle_label = ttk.Label(
+            self.toggle_button,
+            text=_("H\nE\nL\nP"),
+            style="Help.TLabel"
+        )
+        self.toggle_label.bind("<Button-1>", self.help)
+        self.toggle_label.pack(
+            ipadx=int(3 * scaling),
+            ipady=int(25 * scaling)
+        )
+
+        self.toggle_button.grid(
+            row=0,
+            column=0
         )
         
         #self.advanced_pic = tk.PhotoImage(file=resource_path("img/advanced.png"))
@@ -127,7 +145,7 @@ class Help_Panel():
         text = tk.Message(self.advanced_panel, text="Advanced", width=240 * scaling)
         text.grid(column=0, row=0, padx=3, pady=3)
         
-    def help(self):
+    def help(self, event):
         
         if self.visible_panel == "None":
             self.button_frame.pack_forget()

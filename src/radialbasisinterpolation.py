@@ -131,9 +131,21 @@ class RadialBasisInterpolation:
 
     def __call__(self,X):
         X = np.atleast_2d(X)
-        K = self._kernel( scipy.spatial.distance.cdist(X,self.X) )
-        P = RadialBasisInterpolation.vandermond(X,degree=self.degree)
-        return K.dot(self.rbf_coef) + P.dot(self.poly_coef)
+        step_size = int(10*X.shape[0]/self.X.size + 1)
+        i = 0
+
+        result = np.empty(X.shape[0])
+
+        while(i < X.shape[0]):
+            start = i
+            end = np.minimum(i+step_size,X.shape[0])
+            K = self._kernel( scipy.spatial.distance.cdist(X[start:end],self.X) )
+            P = RadialBasisInterpolation.vandermond(X[start:end],degree=self.degree)
+           
+            result[start:end] = K.dot(self.rbf_coef) + P.dot(self.poly_coef)
+            i = i + step_size
+        
+        return result
 
     def _kernel(self,r):
         r = np.asarray(r)

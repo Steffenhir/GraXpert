@@ -366,25 +366,25 @@ namespace eval ttk::theme::forest-dark {
                 active $I(hor-hover) \
             ] -sticky ew
 
-        ttk::style element create Vertical.Scrollbar.trough image $I(vert-basic) \
+        ttk::style element create Vertical.Scrollbar.trough image $I(vert-basic-scaled) \
             -sticky ns
 
         ttk::style element create Vertical.Scrollbar.thumb image \
-            [list $I(vert-accent) \
-                disabled  $I(vert-basic) \
-                pressed $I(vert-hover) \
-                active $I(vert-hover) \
+            [list $I(vert-hover-scaled) \
+                disabled  $I(vert-basic-scaled) \
+                pressed $I(vert-hover-scaled) \
+                active $I(vert-hover-scaled) \
             ] -sticky ns
 
         # Scale
-        ttk::style element create Horizontal.Scale.trough image $I(scale-hor) \
+        ttk::style element create Horizontal.Scale.trough image $I(scale-hor-scaled) \
             -border 5 -padding 0
 
         ttk::style element create Horizontal.Scale.slider image \
-            [list $I(thumb-hor-accent) \
-                disabled $I(thumb-hor-basic) \
-                pressed $I(thumb-hor-hover) \
-                active $I(thumb-hor-hover) \
+            [list $I(thumb-hor-accent-scaled) \
+                disabled $I(thumb-hor-basic-scaled) \
+                pressed $I(thumb-hor-hover-scaled) \
+                active $I(thumb-hor-hover-scaled) \
             ] -sticky {}
 
         ttk::style element create Vertical.Scale.trough image $I(scale-vert) \

@@ -6,25 +6,16 @@ Created on Thu Mar 17 18:16:05 2022
 """
 
 import tkinter as tk
+from localization import _
 
 class LoadingFrame():
     def __init__(self, widget, toplevel):
-        
 
-        bg_color = "#474747"
-        text_color = "#F0F0F0"
-        font = ('Segoe UI Semibold', 20, 'normal')
-        relief = "raised"
-        
+        font = ('Verdana', 20, 'normal')
+      
 
         self.toplevel = toplevel
-        self.text = tk.Message(widget, 
-                               text="Calculating...", 
-                               background=bg_color, 
-                               font=font, 
-                               fg=text_color, 
-                               width=500, 
-                               relief=relief)
+        self.text = tk.Message(widget, text=_("Calculating..."), width=500 ,font=font)
 
         
     def start(self):

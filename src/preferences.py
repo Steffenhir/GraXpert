@@ -24,7 +24,7 @@ DEFAULT_PREFS: Prefs = {
     "height": None,
     "background_points": [],
     "bg_pts_option": 15,
-    "stretch_option": "15% Bg, 3 sigma",
+    "stretch_option": "No Stretch",
     "bg_tol_option": 1.0,
     "interpol_type_option": "RBF",
     "smoothing_option": 1.0,

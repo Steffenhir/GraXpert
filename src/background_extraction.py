@@ -5,47 +5,53 @@ Created on Sat Feb 12 10:01:31 2022
 @author: Steffen
 """
 
-
+import traceback
+from concurrent.futures import wait
+# from gpr_cuda import GPRegression
+from multiprocessing import shared_memory
 
 import numpy as np
-from scipy import interpolate
-from radialbasisinterpolation import RadialBasisInterpolation
-from scipy import linalg, stats, optimize
-from pykrige.ok import OrdinaryKriging
-from skimage.transform import resize
-import skyall
-from PIL import Image
-from skimage.util import img_as_ubyte
 from astropy.stats import sigma_clipped_stats
-# from gpr_cuda import GPRegression
+from pykrige.ok import OrdinaryKriging
+from scipy import interpolate, linalg
+from skimage.transform import resize
+
+from parallel_processing import executor
+from radialbasisinterpolation import RadialBasisInterpolation
 
 
+def extract_background(in_imarray, background_points, interpolation_type, smoothing, downscale_factor):
 
-
-def extract_background(imarray, background_points,interpolation_type,smoothing,downscale_factor):
-    
+    shm_imarray = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
+    shm_background = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
+    imarray = np.ndarray(in_imarray.shape, dtype=np.float32, buffer=shm_imarray.buf)
+    background = np.ndarray(in_imarray.shape, dtype=np.float32, buffer=shm_background.buf)
+    np.copyto(imarray, in_imarray)
     
     num_colors = imarray.shape[2]
-    x_size = imarray.shape[1]
-    y_size = imarray.shape[0]
-    
 
-    
-    background = np.zeros((y_size,x_size,num_colors), dtype=np.float32)
-    
+    x_sub = np.array(background_points[:,0],dtype=int)
+    y_sub = np.array(background_points[:,1],dtype=int)
+        
+    futures = []
     for c in range(num_colors):
+        futures.insert(c, executor.submit(interpol, shm_imarray.name, shm_background.name, c, x_sub, y_sub, in_imarray.shape, interpolation_type, smoothing, downscale_factor, imarray.dtype))
+    wait(futures)
         
-        x_sub = np.array(background_points[:,0],dtype=int)
-        y_sub = np.array(background_points[:,1],dtype=int)
-        subsample = calc_mode_dataset(imarray[:,:,c], x_sub, y_sub, 25)
-
-        background[:,:,c] = interpol(x_sub,y_sub,subsample,(y_size,x_size),interpolation_type,smoothing,downscale_factor)
-        
-    
     #Subtract background from image
     mean = np.mean(background)
-    imarray[:,:,:] = (imarray[:,:,:] - background[:,:,:] + mean).clip(min=0,max=np.max(imarray))
-        
+    imarray[:,:,:] = imarray[:,:,:] - background[:,:,:] + mean
+
+    #clip image
+    imarray[:,:,:] = imarray.clip(min=0.0,max=1.0)
+
+    in_imarray[:] = imarray[:]
+    background = np.copy(background)
+    shm_imarray.close()
+    shm_background.close()
+    shm_imarray.unlink()
+    shm_background.unlink()
+    
     return background
 
 
@@ -62,81 +68,99 @@ def calc_mode_dataset(data, x_sub, y_sub, halfsize):
     return subsample
 
 
+def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind, smoothing, downscale_factor, dtype):
 
-def interpol(x_sub,y_sub,subsample,shape,kind,smoothing,downscale_factor):
-    
-    if(downscale_factor != 1):
+    try:
+        existing_shm_imarray = shared_memory.SharedMemory(name=shm_imarray_name)
+        existing_shm_background = shared_memory.SharedMemory(name=shm_background_name)
+        imarray = np.ndarray(shape, dtype, buffer=existing_shm_imarray.buf) #[:,:,channel_idx]
+        imarray = imarray[:,:,c]
+        background = np.ndarray(shape, dtype, buffer=existing_shm_background.buf)
+        # background = background[:,:,c]
+        shape = imarray.shape
         
-        x_sub = x_sub / shape[1]
-        y_sub = y_sub / shape[0]
+        subsample = calc_mode_dataset(imarray, x_sub, y_sub, 25)
         
-        shape_scaled = (shape[0] // downscale_factor, shape[1] // downscale_factor)
+        if(downscale_factor != 1):
+            x_sub = x_sub / shape[1]
+            y_sub = y_sub / shape[0]
+            
+            shape_scaled = (shape[0] // downscale_factor, shape[1] // downscale_factor)
+            
+            x_sub = x_sub * shape_scaled[1]
+            y_sub = y_sub * shape_scaled[0]
         
-        x_sub = x_sub * shape_scaled[1]
-        y_sub = y_sub * shape_scaled[0]
-    
-    else:
+        else:
+            shape_scaled = shape
         
-        shape_scaled = shape
+        if(kind=='RBF'):
+            points_stacked = np.stack([x_sub,y_sub],-1)
+            interp = RadialBasisInterpolation(points_stacked,subsample,kernel="thin_plate",smooth=smoothing*linalg.norm(subsample)/np.sqrt(len(subsample)))   
         
-     
-    
-    if(kind=='RBF'):
-        points_stacked = np.stack([x_sub,y_sub],-1)
-        interp = RadialBasisInterpolation(points_stacked,subsample,kernel="thin_plate",smooth=smoothing*linalg.norm(subsample)/np.sqrt(len(subsample)))   
-    
-        # Create background from interpolation
-        x_new = np.arange(0,shape_scaled[1],1)
-        y_new = np.arange(0,shape_scaled[0],1)
-    
-        xx, yy = np.meshgrid(x_new,y_new)
-        points_new_stacked = np.stack([xx.ravel(),yy.ravel()],-1)
-    
-        result = interp(points_new_stacked).reshape(shape_scaled)
-    
-    elif(kind=='Splines'):
-        interp = interpolate.bisplrep(y_sub,x_sub,subsample,w=np.ones(len(x_sub))/np.std(subsample), s=smoothing*len(x_sub))
+            # Create background from interpolation
+            x_new = np.arange(0,shape_scaled[1],1)
+            y_new = np.arange(0,shape_scaled[0],1)
+   
+            xx, yy = np.meshgrid(x_new,y_new)
+            points_new_stacked = np.stack([xx.ravel(),yy.ravel()],-1)
         
-        # Create background from interpolation
-        x_new = np.arange(0,shape_scaled[1],1)
-        y_new = np.arange(0,shape_scaled[0],1)
-        result = interpolate.bisplev(y_new,x_new,interp)
-    
-    elif(kind=='Kriging'):
-        OK = OrdinaryKriging(
-            x=x_sub,
-            y=y_sub,
-            z=subsample,
-            variogram_model="spherical",
-            verbose=False,
-            enable_plotting=False,
-        )
-    
-        # Create background from interpolation
-        x_new = np.arange(0,shape_scaled[1],1).astype("float64")
-        y_new = np.arange(0,shape_scaled[0],1).astype("float64")
+            result = interp(points_new_stacked).reshape(shape_scaled)
+        
+        elif(kind=='Splines'):
+            interp = interpolate.bisplrep(y_sub,x_sub,subsample,w=np.ones(len(x_sub))/np.std(subsample), s=smoothing*len(x_sub))
+            
+            # Create background from interpolation
+            x_new = np.arange(0,shape_scaled[1],1)
+            y_new = np.arange(0,shape_scaled[0],1)
+            result = interpolate.bisplev(y_new,x_new,interp)
+        
+        elif(kind=='Kriging'):
+            OK = OrdinaryKriging(
+                x=x_sub,
+                y=y_sub,
+                z=subsample,
+                variogram_model="spherical",
+                verbose=False,
+                enable_plotting=False,
+            )
+        
+            # Create background from interpolation
+            x_new = np.arange(0,shape_scaled[1],1).astype("float64")
+            y_new = np.arange(0,shape_scaled[0],1).astype("float64")
 
-        result, var = OK.execute("grid", xpoints=x_new, ypoints=y_new, backend="C")
-    
-    # if(kind=='GPR_CUDA'):
-    #     # A likelihood in GPyTorch specifies the mapping from latent function values f(X) to observed labels y.
-    #     gpr = GPRegression(
-    #         x_sub=x_sub,
-    #         y_sub=y_sub,
-    #         subsample=subsample, 
-    #         shape=shape_scaled
-    #     )
-    #     result = gpr.run()
-    #     del gpr
-    
-    else:
+            result = np.zeros(shape_scaled, dtype=np.float32)
+            
+            num_it = shape_scaled[0]//50
+            
+            for i in range(num_it):
+                result_i, var = OK.execute("grid", xpoints=x_new, ypoints=y_new[i*50:(i+1)*50], backend="vectorized")
+                result[i*50:(i+1)*50,:] = result_i
+                
+            result_i, var = OK.execute("grid", xpoints=x_new, ypoints=y_new[num_it*50:-1], backend="vectorized")
+            result[num_it*50:-1,:] = result_i
         
-        print("Interpolation method not recognized")
-        return
-    
-    if(downscale_factor != 1):
-        result = resize(result, shape, preserve_range=True)
+        # if(kind=='GPR_CUDA'):
+        #     # A likelihood in GPyTorch specifies the mapping from latent function values f(X) to observed labels y.
+        #     gpr = GPRegression(
+        #         x_sub=x_sub,
+        #         y_sub=y_sub,
+        #         subsample=subsample, 
+        #         shape=shape_scaled
+        #     )
+        #     result = gpr.run()
+        #     del gpr
         
-    return result
+        else:
+            print("Interpolation method not recognized")
+            return
+        
+        if(downscale_factor != 1):
+            result = resize(result, shape, preserve_range=True)
+            
+        background[:,:,c] = result
+    except Exception as e:
+        print("Error occured during interpol.")
+        print(traceback.format_exc(e))
     
-
+    existing_shm_imarray.close()
+    existing_shm_background.close()

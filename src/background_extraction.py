@@ -136,8 +136,10 @@ def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind
                 result_i, var = OK.execute("grid", xpoints=x_new, ypoints=y_new[i*50:(i+1)*50], backend="vectorized")
                 result[i*50:(i+1)*50,:] = result_i
                 
-            result_i, var = OK.execute("grid", xpoints=x_new, ypoints=y_new[num_it*50:-1], backend="vectorized")
-            result[num_it*50:-1,:] = result_i
+            result_i, var = OK.execute("grid", xpoints=x_new, ypoints=y_new[num_it*50:], backend="vectorized")
+            print(result_i)
+            result[num_it*50:,:] = result_i
+            print(result[num_it*50:-1,:])
         
         # if(kind=='GPR_CUDA'):
         #     # A likelihood in GPyTorch specifies the mapping from latent function values f(X) to observed labels y.

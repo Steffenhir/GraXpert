@@ -1,7 +1,6 @@
 import sys
-import textwrap
 import tkinter as tk
-from tkinter import ttk
+from tkinter import CENTER, ttk
 from cProfile import label
 from os import path
 
@@ -37,30 +36,27 @@ class Help_Panel():
         
         s = ttk.Style(master)
         s.configure("Help.TButton", 
-            borderwidth=0,
+            borderwidth=0
         )
         s.configure("Help.TLabel",
-            font=('Verdana','12','bold'),
             foreground="#ffffff",
-            background="#c46f1a"
+            background="#c46f1a",
+            justify=CENTER,
+            anchor=CENTER
         )
         self.toggle_button = ttk.Button(self.button_frame,
-            text="",
             style="Help.TButton"
-        )
-        self.toggle_button.pack(
-            ipadx=int(3 * scaling),
-            ipady=int(25 * scaling)
         )
         self.toggle_label = ttk.Label(
             self.toggle_button,
             text=_("H\nE\nL\nP"),
-            style="Help.TLabel"
+            style="Help.TLabel",
+            font=("Verdana","12","bold")
         )
         self.toggle_label.bind("<Button-1>", self.help)
         self.toggle_label.pack(
-            ipadx=int(3 * scaling),
-            ipady=int(25 * scaling)
+            ipadx=int(5 * scaling),
+            ipady=int(20 * scaling)
         )
 
         self.toggle_button.grid(

@@ -163,6 +163,8 @@ class Help_Panel():
             self.visible_panel="None"
             
         self.master.update()
+        # force update of label to prevent white background on mac
+        self.toggle_label.configure(background="#c46f1a")
             
 
     def advanced(self):

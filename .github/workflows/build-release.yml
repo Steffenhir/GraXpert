@@ -68,7 +68,7 @@ jobs:
       - name: create GraXpert-macos-x86_64 bundle
         run: |
           pyinstaller \
-          ./GraXpert-macos-x86_64.spec \
+          ./GraXpert-macos-x86_64.spec
       - name: install create-dmg
         run: brew install create-dmg
       - name: create .dmg
@@ -78,9 +78,9 @@ jobs:
           --window-pos 50 50 \
           --window-size 1920 1080 \
           --icon-size 100 \
-          --icon "GraXpert-macos-x86_64.app" 200 190 \
+          --icon "GraXpert.app" 200 190 \
           "dist/GraXpert-macos-x86_64.dmg" \
-          "dist/GraXpert-macos-x86_64.app/"
+          "dist/GraXpert.app/"
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:

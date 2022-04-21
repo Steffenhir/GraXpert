@@ -27,7 +27,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,  
           [],
-          name='GraXpert-macos-x86_64',
+          name='GraXpert',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
@@ -41,6 +41,6 @@ exe = EXE(pyz,
           entitlements_file=None , icon='./img/Icon.ico')
 
 app = BUNDLE(exe,
-         name='GraXpert-macos-x86_64.app',
+         name='GraXpert.app',
          icon='./img/Icon.ico',
          bundle_identifier=None)

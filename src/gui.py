@@ -17,7 +17,7 @@ from app_state import INITIAL_STATE
 import background_extraction
 from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, MOVE_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
 from preferences import DEFAULT_PREFS, Prefs, app_state_2_prefs, merge_json, prefs_2_app_state
-from stretch import stretch, stretch_all
+from stretch import stretch_all
 import tooltip
 from loadingframe import LoadingFrame
 from help_panel import Help_Panel
@@ -26,11 +26,11 @@ import json
 from appdirs import user_config_dir
 import multiprocessing
 from ui_scaling import get_scaling_factor
-import localization
 from localization import _
 import traceback
 from skimage import io
 from skimage.transform import resize
+from parallel_processing import executor
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -921,6 +921,10 @@ class Application(tk.Frame):
                 json.dump(self.prefs, f)
         except OSError as err:
             print("error serializing preferences: {0}".format(err))
+        try:
+            executor.shutdown(cancel_futures=True)
+        except Exception as e:
+            print("error shutting down ProcessPoolExecutor: {0}".format(e))
         root.destroy()
 
 def scale_img(path, scaling, shape):
@@ -948,6 +952,7 @@ if __name__ == "__main__":
     scale_img("./img/gfx_number_3.png", scaling*0.7, (25,25))
     scale_img("./img/gfx_number_4.png", scaling*0.7, (25,25))
     scale_img("./img/gfx_number_5.png", scaling*0.7, (25,25))
+    scale_img("./img/hourglass.png", scaling, (25,25))
     
     root.tk.call("source", resource_path("forest-dark.tcl"))   
     style = ttk.Style(root)

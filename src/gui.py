@@ -948,6 +948,7 @@ if __name__ == "__main__":
     scale_img("./img/gfx_number_3.png", scaling*0.7, (25,25))
     scale_img("./img/gfx_number_4.png", scaling*0.7, (25,25))
     scale_img("./img/gfx_number_5.png", scaling*0.7, (25,25))
+    scale_img("./img/hourglass.png", scaling, (25,25))
     
     root.tk.call("source", resource_path("forest-dark.tcl"))   
     style = ttk.Style(root)

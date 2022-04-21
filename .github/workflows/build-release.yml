@@ -1,8 +1,9 @@
 name: build-release
 
 on:
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+  push:
+    tags:
+      - v*.*.*
 
 jobs:
 
@@ -19,6 +20,12 @@ jobs:
         run: |
           pip install setuptools wheel pyinstaller && \
           pip install -r requirements.txt
+      - name: patch version
+        run: |
+          chmod u+x ./releng/patch_version.sh && \
+          ./releng/patch_version.sh
+      - name: test version
+        run: cat ./src/version.py
       - name: create GraXpert-linux bundle
         run: |
           pyinstaller \
@@ -43,6 +50,10 @@ jobs:
         run: |
           pip install setuptools wheel pyinstaller && `
           pip install -r requirements.txt
+      - name: patch version
+        run: ./releng/patch_version.ps1
+      - name: test version
+        run: type ./src/version.py
       - name: create GraXpert-win64 bundle
         run: |
           pyinstaller `
@@ -65,6 +76,12 @@ jobs:
         run: |
           pip3 install setuptools wheel pyinstaller && \
           pip3 install -r requirements.txt
+      - name: patch version
+        run: |
+          chmod u+x ./releng/patch_version.sh && \
+          ./releng/patch_version.sh
+      - name: test version
+        run: cat ./src/version.py
       - name: create GraXpert-macos-x86_64 bundle
         run: |
           pyinstaller \
@@ -107,7 +124,6 @@ jobs:
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: snapshot
           files: |
             GraXpert-linux
             GraXpert-win64.exe

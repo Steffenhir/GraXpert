@@ -1,0 +1,2 @@
+release = "RELEASE"
+version = "SNAPSHOT"

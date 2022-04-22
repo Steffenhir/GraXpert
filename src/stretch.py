@@ -5,6 +5,9 @@ Created on Mon Feb 14 16:44:29 2022
 @author: steff
 """
 
+import multiprocessing
+multiprocessing.freeze_support()
+
 import traceback
 import numpy as np
 from astropy.visualization import AsinhStretch

@@ -1,8 +1,9 @@
 name: build-release
 
 on:
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+  push:
+    tags:
+      - v*.*.*
 
 jobs:
 
@@ -19,18 +20,16 @@ jobs:
         run: |
           pip install setuptools wheel pyinstaller && \
           pip install -r requirements.txt
+      - name: patch version
+        run: |
+          chmod u+x ./releng/patch_version.sh && \
+          ./releng/patch_version.sh
+      - name: test version
+        run: cat ./src/version.py
       - name: create GraXpert-linux bundle
         run: |
           pyinstaller \
-          --icon="./img/Icon.ico" \
-          --add-data="./img/*:./img/" \
-          --add-data="./forest-dark.tcl:./" \
-          --add-data="./forest-dark/*:./forest-dark/" \
-          --onefile \
-          --hidden-import='PIL._tkinter_finder' \
-          --additional-hooks-dir=./releng \
-          -n GraXpert-linux \
-          ./src/gui.py
+          ./GraXpert-linux.spec \
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -51,18 +50,14 @@ jobs:
         run: |
           pip install setuptools wheel pyinstaller && `
           pip install -r requirements.txt
+      - name: patch version
+        run: ./releng/patch_version.ps1
+      - name: test version
+        run: type ./src/version.py
       - name: create GraXpert-win64 bundle
         run: |
           pyinstaller `
-          --icon="./img/Icon.ico" `
-          --add-data="./img/*;./img/" `
-          --add-data="./forest-dark.tcl;./" `
-          --add-data="./forest-dark/*;./forest-dark/" `
-          --onefile `
-          --hidden-import='PIL._tkinter_finder' `
-          --additional-hooks-dir=./releng `
-          -n GraXpert-win64 `
-          ./src/gui.py
+          ./GraXpert-win64.spec `
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -81,20 +76,16 @@ jobs:
         run: |
           pip3 install setuptools wheel pyinstaller && \
           pip3 install -r requirements.txt
+      - name: patch version
+        run: |
+          chmod u+x ./releng/patch_version.sh && \
+          ./releng/patch_version.sh
+      - name: test version
+        run: cat ./src/version.py
       - name: create GraXpert-macos-x86_64 bundle
         run: |
           pyinstaller \
-          --icon="./img/Icon.ico" \
-          --add-data="./img/*:./img/" \
-          --add-data="./forest-dark.tcl:./" \
-          --add-data="./forest-dark/*:./forest-dark/" \
-          --onefile \
-          --hidden-import='PIL._tkinter_finder' \
-          --additional-hooks-dir=./releng \
-          --target-architecture x86_64 \
-          --windowed \
-          -n GraXpert-macos-x86_64 \
-          ./src/gui.py
+          ./GraXpert-macos-x86_64.spec
       - name: install create-dmg
         run: brew install create-dmg
       - name: create .dmg
@@ -104,9 +95,9 @@ jobs:
           --window-pos 50 50 \
           --window-size 1920 1080 \
           --icon-size 100 \
-          --icon "GraXpert-macos-x86_64.app" 200 190 \
+          --icon "GraXpert.app" 200 190 \
           "dist/GraXpert-macos-x86_64.dmg" \
-          "dist/GraXpert-macos-x86_64.app/"
+          "dist/GraXpert.app/"
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -133,7 +124,6 @@ jobs:
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v0.1.0
           files: |
             GraXpert-linux
             GraXpert-win64.exe

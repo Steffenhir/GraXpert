@@ -1,0 +1,225 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2022-04-15 12:08+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: German\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: src/gui.py:147
+msgid " Loading"
+msgstr " Laden"
+
+#: src/gui.py:152
+msgid "Load Image"
+msgstr "Lade Bild"
+
+#: src/gui.py:160
+msgid " Stretch Options"
+msgstr " Stretchoptionen"
+
+#: src/gui.py:176
+msgid " Sample Selection"
+msgstr " Punktauswahl"
+
+#: src/gui.py:185 src/gui.py:191
+msgid "Points per row: {}"
+msgstr "Punkte pro Reihe: {}"
+
+#: src/gui.py:210 src/gui.py:216
+msgid "Grid Tolerance: {}"
+msgstr "Gittertoleranz: {}"
+
+#: src/gui.py:231
+msgid "Create Grid"
+msgstr "Erstelle Gitter"
+
+#: src/gui.py:237
+msgid "Reset Sample Points"
+msgstr "Punkte zurücksetzen"
+
+#: src/gui.py:244
+msgid " Calculation"
+msgstr " Berechnung"
+
+#: src/gui.py:248
+msgid "Interpolation Method:"
+msgstr "Interpolationsmethode"
+
+#: src/gui.py:287
+msgid "Calculate Background"
+msgstr "Berechne Hintergrund"
+
+#: src/gui.py:294
+msgid " Saving"
+msgstr " Speichern"
+
+#: src/gui.py:308
+msgid "Save Background"
+msgstr "Speichere Hintergrund"
+
+#: src/gui.py:315
+msgid "Save Processed"
+msgstr "Speichere Bild"
+
+#: src/gui.py:345
+msgid "An error occurred while loading your picture."
+msgstr "Ein Fehler ist beim Laden des Bildes aufgetreten."
+
+#: src/gui.py:375
+msgid "Please load your picture first."
+msgstr "Bitte zuerst ein Bild laden."
+
+#: src/gui.py:423 src/gui.py:453
+msgid "Error occured when saving the image."
+msgstr "Ein Fehler ist beim Speichern des Bildes aufgetreten."
+
+#:src/gui.py:505
+msgid "Please load your picture first."
+msgstr "Bitte zuerst ein Bild laden."
+
+#: src/gui.py:471
+msgid "Please select background points with left click."
+msgstr "Bitte zuerst Hintergrundpunkte mit Linksklick auswählen"
+
+#: src/gui.py:475
+msgid "Please select at least 2 background points with left click for the Kriging method."
+msgstr "Für die Kriging Methode werden mindestens 2 Hintergrundpunkte benötigt"
+
+#: src/gui.py:479
+msgid "Please select at least 16 background points with left click for the Splines method."
+msgstr "Für die Splines Methode werden mindestens 16 Hintergrundpunkte benötigt"
+
+#: src/gui.py:799
+msgid "Please select background points and press the Calculate button first"
+msgstr "Bitte zuerst ein Bild laden und Hintergrundpunkte auswählen"
+
+#: src/help_panel.py:38
+msgid ""
+"H\n"
+"E\n"
+"L\n"
+"P"
+msgstr ""
+"H\n"
+"I\n"
+"L\n"
+"F\n"
+"E"
+
+#: src/help_panel.py:75
+msgid "Instructions"
+msgstr "Anleitung"
+
+#: src/help_panel.py:78
+msgid "Load your image."
+msgstr "Lade dein Bild."
+
+#: src/help_panel.py:82
+msgid "Stretch your image if necessary to reveal gradients."
+msgstr "Stretche dein Bild um Gradienten deutlicher zu machen."
+
+#: src/help_panel.py:87
+msgid ""
+"Select background points\n"
+"  a) manually with left click\n"
+"  b) automatically via grid (grid selection)\n"
+"You can remove already set points by right clicking on them."
+msgstr ""
+"Wähle Hintergrundpunkte aus\n"
+"  a) automatisch mit Linksklick\n"
+"  b) automatisch mit einem Gitter\n"
+"Bereits gesetzte Punkte können mit Rechtsklick entfernt werden."
+
+#: src/help_panel.py:93
+msgid "Click on Calculate Background to get the processed image."
+msgstr "Klicke auf Hintergrundmodell berechnen um das bearbeitete Bild zu erhalten."
+
+#: src/help_panel.py:96
+msgid "Save the processed image."
+msgstr "Speichere das bearbeitete Bild."
+
+#: src/loadingframe.py:18
+msgid "Calculating..."
+msgstr "Berechne..."
+
+#: src/tooltip.py:154
+msgid ""
+"Load your image you would like to correct. \n"
+"\n"
+"Supported formats: .tiff, .fits, .png, .jpg \n"
+"Supported bitdepths: 16 bit integer, 32 bit float"
+msgstr ""
+"Lade das zu bearbeitende Bild. \n"
+"\n"
+"Unterstützte Formate: .tiff, .fits, .png, .jpg \n"
+"Unterstützte Bittiefen: 16 bit integer, 32 bit float"
+
+#: src/tooltip.py:159
+msgid "Automatically stretch the picture to make gradients more visible. The saved pictures are unaffected by the stretch."
+msgstr "Stretche das Bild automatisch um Gradienten sichtbarer zu machen. Das gespeicherte Bild wird davon nicht beeinflusst."
+
+#: src/tooltip.py:162
+msgid "Reset all the chosen background points."
+msgstr "Setze alle gesetzten Punkte zurück"
+
+#: src/tooltip.py:164
+msgid "Creates a grid with the specified amount of points per row and rejects points below a threshold defined by the tolerance."
+msgstr "Erstellt ein Gitter mit der angegebenen Anzahl an Punkten pro Reihe und ignoriert Punkte, deren Helligkeit über der Toleranz liegt."
+
+#: src/tooltip.py:167
+msgid "The tolerance adjusts the threshold for rejection of background points with automatic background selection"
+msgstr "Die Toleranz bestimmt einen Schwellwert für das Ignorieren von Punkten mit der Gitterauswahl"
+
+#: src/tooltip.py:170
+msgid "Adjust the number of points per row for the grid created by automatic background selection."
+msgstr "Bestimmt die Anzahl an Punkten pro Reihe, die mit der Gitterauswahl erstellt werden"
+
+#: src/tooltip.py:173
+msgid "Choose between different interpolation methods."
+msgstr "Wähle zwischen verschiedenen Interpolationsmethoden"
+
+#: src/tooltip.py:175
+msgid "Adjust the smoothing parameter for the interpolation method. A too small smoothing parameter may lead to over- and undershooting inbetween background points, while a too large smoothing parameter may not be suited for large deviations in gradients."
+msgstr ""
+"Bestimmte den Smoothing Parameter. Ein zu kleines Smoothing könnte zu Oszillationen zwischen den Hintergrundpunkten führen, während ein zu großes Smoothing "
+"bei komplizierten Gradienten nicht passend ist."
+
+#: src/tooltip.py:180
+msgid "Use the specified interpolation method to calculate a background model and subtract it from the picture. This may take a while."
+msgstr "Benutze die angegebene Interpolationsmethode zur Erstellung eines Hintergrundmodells und ziehe sie vom Bild ab."
+
+#: src/tooltip.py:183
+msgid "Choose the bitdepth of the saved pictures and the file format. If you are working with a .fits image the fits header will be preserved."
+msgstr "Bestimme die Bittiefe des gespeicherten Bildes sowie das Format. Falls das Originalbild ein .fits Bild ist, wird der .fits Header erhalten."
+
+#: src/tooltip.py:186
+msgid "Save the background model"
+msgstr "Speichere das Hintergrundmodell."
+
+#: src/tooltip.py:187
+msgid "Save the processed picture"
+msgstr "Speichere das bearbeitete Bild."
+
+#: src/tooltip.py:189
+msgid ""
+"Switch display between \n"
+"\n"
+"Original: Your original picture \n"
+"Processed: Picture with subtracted background model \n"
+"Background: The background model"
+msgstr ""
+"Wechsle die Ansicht zwischen \n"
+"\n"
+"Original: originales Bild \n"
+"Processed: bearbeitetes Bild \n"
+"Background: Hintergrundmodell"

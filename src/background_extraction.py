@@ -5,6 +5,9 @@ Created on Sat Feb 12 10:01:31 2022
 @author: Steffen
 """
 
+import multiprocessing
+multiprocessing.freeze_support()
+
 import traceback
 from concurrent.futures import wait
 # from gpr_cuda import GPRegression

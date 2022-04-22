@@ -4,6 +4,9 @@ Created on Sun Feb 13 10:05:08 2022
 @author: steff
 """
 
+import multiprocessing
+multiprocessing.freeze_support()
+
 import tkinter as tk
 import hdpitkinter as hdpitk
 from tkinter import ttk
@@ -24,7 +27,6 @@ from help_panel import Help_Panel
 from astroimage import AstroImage
 import json
 from appdirs import user_config_dir
-import multiprocessing
 from ui_scaling import get_scaling_factor
 from localization import _
 import traceback
@@ -936,7 +938,6 @@ def scale_img(path, scaling, shape):
     io.imsave(resource_path(resource_path(path.replace('.png', '-scaled.png'))), img, check_contrast=False)
 
 if __name__ == "__main__":
-    multiprocessing.freeze_support()
     root = hdpitk.HdpiTk()
     scaling = get_scaling_factor(root)
     

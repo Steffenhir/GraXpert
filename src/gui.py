@@ -31,6 +31,7 @@ import traceback
 from skimage import io
 from skimage.transform import resize
 from parallel_processing import executor
+from version import release, version
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -65,7 +66,7 @@ class Application(tk.Frame):
             "Processed": None
             }
         
-        self.my_title = "GraXpert V0.1.0"
+        self.my_title = "GraXpert | Release: '{}' ({})".format(release, version)
         self.master.title(self.my_title)
 
         self.prefs: Prefs = DEFAULT_PREFS

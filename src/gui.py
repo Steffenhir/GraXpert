@@ -502,22 +502,22 @@ class Application(tk.Frame):
     def calculate(self):
 
         if self.images["Original"] is None:
-            messagebox.showerror("Error", "Please load your picture first.")
+            messagebox.showerror("Error", _("Please load your picture first."))
             return
 
         background_points = self.cmd.app_state["background_points"]
         
         #Error messages if not enough points
         if(len(background_points) == 0):
-            messagebox.showerror("Error", _("Please load your picture and select background points with right click."))
+            messagebox.showerror("Error", _("Please select background points with left click."))
             return
         
         if(len(background_points) < 2 and self.interpol_type.get() == "Kriging"):
-            messagebox.showerror("Error", _("Please select at least 2 background points with right click for the Kriging method."))
+            messagebox.showerror("Error", _("Please select at least 2 background points with left click for the Kriging method."))
             return
         
         if(len(background_points) < 16 and self.interpol_type.get() == "Splines"):
-            messagebox.showerror("Error", _("Please select at least 16 background points with right click for the Splines method."))
+            messagebox.showerror("Error", _("Please select at least 16 background points with left click for the Splines method."))
             return
         
         self.loading_frame.start()

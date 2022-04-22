@@ -1,14 +1,16 @@
 import sys
 import tkinter as tk
-from tkinter import CENTER, ttk
 from cProfile import label
 from os import path
+from tkinter import CENTER, ttk
 
 from numpy import pad
 from PIL import Image, ImageTk
 
-from ui_scaling import get_scaling_factor
 from localization import _
+from ui_scaling import get_scaling_factor
+# from version import release, version
+
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -87,6 +89,9 @@ class Help_Panel():
         self.label = tk.Label(self.help_panel, image=logo)
         self.label.image= logo
         self.label.grid(column=0, row=0, padx=(40,30), pady=50*scaling)
+
+        # text = tk.Message(self.help_panel, text="Release: '{}' ({})".format(release, version), width=240 * scaling, anchor="center")
+        # text.grid(column=0, row=1, padx=(40,30), pady=(0,25*scaling), sticky="ew")
         
         text = tk.Message(self.help_panel, text=_("Instructions"), width=240 * scaling, font=heading_font, anchor="center")
         text.grid(column=0, row=1, padx=(40,30), pady=(0,10*scaling), sticky="ew")

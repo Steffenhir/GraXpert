@@ -11,7 +11,7 @@ from tkinter import LEFT, ttk
 
 from PIL import ImageTk
 
-from localization import _
+from graxpert.localization import _
 
 
 def resource_path(relative_path):

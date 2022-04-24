@@ -19,8 +19,8 @@ from pykrige.ok import OrdinaryKriging
 from scipy import interpolate, linalg
 from skimage.transform import resize
 
-from parallel_processing import executor
-from radialbasisinterpolation import RadialBasisInterpolation
+from graxpert.parallel_processing import executor
+from graxpert.radialbasisinterpolation import RadialBasisInterpolation
 
 
 def extract_background(in_imarray, background_points, interpolation_type, smoothing, downscale_factor):

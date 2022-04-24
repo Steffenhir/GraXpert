@@ -1,7 +1,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from ui_scaling import get_scaling_factor
-from localization import _
+from graxpert.ui_scaling import get_scaling_factor
+from graxpert.localization import _
 
 
 class Tooltip:

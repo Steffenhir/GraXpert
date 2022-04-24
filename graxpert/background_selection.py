@@ -9,8 +9,8 @@ Created on Tue Feb 15 15:09:15 2022
 from skimage import color
 from skimage.transform import rescale
 import numpy as np
-import stretch
-import skyall
+import graxpert.stretch
+import graxpert.skyall
 
 def background_selection(data, num_pts_per_row, tol):
 

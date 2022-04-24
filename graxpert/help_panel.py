@@ -7,8 +7,8 @@ from tkinter import CENTER, ttk
 from numpy import pad
 from PIL import Image, ImageTk
 
-from localization import _
-from ui_scaling import get_scaling_factor
+from graxpert.localization import _
+from graxpert.ui_scaling import get_scaling_factor
 # from version import release, version
 
 

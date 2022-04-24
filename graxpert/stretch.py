@@ -14,7 +14,7 @@ from astropy.visualization import AsinhStretch
 from scipy.optimize import root
 from concurrent.futures import wait
 from multiprocessing import shared_memory
-from parallel_processing import executor
+from graxpert.parallel_processing import executor
 
 
 

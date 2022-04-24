@@ -77,22 +77,26 @@ msgstr "Ein Fehler ist beim Laden des Bildes aufgetreten."
 
 #: src/gui.py:375
 msgid "Please load your picture first."
-msgstr "Bitte zuerst ein Bild laden"
+msgstr "Bitte zuerst ein Bild laden."
 
 #: src/gui.py:423 src/gui.py:453
 msgid "Error occured when saving the image."
-msgstr "Ein Fehler ist beim Speichern des Bildes aufgetreten"
+msgstr "Ein Fehler ist beim Speichern des Bildes aufgetreten."
+
+#:src/gui.py:505
+msgid "Please load your picture first."
+msgstr "Bitte zuerst ein Bild laden."
 
 #: src/gui.py:471
-msgid "Please load your picture and select background points with right click."
-msgstr "Bitte zuerst ein Bild laden und Hintergrundpunkte auswählen"
+msgid "Please select background points with left click."
+msgstr "Bitte zuerst Hintergrundpunkte mit Linksklick auswählen"
 
 #: src/gui.py:475
-msgid "Please select at least 2 background points with right click for the Kriging method."
+msgid "Please select at least 2 background points with left click for the Kriging method."
 msgstr "Für die Kriging Methode werden mindestens 2 Hintergrundpunkte benötigt"
 
 #: src/gui.py:479
-msgid "Please select at least 16 background points with right click for the Splines method."
+msgid "Please select at least 16 background points with left click for the Splines method."
 msgstr "Für die Splines Methode werden mindestens 16 Hintergrundpunkte benötigt"
 
 #: src/gui.py:799

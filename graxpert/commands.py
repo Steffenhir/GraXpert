@@ -6,8 +6,8 @@ from typing import Dict
 
 import numpy as np
 
-from app_state import INITIAL_STATE, AppState
-from background_selection import background_selection
+from graxpert.app_state import INITIAL_STATE, AppState
+from graxpert.background_selection import background_selection
 
 
 class ICommandHandler(ABC):

@@ -7,8 +7,8 @@ from os import path
 from numpy import pad
 from PIL import Image, ImageTk
 
-from ui_scaling import get_scaling_factor
-from localization import _
+from graxpert.ui_scaling import get_scaling_factor
+from graxpert.localization import _
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """

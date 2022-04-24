@@ -1,6 +1,3 @@
-*.tiff
-*.tif
-*.fits
 *-scaled.png
 __pycache__
 python-venv

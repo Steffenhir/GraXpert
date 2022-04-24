@@ -17,20 +17,20 @@ from app_state import INITIAL_STATE
 import background_extraction
 from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, MOVE_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
 from preferences import DEFAULT_PREFS, Prefs, app_state_2_prefs, merge_json, prefs_2_app_state
-from stretch import stretch_all
-import tooltip
-from loadingframe import LoadingFrame
-from help_panel import Help_Panel
-from astroimage import AstroImage
+from graxpert.stretch import stretch_all
+from graxpert import tooltip
+from graxpert.loadingframe import LoadingFrame
+from graxpert.help_panel import Help_Panel
+from graxpert.astroimage import AstroImage
 import json
 from appdirs import user_config_dir
 import multiprocessing
-from ui_scaling import get_scaling_factor
-from localization import _
+from graxpert.ui_scaling import get_scaling_factor
+from graxpert.localization import _
 import traceback
 from skimage import io
 from skimage.transform import resize
-from parallel_processing import executor
+from graxpert.parallel_processing import executor
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -502,22 +502,22 @@ class Application(tk.Frame):
     def calculate(self):
 
         if self.images["Original"] is None:
-            messagebox.showerror("Error", "Please load your picture first.")
+            messagebox.showerror("Error", _("Please load your picture first."))
             return
 
         background_points = self.cmd.app_state["background_points"]
         
         #Error messages if not enough points
         if(len(background_points) == 0):
-            messagebox.showerror("Error", _("Please load your picture and select background points with right click."))
+            messagebox.showerror("Error", _("Please select background points with left click."))
             return
         
         if(len(background_points) < 2 and self.interpol_type.get() == "Kriging"):
-            messagebox.showerror("Error", _("Please select at least 2 background points with right click for the Kriging method."))
+            messagebox.showerror("Error", _("Please select at least 2 background points with left click for the Kriging method."))
             return
         
         if(len(background_points) < 16 and self.interpol_type.get() == "Splines"):
-            messagebox.showerror("Error", _("Please select at least 16 background points with right click for the Splines method."))
+            messagebox.showerror("Error", _("Please select at least 16 background points with left click for the Splines method."))
             return
         
         self.loading_frame.start()

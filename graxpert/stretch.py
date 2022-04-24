@@ -11,7 +11,7 @@ from astropy.visualization import AsinhStretch
 from scipy.optimize import root
 from concurrent.futures import wait
 from multiprocessing import shared_memory
-from parallel_processing import executor
+from graxpert.parallel_processing import executor
 
 
 
@@ -67,6 +67,7 @@ def stretch(data, bg, sigma):
 def stretch_all(datas, stretch_params):
     
     if stretch_params is None:
+        datas = [data.clip(min=0, max=1) for data in datas]
         return datas
     
     bg = stretch_params[0]

@@ -19,7 +19,7 @@ lang, enc = locale.getdefaultlocale()
 
 if lang is None:
     lang = "en_EN"
-if lang.startswith("de"):
+if lang.startswith("de") or lang.startswith("gsw"):
     lang = "de_DE"
 
 lang = gettext.translation('base', localedir=resource_path("locales"), languages=[lang], fallback=True)

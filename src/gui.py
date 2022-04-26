@@ -853,7 +853,7 @@ class Application(tk.Frame):
                     (canvas_width, canvas_height),
                     Image.AFFINE,
                     affine_inv,
-                    Image.NEAREST   
+                    Image.BILINEAR  
                     )
 
         im = ImageTk.PhotoImage(image=dst)

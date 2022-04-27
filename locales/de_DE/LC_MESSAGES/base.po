@@ -148,6 +148,22 @@ msgstr "Klicke auf Hintergrundmodell berechnen um das bearbeitete Bild zu erhalt
 msgid "Save the processed image."
 msgstr "Speichere das bearbeitete Bild."
 
+#: src/help_panel.py
+msgid "A\nD\nV\nA\nN\nC\nE\nD"
+msgstr "E\nR\nW\nE\nI\nT\nE\nR\nT"
+
+#: src/help_panel.py
+msgid "Advanced Settings"
+msgstr "Erweiterte Einstellungen"
+
+#: src/help_panel.py
+msgid "Sample size: {}"
+msgstr "Stützstellengröße: {}"
+
+#: src/help_panel.py
+msgid "Sample color: {}"
+msgstr "Stützstellenfarbe: {}"
+
 #: src/loadingframe.py:18
 msgid "Calculating..."
 msgstr "Berechne..."

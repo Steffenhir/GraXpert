@@ -16,6 +16,7 @@ from PIL import Image, ImageTk
 import numpy as np            
 import os
 import sys
+from colorsys import hls_to_rgb
 from app_state import INITIAL_STATE
 import background_extraction
 from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, MOVE_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
@@ -103,7 +104,7 @@ class Application(tk.Frame):
         #Right help panel
         
         self.canvas = tk.Canvas(self.master, background="black", name="picture")
-        self.help_panel = Help_Panel(self.master, self.canvas)
+        self.help_panel = Help_Panel(self.master, self.canvas, self)
         
        
         # Canvas
@@ -536,7 +537,7 @@ class Application(tk.Frame):
         self.images["Background"].set_from_array(background_extraction.extract_background(
             imarray,np.array(background_points),
             self.interpol_type.get(),self.smoothing.get(),
-            downscale_factor
+            downscale_factor, self.sample_size.get()
             ))
 
         self.images["Processed"] = AstroImage(self.stretch_option_current)
@@ -570,10 +571,10 @@ class Application(tk.Frame):
         if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"] is None):
             return
         
-        self.clicked_inside_pt = False
+        self.clicked_inside_pt = False       
+        point_im = self.to_image_point(event.x,event.y)
         
-        if len(self.cmd.app_state["background_points"]) != 0:
-            point_im = self.to_image_point(event.x,event.y)
+        if len(self.cmd.app_state["background_points"]) != 0 and len(point_im != 0):
             
             eventx_im = point_im[0]
             eventy_im = point_im[1]
@@ -594,7 +595,7 @@ class Application(tk.Frame):
                     min_idx = i
             
             
-            if(min_idx != -1 and min_dist <= 25):
+            if(min_idx != -1 and min_dist <= self.sample_size.get()):
                 self.clicked_inside_pt = True
                 self.clicked_inside_pt_idx = min_idx
                 self.clicked_inside_pt_coord = self.cmd.app_state["background_points"][min_idx]
@@ -683,7 +684,7 @@ class Application(tk.Frame):
                 min_idx = i
         
         
-        if(min_idx != -1 and min_dist <= 25):
+        if(min_idx != -1 and min_dist <= self.sample_size.get()):
             point = background_points[min_idx]
             self.cmd = Command(RM_POINT_HANDLER, self.cmd, idx=min_idx, point=point)
             self.cmd.execute()
@@ -877,14 +878,22 @@ class Application(tk.Frame):
         return
     
     def redraw_points(self):
+        
+        if self.images["Original"] is None:
+            return
+    
+        color = hls_to_rgb(self.sample_color.get()/360, 0.5, 1.0)
+        color = (int(color[0]*255), int(color[1]*255), int(color[2]*255))
+        color = '#%02x%02x%02x' % color
+        
         self.canvas.delete("rectangle")      
-        rectsize=25
+        rectsize = self.sample_size.get()
         background_points = self.cmd.app_state["background_points"]
 
         for point in background_points:        
             corner1 = self.to_canvas_point(point[0]-rectsize,point[1]-rectsize)
             corner2 = self.to_canvas_point(point[0]+rectsize,point[1]+rectsize)
-            self.canvas.create_rectangle(corner1[0],corner1[1], corner2[0],corner2[1],outline="red", tags="rectangle")
+            self.canvas.create_rectangle(corner1[0],corner1[1], corner2[0],corner2[1],outline=color, width=2, tags="rectangle")
             
         return
 
@@ -928,6 +937,8 @@ class Application(tk.Frame):
                 self.prefs["interpol_type_option"] = self.interpol_type.get()
                 self.prefs["smoothing_option"] = self.smoothing.get()
                 self.prefs["saveas_option"] = self.saveas_type.get()
+                self.prefs["sample_size"] = self.sample_size.get()
+                self.prefs["sample_color"] = self.sample_color.get()
                 json.dump(self.prefs, f)
         except OSError as err:
             print("error serializing preferences: {0}".format(err))

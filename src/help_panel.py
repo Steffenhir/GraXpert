@@ -23,12 +23,13 @@ def resource_path(relative_path):
     return path.join(base_path, relative_path)
 
 class Help_Panel():
-    def __init__(self, master, canvas):
+    def __init__(self, master, canvas, app):
         
         
         self.visible = True
         self.master = master
         self.canvas = canvas
+        self.app = app
         
         self.visible_panel = "None"
         
@@ -37,6 +38,8 @@ class Help_Panel():
         scaling = get_scaling_factor(master)
         
         s = ttk.Style(master)
+        
+        # Help Button
         s.configure("Help.TButton", 
             borderwidth=0
         )
@@ -46,29 +49,58 @@ class Help_Panel():
             justify=CENTER,
             anchor=CENTER
         )
-        self.toggle_button = ttk.Button(self.button_frame,
+        
+        self.help_button = ttk.Button(self.button_frame,
             style="Help.TButton"
         )
-        self.toggle_label = ttk.Label(
-            self.toggle_button,
+        self.help_label = ttk.Label(
+            self.help_button,
             text=_("H\nE\nL\nP"),
             style="Help.TLabel",
             font=("Verdana","12","bold")
         )
-        self.toggle_label.bind("<Button-1>", self.help)
-        self.toggle_label.pack(
+        self.help_label.bind("<Button-1>", self.help)
+        self.help_label.pack(
             ipadx=int(5 * scaling),
             ipady=int(20 * scaling)
         )
 
-        self.toggle_button.grid(
+        self.help_button.grid(
             row=0,
             column=0
         )
         
-        #self.advanced_pic = tk.PhotoImage(file=resource_path("img/advanced.png"))
-        #self.advanced_button = tk.Button(self.button_frame, image=self.advanced_pic, command=self.advanced, borderwidth=0)
-        #self.advanced_button.grid(row=1, column=0)
+        # Advanced Button
+        s.configure("Advanced.TButton", 
+            borderwidth=0
+        )
+        s.configure("Advanced.TLabel",
+            foreground="#ffffff",
+            background="#254f69",
+            justify=CENTER,
+            anchor=CENTER
+        )
+        
+        self.advanced_button = ttk.Button(self.button_frame,
+            style="Advaned.TButton"
+        )
+        self.advanced_label = ttk.Label(
+            self.advanced_button,
+            text=_("A\nD\nV\nA\nN\nC\nE\nD"),
+            style="Advanced.TLabel",
+            font=("Verdana","12","bold")
+        )
+        self.advanced_label.bind("<Button-1>", self.advanced)
+        self.advanced_label.pack(
+            ipadx=int(5 * scaling),
+            ipady=int(20 * scaling)
+        )
+
+        self.advanced_button.grid(
+            row=1,
+            column=0
+        )
+        
         
         self.button_frame.pack(side=tk.RIGHT)
         
@@ -143,8 +175,61 @@ class Help_Panel():
         # Advanced Panel
         
         self.advanced_panel = tk.Frame(self.canvas)
-        text = tk.Message(self.advanced_panel, text="Advanced", width=240 * scaling)
-        text.grid(column=0, row=0, padx=3, pady=3)
+        
+        text = tk.Message(self.advanced_panel, text=_("Advanced Settings"), width=240 * scaling, font=heading_font, anchor="center")
+        text.grid(column=0, row=0, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
+        
+        self.app.sample_size = tk.IntVar()
+        self.app.sample_size.set(25)
+        if "sample_size" in self.app.prefs:
+            self.app.sample_size.set(self.app.prefs["sample_size"])
+        
+        self.sample_size_text = tk.Message(self.advanced_panel, text=_("Sample size: {}").format(self.app.sample_size.get()))
+        self.sample_size_text.config(width=500 * scaling)
+        self.sample_size_text.grid(column=0, row=1, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        
+        def on_sample_size_slider(sample_size):
+            self.app.sample_size.set(float("{:.2f}".format(float(sample_size))))
+            self.sample_size_text.configure(text=_("Sample size: {}").format(self.app.sample_size.get()))
+            self.app.redraw_points()
+        
+        self.sample_size_slider = ttk.Scale(
+            self.advanced_panel,
+            orient=tk.HORIZONTAL,
+            from_=5,
+            to=50,
+            var=self.app.sample_size,
+            command=on_sample_size_slider,
+            length=150
+            )
+        self.sample_size_slider.grid(column=0, row=2, pady=(0,10*scaling), padx=15*scaling, sticky="ew")
+        
+        
+        self.app.sample_color = tk.IntVar()
+        self.app.sample_color.set(55)
+        if "sample_color" in self.app.prefs:
+            self.app.sample_color.set(self.app.prefs["sample_color"])
+        
+        self.sample_color_text = tk.Message(self.advanced_panel, text=_("Sample color: {}").format(self.app.sample_color.get()))
+        self.sample_color_text.config(width=500 * scaling)
+        self.sample_color_text.grid(column=0, row=3, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        
+        def on_sample_color_slider(sample_color):
+            self.app.sample_color.set(float("{:.2f}".format(float(sample_color))))
+            self.sample_color_text.configure(text=_("Sample color: {}").format(self.app.sample_color.get()))
+            self.app.redraw_points()
+        
+        self.sample_color_slider = ttk.Scale(
+            self.advanced_panel,
+            orient=tk.HORIZONTAL,
+            from_=0,
+            to=360,
+            var=self.app.sample_color,
+            command=on_sample_color_slider,
+            length=150
+            )
+        self.sample_color_slider.grid(column=0, row=4, pady=(0,10*scaling), padx=15*scaling, sticky="ew")
+        
         
     def help(self, event):
         
@@ -169,10 +254,10 @@ class Help_Panel():
             
         self.master.update()
         # force update of label to prevent white background on mac
-        self.toggle_label.configure(background="#c46f1a")
+        self.help_label.configure(background="#c46f1a")
             
 
-    def advanced(self):
+    def advanced(self, event):
         
         if self.visible_panel == "None":
             self.button_frame.pack_forget()
@@ -194,6 +279,8 @@ class Help_Panel():
             self.visible_panel="None"
             
         self.master.update()
+        # force update of label to prevent white background on mac
+        self.advanced_label.configure(background="#254f69")
         
 
 

@@ -21,7 +21,7 @@ class AstroImage:
         self.img_format = os.path.splitext(directory)[1]
         
         img_array = None
-        if(self.img_format == ".fits" or self.img_format == ".fit"):
+        if(self.img_format == ".fits" or self.img_format == ".fit" or self.img_format == ".fts"):
             hdul = fits.open(directory)
             img_array = hdul[0].data
             self.fits_header = hdul[0].header

@@ -353,7 +353,7 @@ class Application(tk.Frame):
             initialdir = os.getcwd()
         
         filename = tk.filedialog.askopenfilename(
-            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits")],
+            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits .fts"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits .fts")],
             initialdir = initialdir
             )
         

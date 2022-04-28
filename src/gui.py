@@ -180,7 +180,7 @@ class Application(tk.Frame):
         text.image = num_pic
         text.grid(column=0, row=2, pady=5*scal, padx=0, sticky="w")
         
-        self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "25% Bg, 1.25 sigma"]
+        self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "30% Bg, 2 sigma"]
         self.stretch_option_current = tk.StringVar()
         self.stretch_option_current.set(self.stretch_options[0])
         if "stretch_option" in self.prefs:
@@ -537,7 +537,8 @@ class Application(tk.Frame):
         self.images["Background"].set_from_array(background_extraction.extract_background(
             imarray,np.array(background_points),
             self.interpol_type.get(),self.smoothing.get(),
-            downscale_factor, self.sample_size.get()
+            downscale_factor, self.sample_size.get(),
+            self.RBF_kernel.get()
             ))
 
         self.images["Processed"] = AstroImage(self.stretch_option_current)
@@ -939,6 +940,8 @@ class Application(tk.Frame):
                 self.prefs["saveas_option"] = self.saveas_type.get()
                 self.prefs["sample_size"] = self.sample_size.get()
                 self.prefs["sample_color"] = self.sample_color.get()
+                self.prefs["RBF_kernel"] = self.RBF_kernel.get()
+                self.prefs["lang"] = self.lang.get()
                 json.dump(self.prefs, f)
         except OSError as err:
             print("error serializing preferences: {0}".format(err))

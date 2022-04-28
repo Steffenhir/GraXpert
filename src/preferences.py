@@ -19,6 +19,8 @@ class Prefs(TypedDict):
     saveas_option: AnyStr
     sample_size: int
     sample_color: int
+    RBF_kernel: AnyStr
+    lang: AnyStr
 
 DEFAULT_PREFS: Prefs = {
     "working_dir": os.getcwd(),
@@ -32,7 +34,9 @@ DEFAULT_PREFS: Prefs = {
     "smoothing_option": 1.0,
     "saveas_option": "32 bit Tiff",
     "sample_size": 25,
-    "sample_color": 55
+    "sample_color": 55,
+    "RBF_kernel": "thin_plate",
+    "lang": None
 }
 
 def app_state_2_prefs(prefs: Prefs, app_state: AppState) -> Prefs:
@@ -70,4 +74,8 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["sample_size"] = json["sample_size"]
     if "sample_color" in json:
         prefs["sample_color"] = json["sample_color"]
+    if "RBF_kernel" in json:
+        prefs["RBF_kernel"] = json["RBF_kernel"]
+    if "lang" in json:
+        prefs["lang"] = json["lang"]
     return prefs

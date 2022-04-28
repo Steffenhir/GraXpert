@@ -3,11 +3,12 @@ import tkinter as tk
 from cProfile import label
 from os import path
 from tkinter import CENTER, ttk
+from tkinter import messagebox
 
 from numpy import pad
 from PIL import Image, ImageTk
 
-from localization import _
+from localization import _, lang
 from ui_scaling import get_scaling_factor
 # from version import release, version
 
@@ -177,7 +178,10 @@ class Help_Panel():
         self.advanced_panel = tk.Frame(self.canvas)
         
         text = tk.Message(self.advanced_panel, text=_("Advanced Settings"), width=240 * scaling, font=heading_font, anchor="center")
-        text.grid(column=0, row=0, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
+        text.grid(column=0, row=0, padx=(40*scaling,30*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+        
+        text = tk.Message(self.advanced_panel, text=_("Sample Points"), width=240 * scaling, font=heading_font2, anchor="center")
+        text.grid(column=0, row=1, padx=(5*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
         
         self.app.sample_size = tk.IntVar()
         self.app.sample_size.set(25)
@@ -186,7 +190,7 @@ class Help_Panel():
         
         self.sample_size_text = tk.Message(self.advanced_panel, text=_("Sample size: {}").format(self.app.sample_size.get()))
         self.sample_size_text.config(width=500 * scaling)
-        self.sample_size_text.grid(column=0, row=1, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        self.sample_size_text.grid(column=0, row=2, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
         
         def on_sample_size_slider(sample_size):
             self.app.sample_size.set(float("{:.2f}".format(float(sample_size))))
@@ -202,7 +206,7 @@ class Help_Panel():
             command=on_sample_size_slider,
             length=150
             )
-        self.sample_size_slider.grid(column=0, row=2, pady=(0,10*scaling), padx=15*scaling, sticky="ew")
+        self.sample_size_slider.grid(column=0, row=3, pady=(0,10*scaling), padx=15*scaling, sticky="ew")
         
         
         self.app.sample_color = tk.IntVar()
@@ -212,7 +216,7 @@ class Help_Panel():
         
         self.sample_color_text = tk.Message(self.advanced_panel, text=_("Sample color: {}").format(self.app.sample_color.get()))
         self.sample_color_text.config(width=500 * scaling)
-        self.sample_color_text.grid(column=0, row=3, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        self.sample_color_text.grid(column=0, row=4, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
         
         def on_sample_color_slider(sample_color):
             self.app.sample_color.set(float("{:.2f}".format(float(sample_color))))
@@ -228,7 +232,40 @@ class Help_Panel():
             command=on_sample_color_slider,
             length=150
             )
-        self.sample_color_slider.grid(column=0, row=4, pady=(0,10*scaling), padx=15*scaling, sticky="ew")
+        self.sample_color_slider.grid(column=0, row=5, pady=(0,10*scaling), padx=15*scaling, sticky="ew")
+        
+        text = tk.Message(self.advanced_panel, text=_("Interpolation"), width=240 * scaling, font=heading_font2, anchor="center")
+        text.grid(column=0, row=6, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+        
+        text = tk.Message(self.advanced_panel, text=_("RBF Kernel"), width=240*scaling, anchor="center")
+        text.grid(column=0, row=7, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        
+        self.app.RBF_kernels = ["thin_plate", "quintic", "cubic", "linear", "gaussian", "inverse", "multiquadratic"]
+        self.app.RBF_kernel = tk.StringVar()
+        self.app.RBF_kernel.set(self.app.RBF_kernels[0])
+        if "RBF_kernel" in self.app.prefs:
+            self.app.RBF_kernel.set(self.app.prefs["RBF_kernel"])
+
+        self.kernel_menu = ttk.OptionMenu(self.advanced_panel, self.app.RBF_kernel, self.app.RBF_kernel.get(), *self.app.RBF_kernels)
+        self.kernel_menu.grid(column=0, row=8, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        
+        
+        text = tk.Message(self.advanced_panel, text=_("Language"), width=240 * scaling, font=heading_font2, anchor="center")
+        text.grid(column=0, row=9, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+    
+        def lang_change(lang):
+            messagebox.showerror("", _("Please restart the program to change the language."))
+        
+        self.app.langs = ["English", "Deutsch"]
+        self.app.lang = tk.StringVar()
+
+        if lang == "de_DE":
+            self.app.lang.set("Deutsch")
+        else:
+            self.app.lang.set("English")
+
+        self.lang_menu = ttk.OptionMenu(self.advanced_panel, self.app.lang, self.app.lang.get(), *self.app.langs, command=lang_change)
+        self.lang_menu.grid(column=0, row=10, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
         
         
     def help(self, event):

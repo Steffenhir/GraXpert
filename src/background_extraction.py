@@ -23,7 +23,7 @@ from parallel_processing import executor
 from radialbasisinterpolation import RadialBasisInterpolation
 
 
-def extract_background(in_imarray, background_points, interpolation_type, smoothing, downscale_factor, sample_size):
+def extract_background(in_imarray, background_points, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel="thin_plate"):
 
     shm_imarray = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
     shm_background = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
@@ -38,7 +38,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         
     futures = []
     for c in range(num_colors):
-        futures.insert(c, executor.submit(interpol, shm_imarray.name, shm_background.name, c, x_sub, y_sub, in_imarray.shape, interpolation_type, smoothing, downscale_factor, sample_size, imarray.dtype))
+        futures.insert(c, executor.submit(interpol, shm_imarray.name, shm_background.name, c, x_sub, y_sub, in_imarray.shape, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, imarray.dtype))
     wait(futures)
         
     #Subtract background from image
@@ -71,7 +71,7 @@ def calc_mode_dataset(data, x_sub, y_sub, halfsize):
     return subsample
 
 
-def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind, smoothing, downscale_factor, sample_size, dtype):
+def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind, smoothing, downscale_factor, sample_size, RBF_kernel, dtype):
 
     try:
         existing_shm_imarray = shared_memory.SharedMemory(name=shm_imarray_name)
@@ -98,7 +98,7 @@ def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind
         
         if(kind=='RBF'):
             points_stacked = np.stack([x_sub,y_sub],-1)
-            interp = RadialBasisInterpolation(points_stacked,subsample,kernel="thin_plate",smooth=smoothing*linalg.norm(subsample)/np.sqrt(len(subsample)))   
+            interp = RadialBasisInterpolation(points_stacked,subsample,kernel=RBF_kernel,smooth=smoothing*linalg.norm(subsample)/np.sqrt(len(subsample)))   
         
             # Create background from interpolation
             x_new = np.arange(0,shape_scaled[1],1)

@@ -143,7 +143,7 @@ class Application(tk.Frame):
         
         
         #Side menu
-        self.side_canvas = tk.Canvas(self.master, borderwidth=0,  bd=0, highlightthickness=0)
+        self.side_canvas = tk.Canvas(self.master, borderwidth=0,  bd=0, highlightthickness=0, name="left_panel")
         self.side_canvas.pack(side=tk.TOP, fill=tk.Y, expand=True)
         
         self.scrollbar = ttk.Scrollbar(self.canvas, orient=tk.VERTICAL, command=self.side_canvas.yview)
@@ -736,19 +736,26 @@ class Application(tk.Frame):
         self.redraw_image()
 
     def mouse_wheel(self, event):
-
-        if self.images[self.display_type.get()] is None:
-            return
-
-
-        if (event.delta > 0 or event.num == 4):
-
-            self.scale_at(6/5, event.x, event.y)
-        else:
-
-            self.scale_at(5/6, event.x, event.y)
-   
-        self.redraw_image()
+        
+        if str(event.widget).startswith(".picture"):
+            if self.images[self.display_type.get()] is None:
+                return
+    
+    
+            if (event.delta > 0 or event.num == 4):
+    
+                self.scale_at(6/5, event.x, event.y)
+            else:
+    
+                self.scale_at(5/6, event.x, event.y)
+       
+            self.redraw_image()
+        
+        elif str(event.widget).startswith(".left_panel"):
+            if (event.delta > 0 or event.num == 4):
+                self.side_canvas.yview_scroll(-1, "units")
+            else:
+                self.side_canvas.yview_scroll(1, "units")
         
 
     def reset_transform(self):

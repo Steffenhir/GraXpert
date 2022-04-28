@@ -18,7 +18,7 @@ class AstroImage:
         self.height = 0
         
     def set_from_file(self, directory):
-        self.img_format = os.path.splitext(directory)[1]
+        self.img_format = os.path.splitext(directory)[1].lower()
         
         img_array = None
         if(self.img_format == ".fits" or self.img_format == ".fit" or self.img_format == ".fts"):

@@ -16,6 +16,7 @@ class AstroImage:
         self.stretch_option = stretch_option
         self.width = 0
         self.height = 0
+        self.roworder = "BOTTOM-UP"
         
     def set_from_file(self, directory):
         self.img_format = os.path.splitext(directory)[1].lower()
@@ -29,6 +30,9 @@ class AstroImage:
             
             if(len(img_array.shape) == 3):
                img_array = np.moveaxis(img_array,0,-1)
+               
+            if "ROWORDER" in self.fits_header:
+                self.roworder = self.fits_header["ROWORDER"]
 
         else:
             img_array = io.imread(directory)
@@ -60,6 +64,10 @@ class AstroImage:
     def update_display(self):
         img_display = self.stretch()
         img_display = img_display*255
+        
+        if self.roworder == "TOP-DOWN":
+            img_display = np.flip(img_display, axis=0)
+        
         if(img_display.shape[2] == 1):
             self.img_display = Image.fromarray(img_display[:,:,0].astype(np.uint8))
         else:
@@ -68,6 +76,10 @@ class AstroImage:
     
     def update_display_from_array(self, img_display):
         img_display = img_display*255
+        
+        if self.roworder == "TOP-DOWN":
+            img_display = np.flip(img_display, axis=0)
+        
         if(img_display.shape[2] == 1):
             self.img_display = Image.fromarray(img_display[:,:,0].astype(np.uint8))
         else:
@@ -116,6 +128,9 @@ class AstroImage:
         self.fits_header["CBG-1"] = background_mean
         self.fits_header["CBG-2"] = background_mean
         self.fits_header["CBG-3"] = background_mean
+        
+        if "ROWORDER" in original_header:
+            self.roworder = original_header["ROWORDER"]
                 
     def save(self, dir, saveas_type):
         if(self.img_array is None):

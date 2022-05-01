@@ -129,8 +129,8 @@ class AstroImage:
         self.fits_header["CBG-2"] = background_mean
         self.fits_header["CBG-3"] = background_mean
         
-        if "ROWORDER" in original_header:
-            self.roworder = original_header["ROWORDER"]
+        if "ROWORDER" in self.fits_header:
+            self.roworder = self.fits_header["ROWORDER"]
                 
     def save(self, dir, saveas_type):
         if(self.img_array is None):

@@ -43,12 +43,18 @@ def background_selection(data, num_pts_per_row, tol):
     local_median = np.zeros(len(background_pts))
     halfsize = 25
     data_mono_padded = np.pad(array=data_mono, pad_width=(halfsize,), mode="reflect")
+
     
     for i in range(len(background_pts)):
-        y_pt = background_pts[i][0]
-        x_pt = background_pts[i][1]      
-        local_median[i] = np.median(data_mono_padded[y_pt:y_pt+2*halfsize, x_pt:x_pt+2*halfsize])
-    
+        x_pt = background_pts[i][0]
+        y_pt = background_pts[i][1]
+        
+        pt, median = find_darkest_quadrant(x_pt, y_pt, data_mono_padded, halfsize)
+
+        background_pts[i][0] = pt[0]
+        background_pts[i][1] = pt[1]
+        local_median[i] = median
+
     # Calculate median average deviation and remove points not within tolerance 
     mad = np.median(np.abs(local_median - global_median))
     
@@ -57,8 +63,26 @@ def background_selection(data, num_pts_per_row, tol):
         if(local_median[i] < global_median + tol*mad):
             background_pts_sliced.append(background_pts[i])
         
-    
+
     return background_pts_sliced
+
+
+def find_darkest_quadrant(x, y, data_padded, sample_size):
+    
+    cords = [[x+0,y+0],[x+sample_size,y+sample_size],[x-sample_size,y+sample_size],
+                  [x+sample_size,y-sample_size],[x-sample_size,y-sample_size]]
+    median = []
+    for point in cords:
+        if point[0] < 0 or point[0] > data_padded.shape[0] - 2*sample_size or point[1] < 0 or point[1] > data_padded.shape[1] - 2*sample_size:
+            median.append(2)
+        else:
+            median.append(np.median(data_padded[point[0]:point[0]+2*sample_size,point[1]:point[1]+2*sample_size]))
+    
+    min_idx = np.argmin(median)
+
+    return cords[min_idx], median[min_idx]
+    
+    
     
 
 def background_selection2(data, num_pts):

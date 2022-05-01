@@ -23,7 +23,7 @@ from parallel_processing import executor
 from radialbasisinterpolation import RadialBasisInterpolation
 
 
-def extract_background(in_imarray, background_points, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel="thin_plate"):
+def extract_background(in_imarray, background_points, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order):
 
     shm_imarray = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
     shm_background = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
@@ -38,7 +38,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         
     futures = []
     for c in range(num_colors):
-        futures.insert(c, executor.submit(interpol, shm_imarray.name, shm_background.name, c, x_sub, y_sub, in_imarray.shape, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, imarray.dtype))
+        futures.insert(c, executor.submit(interpol, shm_imarray.name, shm_background.name, c, x_sub, y_sub, in_imarray.shape, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, imarray.dtype))
     wait(futures)
         
     #Subtract background from image
@@ -71,7 +71,7 @@ def calc_mode_dataset(data, x_sub, y_sub, halfsize):
     return subsample
 
 
-def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind, smoothing, downscale_factor, sample_size, RBF_kernel, dtype):
+def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, dtype):
 
     try:
         existing_shm_imarray = shared_memory.SharedMemory(name=shm_imarray_name)
@@ -110,7 +110,7 @@ def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind
             result = interp(points_new_stacked).reshape(shape_scaled)
         
         elif(kind=='Splines'):
-            interp = interpolate.bisplrep(y_sub,x_sub,subsample,w=np.ones(len(x_sub))/np.std(subsample), s=smoothing*len(x_sub))
+            interp = interpolate.bisplrep(y_sub,x_sub,subsample,w=np.ones(len(x_sub))/np.std(subsample), s=smoothing*len(x_sub), kx=spline_order, ky=spline_order)
             
             # Create background from interpolation
             x_new = np.arange(0,shape_scaled[1],1)

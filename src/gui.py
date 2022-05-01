@@ -544,7 +544,7 @@ class Application(tk.Frame):
             imarray,np.array(background_points),
             self.interpol_type.get(),self.smoothing.get(),
             downscale_factor, self.sample_size.get(),
-            self.RBF_kernel.get()
+            self.RBF_kernel.get(),self.spline_order.get()
             ))
 
         self.images["Processed"] = AstroImage(self.stretch_option_current)
@@ -971,6 +971,7 @@ class Application(tk.Frame):
                 self.prefs["sample_size"] = self.sample_size.get()
                 self.prefs["sample_color"] = self.sample_color.get()
                 self.prefs["RBF_kernel"] = self.RBF_kernel.get()
+                self.prefs["spline_order"] = self.spline_order.get()
                 self.prefs["lang"] = self.lang.get()
                 json.dump(self.prefs, f)
         except OSError as err:

@@ -200,6 +200,10 @@ msgstr "Samplegröße: {}"
 msgid "Sample color: {}"
 msgstr "Samplefarbe: {}"
 
+#: src/help_panel.py
+msgid "Spline order"
+msgstr "Grad der Splines"
+
 #: src/loadingframe.py:18
 msgid "Calculating..."
 msgstr "Berechne..."

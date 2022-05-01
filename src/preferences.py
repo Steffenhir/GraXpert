@@ -36,6 +36,7 @@ DEFAULT_PREFS: Prefs = {
     "sample_size": 25,
     "sample_color": 55,
     "RBF_kernel": "thin_plate",
+    "spline_order": 3,
     "lang": None
 }
 
@@ -76,6 +77,8 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["sample_color"] = json["sample_color"]
     if "RBF_kernel" in json:
         prefs["RBF_kernel"] = json["RBF_kernel"]
+    if "spline_order" in json:
+        prefs["spline_order"] = json["spline_order"]
     if "lang" in json:
         prefs["lang"] = json["lang"]
     return prefs

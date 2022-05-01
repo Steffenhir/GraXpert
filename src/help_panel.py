@@ -281,7 +281,7 @@ class Help_Panel():
         text = tk.Message(self.advanced_panel_window, text=_("RBF Kernel"), width=240*scaling, anchor="center")
         text.grid(column=0, row=7, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
         
-        self.app.RBF_kernels = ["thin_plate", "quintic", "cubic", "linear", "gaussian", "inverse", "multiquadratic"]
+        self.app.RBF_kernels = ["thin_plate", "quintic", "cubic", "linear"]
         self.app.RBF_kernel = tk.StringVar()
         self.app.RBF_kernel.set(self.app.RBF_kernels[0])
         if "RBF_kernel" in self.app.prefs:
@@ -291,8 +291,21 @@ class Help_Panel():
         self.kernel_menu.grid(column=0, row=8, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
         
         
+        text = tk.Message(self.advanced_panel_window, text=_("Spline order"), width=240*scaling, anchor="center")
+        text.grid(column=0, row=9, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        
+        self.app.spline_orders = [1,2,3,4,5]
+        self.app.spline_order = tk.IntVar()
+        self.app.spline_order.set(3)
+        if "spline_order" in self.app.prefs:
+            self.app.spline_order.set(self.app.prefs["spline_order"])
+
+        self.spline_order_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.spline_order, self.app.spline_order.get(), *self.app.spline_orders)
+        self.spline_order_menu.grid(column=0, row=10, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        
+        
         text = tk.Message(self.advanced_panel_window, text=_("Language"), width=240 * scaling, font=heading_font2, anchor="center")
-        text.grid(column=0, row=9, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+        text.grid(column=0, row=11, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
     
         def lang_change(lang):
             messagebox.showerror("", _("Please restart the program to change the language."))
@@ -306,7 +319,7 @@ class Help_Panel():
             self.app.lang.set("English")
 
         self.lang_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.lang, self.app.lang.get(), *self.app.langs, command=lang_change)
-        self.lang_menu.grid(column=0, row=10, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        self.lang_menu.grid(column=0, row=12, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
         
         
         self.advanced_canvas.create_window((0,0), window=self.advanced_panel_window)

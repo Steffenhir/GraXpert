@@ -297,18 +297,18 @@ namespace eval ttk::theme::forest-dark {
         ttk::style configure TCheckbutton -padding 4
 
         ttk::style element create Checkbutton.indicator image \
-            [list $I(check-unsel-accent) \
+            [list $I(check-unsel-accent-scaled) \
                 {alternate disabled} $I(check-tri-basic) \
-                {selected disabled} $I(check-basic) \
-                disabled $I(check-unsel-basic) \
+                {selected disabled} $I(check-basic-scaled) \
+                disabled $I(check-unsel-basic-scaled) \
                 {pressed alternate} $I(check-tri-hover) \
                 {active alternate} $I(check-tri-hover) \
                 alternate $I(check-tri-accent) \
-                {pressed selected} $I(check-hover) \
-                {active selected} $I(check-hover) \
-                selected $I(check-accent) \
-                {pressed !selected} $I(check-unsel-pressed) \
-                active $I(check-unsel-hover) \
+                {pressed selected} $I(check-hover-scaled) \
+                {active selected} $I(check-hover-scaled) \
+                selected $I(check-accent-scaled) \
+                {pressed !selected} $I(check-unsel-pressed-scaled) \
+                active $I(check-unsel-hover-scaled) \
             ] -width 26 -sticky w
 
         # Switch

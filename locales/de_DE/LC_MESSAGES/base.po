@@ -31,6 +31,10 @@ msgstr " Stretchoptionen"
 msgid " Sample Selection"
 msgstr " Punktauswahl"
 
+#: src/gui.py:176
+msgid "Display points"
+msgstr "Zeige Punkte"
+
 #: src/gui.py:185 src/gui.py:191
 msgid "Points per row: {}"
 msgstr "Punkte pro Reihe: {}"

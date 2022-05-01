@@ -196,6 +196,11 @@ class Application(tk.Frame):
         text.image = num_pic
         text.grid(column=0, row=4, pady=5*scal, padx=0, sticky="w")
         
+        self.display_pts = tk.BooleanVar()
+        self.display_pts.set(True)
+        self.display_pts_switch = ttk.Checkbutton(self.side_menu, text=_("Display points"), var=self.display_pts, command=self.redraw_points)
+        self.display_pts_switch.grid(column=0, row=5, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
+        
         self.bg_pts = tk.IntVar()
         self.bg_pts.set(10)
         if "bg_pts_option" in self.prefs:
@@ -203,7 +208,7 @@ class Application(tk.Frame):
         
         self.bg_selection_text = tk.Message(self.side_menu, text=_("Points per row: {}").format(self.bg_pts.get()))
         self.bg_selection_text.config(width=500 * scal)
-        self.bg_selection_text.grid(column=0, row=5, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
+        self.bg_selection_text.grid(column=0, row=6, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         def on_bg_pts_slider(bgs_points):
             self.bg_pts.set(int(float(bgs_points)))
@@ -219,7 +224,7 @@ class Application(tk.Frame):
             length=150
             )
         
-        self.bg_pts_slider.grid(column=0, row=6, pady=(0,0), padx=15*scal, sticky="ew")
+        self.bg_pts_slider.grid(column=0, row=7, pady=(0,0), padx=15*scal, sticky="ew")
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
         
         self.bg_tol = tk.DoubleVar()
@@ -229,7 +234,7 @@ class Application(tk.Frame):
         
         self.bg_selection_tol = tk.Message(self.side_menu, text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
         self.bg_selection_tol.config(width=500)
-        self.bg_selection_tol.grid(column=0, row=7, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
+        self.bg_selection_tol.grid(column=0, row=8, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         def on_bg_tol_slider(bg_tol):
             self.bg_tol.set(float("{:.1f}".format(float(bg_tol))))
@@ -244,30 +249,30 @@ class Application(tk.Frame):
             command=on_bg_tol_slider,
             length=150
             )
-        self.bg_tol_slider.grid(column=0, row=8, pady=(0,10*scal), padx=15*scal, sticky="ew")
+        self.bg_tol_slider.grid(column=0, row=9, pady=(0,10*scal), padx=15*scal, sticky="ew")
         tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
         self.bg_selection_button = ttk.Button(self.side_menu, 
                          text=_("Create Grid"),
                          command=self.select_background)
-        self.bg_selection_button.grid(column=0, row=9, pady=5*scal, padx=15*scal, sticky="news")
+        self.bg_selection_button.grid(column=0, row=10, pady=5*scal, padx=15*scal, sticky="news")
         tt_bg_select = tooltip.Tooltip(self.bg_selection_button, text= tooltip.bg_select_text)
         
         self.reset_button = ttk.Button(self.side_menu, 
                          text=_("Reset Sample Points"),
                          command=self.reset_backgroundpts)
-        self.reset_button.grid(column=0, row=10, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
+        self.reset_button.grid(column=0, row=11, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
         tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
         
         #---Calculation---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_4-scaled.png"))
         text = tk.Label(self.side_menu, text=_(" Calculation"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
-        text.grid(column=0, row=11, pady=5*scal, padx=0, sticky="w")
+        text.grid(column=0, row=12, pady=5*scal, padx=0, sticky="w")
         
         self.intp_type_text = tk.Message(self.side_menu, text=_("Interpolation Method:"))
         self.intp_type_text.config(width=500)
-        self.intp_type_text.grid(column=0, row=12, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
+        self.intp_type_text.grid(column=0, row=13, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         self.interpol_options = ["RBF", "Splines", "Kriging"]
         self.interpol_type = tk.StringVar()
@@ -275,7 +280,7 @@ class Application(tk.Frame):
         if "interpol_type_option" in self.prefs:
             self.interpol_type.set(self.prefs["interpol_type_option"])
         self.interpol_menu = ttk.OptionMenu(self.side_menu, self.interpol_type, self.interpol_type.get(), *self.interpol_options)
-        self.interpol_menu.grid(column=0, row=13, pady=(0,5*scal), padx=15*scal, sticky="news")
+        self.interpol_menu.grid(column=0, row=14, pady=(0,5*scal), padx=15*scal, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.interpol_menu, text=tooltip.interpol_type_text)
         
         self.smoothing = tk.DoubleVar()
@@ -285,7 +290,7 @@ class Application(tk.Frame):
         
         self.smooth_text = tk.Message(self.side_menu, text="Smoothing: {}".format(self.smoothing.get()))
         self.smooth_text.config(width=500)
-        self.smooth_text.grid(column=0, row=14, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
+        self.smooth_text.grid(column=0, row=15, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         def on_smoothing_slider(smoothing):
             self.smoothing.set(float("{:.2f}".format(float(smoothing))))
@@ -300,20 +305,20 @@ class Application(tk.Frame):
             command=on_smoothing_slider,
             length=150
             )
-        self.smoothing_slider.grid(column=0, row=15, pady=(0,10*scal), padx=15*scal, sticky="ew")
+        self.smoothing_slider.grid(column=0, row=16, pady=(0,10*scal), padx=15*scal, sticky="ew")
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
         self.calculate_button = ttk.Button(self.side_menu, 
                          text=_("Calculate Background"),
                          command=self.calculate)
-        self.calculate_button.grid(column=0, row=16, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
+        self.calculate_button.grid(column=0, row=17, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
         #---Saving---  
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_5-scaled.png"))
         self.saveas_text = tk.Label(self.side_menu, text=_(" Saving"), image=num_pic, font=heading_font, compound="left")
         self.saveas_text.image = num_pic
-        self.saveas_text.grid(column=0, row=17, pady=5*scal, padx=0, sticky="w")
+        self.saveas_text.grid(column=0, row=18, pady=5*scal, padx=0, sticky="w")
         
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits"]
         self.saveas_type = tk.StringVar()
@@ -321,20 +326,20 @@ class Application(tk.Frame):
         if "saveas_option" in self.prefs:
             self.saveas_type.set(self.prefs["saveas_option"])
         self.saveas_menu = ttk.OptionMenu(self.side_menu, self.saveas_type, self.saveas_type.get(), *self.saveas_options)
-        self.saveas_menu.grid(column=0, row=18, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
+        self.saveas_menu.grid(column=0, row=19, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
         
         self.save_background_button = ttk.Button(self.side_menu, 
                          text=_("Save Background"),
                          command=self.save_background_image)
-        self.save_background_button.grid(column=0, row=19, pady=5*scal, padx=15*scal, sticky="news")
+        self.save_background_button.grid(column=0, row=20, pady=5*scal, padx=15*scal, sticky="news")
         tt_save_bg = tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
               
         
         self.save_button = ttk.Button(self.side_menu, 
                          text=_("Save Processed"),
                          command=self.save_image)
-        self.save_button.grid(column=0, row=20, pady=(5*scal,10*scal), padx=15*scal, sticky="news")
+        self.save_button.grid(column=0, row=21, pady=(5*scal,10*scal), padx=15*scal, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
         
         
@@ -570,13 +575,14 @@ class Application(tk.Frame):
     
     def mouse_down_left(self,event):
         
+        self.left_drag_timer = -1
         if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"] is None):
             return
         
         self.clicked_inside_pt = False       
         point_im = self.to_image_point(event.x,event.y)
         
-        if len(self.cmd.app_state["background_points"]) != 0 and len(point_im != 0):
+        if len(self.cmd.app_state["background_points"]) != 0 and len(point_im) != 0 and self.display_pts.get():
             
             eventx_im = point_im[0]
             eventy_im = point_im[1]
@@ -607,7 +613,7 @@ class Application(tk.Frame):
         
     def mouse_release_left(self,event):
         
-        if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"] is None):
+        if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"] is None or not self.display_pts.get()):
             return
         
 
@@ -640,7 +646,7 @@ class Application(tk.Frame):
         if(self.left_drag_timer == -1):
             self.left_drag_timer = event.time
         
-        if self.clicked_inside_pt:         
+        if self.clicked_inside_pt and self.display_pts.get():         
             new_point = self.to_image_point(event.x, event.y)
             if len(new_point) != 0:
                 self.cmd.app_state["background_points"][self.clicked_inside_pt_idx] = new_point
@@ -660,7 +666,7 @@ class Application(tk.Frame):
         
     def remove_pt(self,event):
         
-        if len(self.cmd.app_state["background_points"]) == 0:
+        if len(self.cmd.app_state["background_points"]) == 0 or not self.display_pts.get():
             return False
             
         point_im = self.to_image_point(event.x,event.y)
@@ -697,7 +703,7 @@ class Application(tk.Frame):
         
     def mouse_down_right(self, event):
         
-        if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"] is None):
+        if(str(event.widget).split(".")[-1] != "picture" or self.images["Original"] is None or not self.display_pts.get()):
             return
         
         self.remove_pt(event)
@@ -913,11 +919,12 @@ class Application(tk.Frame):
         self.canvas.delete("rectangle")      
         rectsize = self.sample_size.get()
         background_points = self.cmd.app_state["background_points"]
-
-        for point in background_points:        
-            corner1 = self.to_canvas_point(point[0]-rectsize,point[1]-rectsize)
-            corner2 = self.to_canvas_point(point[0]+rectsize,point[1]+rectsize)
-            self.canvas.create_rectangle(corner1[0],corner1[1], corner2[0],corner2[1],outline=color, width=2, tags="rectangle")
+        
+        if self.display_pts.get():
+            for point in background_points:        
+                corner1 = self.to_canvas_point(point[0]-rectsize,point[1]-rectsize)
+                corner2 = self.to_canvas_point(point[0]+rectsize,point[1]+rectsize)
+                self.canvas.create_rectangle(corner1[0],corner1[1], corner2[0],corner2[1],outline=color, width=2, tags="rectangle")
             
         return
 
@@ -992,6 +999,14 @@ if __name__ == "__main__":
     scale_img("./forest-dark/thumb-hor-hover.png", scaling*0.9, (20,8))
     scale_img("./forest-dark/thumb-hor-basic.png", scaling*0.9, (20,8))
     scale_img("./forest-dark/scale-hor.png", scaling, (20,20))
+    
+    scale_img("./forest-dark/check-accent.png", scaling*0.8, (20,20))
+    scale_img("./forest-dark/check-basic.png", scaling*0.8, (20,20))
+    scale_img("./forest-dark/check-hover.png", scaling*0.8, (20,20))
+    scale_img("./forest-dark/check-unsel-accent.png", scaling*0.8, (20,20))
+    scale_img("./forest-dark/check-unsel-basic.png", scaling*0.8, (20,20))
+    scale_img("./forest-dark/check-unsel-hover.png", scaling*0.8, (20,20))
+    scale_img("./forest-dark/check-unsel-pressed.png", scaling*0.8, (20,20))
     
     scale_img("./img/gfx_number_1.png", scaling*0.7, (25,25))
     scale_img("./img/gfx_number_2.png", scaling*0.7, (25,25))

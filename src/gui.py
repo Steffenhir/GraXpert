@@ -408,7 +408,8 @@ class Application(tk.Frame):
             return
         
         self.loading_frame.start()
-        self.cmd = Command(SEL_POINTS_HANDLER, self.cmd, data=self.images["Original"].img_array, num_pts=self.bg_pts.get(), tol=self.bg_tol.get())
+        self.cmd = Command(SEL_POINTS_HANDLER, self.cmd, data=self.images["Original"].img_array, 
+                           num_pts=self.bg_pts.get(), tol=self.bg_tol.get(), sample_size=self.sample_size.get())
         self.cmd.execute()
         self.redraw_image()
         self.loading_frame.end()

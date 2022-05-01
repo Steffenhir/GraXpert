@@ -12,7 +12,7 @@ import numpy as np
 import stretch
 import skyall
 
-def background_selection(data, num_pts_per_row, tol):
+def background_selection(data, num_pts_per_row, tol, sample_size):
 
     # Convert to mono
     data_mono = np.copy(data)
@@ -41,7 +41,7 @@ def background_selection(data, num_pts_per_row, tol):
     
     # Calculate median around each grid point
     local_median = np.zeros(len(background_pts))
-    halfsize = 25
+    halfsize = sample_size
     data_mono_padded = np.pad(array=data_mono, pad_width=(halfsize,), mode="reflect")
 
     

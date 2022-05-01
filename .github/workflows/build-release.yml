@@ -65,6 +65,36 @@ jobs:
           path: ./dist/GraXpert-win64.exe
           retention-days: 5
 
+  build-windows-zip:
+    runs-on: windows-latest
+    steps:
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: checkout repository
+        uses: actions/checkout@v2
+      - name: install dependencies
+        run: |
+          pip install setuptools wheel pyinstaller && `
+          pip install -r requirements.txt
+      - name: patch version
+        run: ./releng/patch_version.ps1
+      - name: test version
+        run: type ./src/version.py
+      - name: create GraXpert-win64 bundle
+        run: |
+          pyinstaller `
+          ./GraXpert-win64-zip.spec `
+      - name: zip GraXpert-win64 bundle
+        run: Compress-Archive -Path .\dist\GraXpert-win64 -DestinationPath .\dist\GraXpert-win64.zip
+      - name: store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: GraXpert-win64.zip
+          path: ./dist/GraXpert-win64.zip
+          retention-days: 5
+
   build-macos-x86_64:
     runs-on: macos-10.15
     steps:
@@ -113,10 +143,14 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: GraXpert-linux
-      - name: download windows artifacts
+      - name: download windows exe
         uses: actions/download-artifact@v2
         with:
           name: GraXpert-win64.exe
+      - name: download windows zip
+        uses: actions/download-artifact@v2
+        with:
+          name: GraXpert-win64.zip
       - name: download macos artifacts
         uses: actions/download-artifact@v2
         with:
@@ -127,4 +161,5 @@ jobs:
           files: |
             GraXpert-linux
             GraXpert-win64.exe
+            GraXpert-win64.zip
             GraXpert-macos-x86_64.dmg

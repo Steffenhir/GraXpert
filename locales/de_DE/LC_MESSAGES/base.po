@@ -149,6 +149,34 @@ msgid "Save the processed image."
 msgstr "Speichere das bearbeitete Bild."
 
 #: src/help_panel.py
+msgid "Keybindings"
+msgstr "Tastenbelegung"
+
+#: src/help_panel.py
+msgid "Left click on picture: Set sample point"
+msgstr "Linksklick auf Bild: Setze Punkt"
+
+#: src/help_panel.py
+msgid "Left click on picture + drag: Move picture"
+msgstr "Linksklick auf Bild + Verschieben:\nVerschiebe Bild"
+
+#: src/help_panel.py
+msgid "Left click on sample point + drag:\nMove sample point"
+msgstr "Linksklick auf Samplepunkt:\nVerschiebe Samplepunkt"
+
+#: src/help_panel.py
+msgid "Right click on sample point:\nDelete sample point"
+msgstr "Rechtsklick auf Samplepunkt:\nLösche Samplepunkt"
+
+#: src/help_panel.py
+msgid "Mouse wheel: Zoom"
+msgstr "Mausrad: Zoomen"
+
+#: src/help_panel.py
+msgid "Ctrl+Z/Y: Undo/Redo sample point"
+msgstr "Strg+Z/Y:\nWiederholen/zurücksetzen von Samplepunktauswahl"
+
+#: src/help_panel.py
 msgid "A\nD\nV\nA\nN\nC\nE\nD"
 msgstr "E\nR\nW\nE\nI\nT\nE\nR\nT"
 
@@ -157,12 +185,16 @@ msgid "Advanced Settings"
 msgstr "Erweiterte Einstellungen"
 
 #: src/help_panel.py
+msgid "Sample Points"
+msgstr "Samplepunkte"
+
+#: src/help_panel.py
 msgid "Sample size: {}"
-msgstr "Stützstellengröße: {}"
+msgstr "Samplegröße: {}"
 
 #: src/help_panel.py
 msgid "Sample color: {}"
-msgstr "Stützstellenfarbe: {}"
+msgstr "Samplefarbe: {}"
 
 #: src/loadingframe.py:18
 msgid "Calculating..."

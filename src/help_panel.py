@@ -83,7 +83,7 @@ class Help_Panel():
         )
         
         self.advanced_button = ttk.Button(self.button_frame,
-            style="Advaned.TButton"
+            style="Advanced.TButton"
         )
         self.advanced_label = ttk.Label(
             self.advanced_button,
@@ -105,12 +105,18 @@ class Help_Panel():
         
         self.button_frame.pack(side=tk.RIGHT)
         
-        # Help Panel
+        # ------------Help Panel-----------------
         heading_font = "Verdana 18 bold"
         heading_font2 = "Verdana 10 bold"
         
         
         self.help_panel = tk.Frame(self.canvas)
+        self.help_canvas = tk.Canvas(self.help_panel, borderwidth=0,  bd=0, highlightthickness=0, name="help_canvas")
+        self.help_canvas.pack(side=tk.RIGHT, fill=tk.Y, expand=True)
+        self.help_scrollbar = ttk.Scrollbar(self.help_panel, orient=tk.VERTICAL, command=self.help_canvas.yview)
+        self.help_scrollbar.pack(side=tk.LEFT, fill=tk.Y)
+        
+        self.help_panel_window = tk.Frame(self.help_canvas, borderwidth=0)
         
         logo = Image.open(resource_path("img/GraXpert_LOGO_Hauptvariante.png"))
         logo = logo.resize((
@@ -119,38 +125,38 @@ class Help_Panel():
         ))
 
         logo = ImageTk.PhotoImage(logo)
-        self.label = tk.Label(self.help_panel, image=logo)
+        self.label = tk.Label(self.help_panel_window, image=logo)
         self.label.image= logo
         self.label.grid(column=0, row=0, padx=(40,30), pady=50*scaling)
 
         # text = tk.Message(self.help_panel, text="Release: '{}' ({})".format(release, version), width=240 * scaling, anchor="center")
         # text.grid(column=0, row=1, padx=(40,30), pady=(0,25*scaling), sticky="ew")
         
-        text = tk.Message(self.help_panel, text=_("Instructions"), width=240 * scaling, font=heading_font, anchor="center")
+        text = tk.Message(self.help_panel_window, text=_("Instructions"), width=240 * scaling, font=heading_font, anchor="center")
         text.grid(column=0, row=1, padx=(40,30), pady=(0,10*scaling), sticky="ew")
         
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_1-scaled.png"))
-        text = tk.Label(self.help_panel, text=_(" Loading"), image=num_pic, compound="left", font=heading_font2)
+        text = tk.Label(self.help_panel_window, text=_(" Loading"), image=num_pic, compound="left", font=heading_font2)
         text.image = num_pic
         text.grid(column=0, row=2, padx=(40,30), pady=(5*scaling,0), sticky="w")
-        text = tk.Message(self.help_panel, text=_("Load your image."), width=240 * scaling)
+        text = tk.Message(self.help_panel_window, text=_("Load your image."), width=240 * scaling)
         text.grid(column=0, row=3, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
         
         
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_2-scaled.png"))
-        text = tk.Label(self.help_panel, text=_(" Stretch Options"), image=num_pic, compound="left", font=heading_font2)
+        text = tk.Label(self.help_panel_window, text=_(" Stretch Options"), image=num_pic, compound="left", font=heading_font2)
         text.image = num_pic
         text.grid(column=0, row=4, padx=(40,30), pady=(5*scaling,0), sticky="w")
-        text = tk.Message(self.help_panel, text=_("Stretch your image if necessary to reveal gradients."), width=240 * scaling)
+        text = tk.Message(self.help_panel_window, text=_("Stretch your image if necessary to reveal gradients."), width=240 * scaling)
         text.grid(column=0, row=5, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
         
         
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_3-scaled.png"))
-        text = tk.Label(self.help_panel, text=_(" Sample Selection"), image=num_pic, compound="left", font=heading_font2)
+        text = tk.Label(self.help_panel_window, text=_(" Sample Selection"), image=num_pic, compound="left", font=heading_font2)
         text.image = num_pic
         text.grid(column=0, row=6, padx=(40,30), pady=(5*scaling,0), sticky="w")
         text = tk.Message(
-            self.help_panel,
+            self.help_panel_window,
             text= _("Select background points\n  a) manually with left click\n  b) automatically via grid (grid selection)"
                 "\nYou can remove already set points by right clicking on them."), 
             width=240 * scaling
@@ -159,28 +165,63 @@ class Help_Panel():
         
         
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_4-scaled.png"))
-        text = tk.Label(self.help_panel, text=_(" Calculation"), image=num_pic, compound="left", font=heading_font2)
+        text = tk.Label(self.help_panel_window, text=_(" Calculation"), image=num_pic, compound="left", font=heading_font2)
         text.image = num_pic
         text.grid(column=0, row=8, padx=(40,30), pady=(5*scaling,0), sticky="w")
-        text = tk.Message(self.help_panel, text=_("Click on Calculate Background to get the processed image."), width=240 * scaling)
+        text = tk.Message(self.help_panel_window, text=_("Click on Calculate Background to get the processed image."), width=240 * scaling)
         text.grid(column=0, row=9, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
         
         
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_5-scaled.png"))
-        text = tk.Label(self.help_panel, text=_(" Saving"), image=num_pic, compound="left", font=heading_font2)
+        text = tk.Label(self.help_panel_window, text=_(" Saving"), image=num_pic, compound="left", font=heading_font2)
         text.image = num_pic
         text.grid(column=0, row=10, padx=(40,30), pady=(5*scaling,0), sticky="w")
-        text = tk.Message(self.help_panel, text=_("Save the processed image."), width=240 * scaling)
+        text = tk.Message(self.help_panel_window, text=_("Save the processed image."), width=240 * scaling)
         text.grid(column=0, row=11, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
     
-        # Advanced Panel
+        text = tk.Message(self.help_panel_window, text=_("Keybindings"), width=240 * scaling, font=heading_font, anchor="center")
+        text.grid(column=0, row=12, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
+        
+        text = tk.Message(self.help_panel_window, text=_("Left click on picture: Set sample point"), width=240 * scaling)
+        text.grid(column=0, row=13, padx=(40,30), pady=(0,10*scaling), sticky="w")
+        
+        text = tk.Message(self.help_panel_window, text=_("Left click on picture + drag: Move picture"), width=240 * scaling)
+        text.grid(column=0, row=14, padx=(40,30), pady=(0,10*scaling), sticky="w")
+        
+        text = tk.Message(self.help_panel_window, text=_("Left click on sample point + drag:\nMove sample point"), width=240 * scaling)
+        text.grid(column=0, row=15, padx=(40,30), pady=(0,10*scaling), sticky="w")
+        
+        text = tk.Message(self.help_panel_window, text=_("Right click on sample point:\nDelete sample point"), width=240 * scaling)
+        text.grid(column=0, row=16, padx=(40,30), pady=(0,10*scaling), sticky="w")       
+        
+        text = tk.Message(self.help_panel_window, text=_("Mouse wheel: Zoom"), width=240 * scaling)
+        text.grid(column=0, row=17, padx=(40,30), pady=(0,10*scaling), sticky="w")
+        
+        text = tk.Message(self.help_panel_window, text=_("Ctrl+Z/Y: Undo/Redo sample point"), width=240 * scaling)
+        text.grid(column=0, row=18, padx=(40,30), pady=(0,10*scaling), sticky="w")
+        
+        self.help_canvas.create_window((0,0), window=self.help_panel_window)
+        self.help_canvas.configure(yscrollcommand=self.help_scrollbar.set)
+        self.help_canvas.bind('<Configure>', lambda e: self.help_canvas.configure(scrollregion=self.help_canvas.bbox("all")))
+        self.help_panel_window.update()
+        width = self.help_panel_window.winfo_width()
+        self.help_canvas.configure(width=width)
+        self.help_canvas.yview_moveto("0.0")
+        
+        # ------Advanced Panel-----------
         
         self.advanced_panel = tk.Frame(self.canvas)
+        self.advanced_canvas = tk.Canvas(self.advanced_panel, borderwidth=0,  bd=0, highlightthickness=0, name="advanced_canvas")
+        self.advanced_canvas.pack(side=tk.RIGHT, fill=tk.Y, expand=True)
+        self.advanced_scrollbar = ttk.Scrollbar(self.advanced_panel, orient=tk.VERTICAL, command=self.advanced_canvas.yview)
+        self.advanced_scrollbar.pack(side=tk.LEFT, fill=tk.Y)
         
-        text = tk.Message(self.advanced_panel, text=_("Advanced Settings"), width=240 * scaling, font=heading_font, anchor="center")
+        self.advanced_panel_window = tk.Frame(self.advanced_canvas, borderwidth=0)
+        
+        text = tk.Message(self.advanced_panel_window, text=_("Advanced Settings"), width=240 * scaling, font=heading_font, anchor="center")
         text.grid(column=0, row=0, padx=(40*scaling,30*scaling), pady=(20*scaling,10*scaling), sticky="ew")
         
-        text = tk.Message(self.advanced_panel, text=_("Sample Points"), width=240 * scaling, font=heading_font2, anchor="center")
+        text = tk.Message(self.advanced_panel_window, text=_("Sample Points"), width=240 * scaling, font=heading_font2, anchor="center")
         text.grid(column=0, row=1, padx=(5*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
         
         self.app.sample_size = tk.IntVar()
@@ -188,7 +229,7 @@ class Help_Panel():
         if "sample_size" in self.app.prefs:
             self.app.sample_size.set(self.app.prefs["sample_size"])
         
-        self.sample_size_text = tk.Message(self.advanced_panel, text=_("Sample size: {}").format(self.app.sample_size.get()))
+        self.sample_size_text = tk.Message(self.advanced_panel_window, text=_("Sample size: {}").format(self.app.sample_size.get()))
         self.sample_size_text.config(width=500 * scaling)
         self.sample_size_text.grid(column=0, row=2, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
         
@@ -198,7 +239,7 @@ class Help_Panel():
             self.app.redraw_points()
         
         self.sample_size_slider = ttk.Scale(
-            self.advanced_panel,
+            self.advanced_panel_window,
             orient=tk.HORIZONTAL,
             from_=5,
             to=50,
@@ -214,7 +255,7 @@ class Help_Panel():
         if "sample_color" in self.app.prefs:
             self.app.sample_color.set(self.app.prefs["sample_color"])
         
-        self.sample_color_text = tk.Message(self.advanced_panel, text=_("Sample color: {}").format(self.app.sample_color.get()))
+        self.sample_color_text = tk.Message(self.advanced_panel_window, text=_("Sample color: {}").format(self.app.sample_color.get()))
         self.sample_color_text.config(width=500 * scaling)
         self.sample_color_text.grid(column=0, row=4, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
         
@@ -224,7 +265,7 @@ class Help_Panel():
             self.app.redraw_points()
         
         self.sample_color_slider = ttk.Scale(
-            self.advanced_panel,
+            self.advanced_panel_window,
             orient=tk.HORIZONTAL,
             from_=0,
             to=360,
@@ -234,10 +275,10 @@ class Help_Panel():
             )
         self.sample_color_slider.grid(column=0, row=5, pady=(0,10*scaling), padx=15*scaling, sticky="ew")
         
-        text = tk.Message(self.advanced_panel, text=_("Interpolation"), width=240 * scaling, font=heading_font2, anchor="center")
+        text = tk.Message(self.advanced_panel_window, text=_("Interpolation"), width=240 * scaling, font=heading_font2, anchor="center")
         text.grid(column=0, row=6, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
         
-        text = tk.Message(self.advanced_panel, text=_("RBF Kernel"), width=240*scaling, anchor="center")
+        text = tk.Message(self.advanced_panel_window, text=_("RBF Kernel"), width=240*scaling, anchor="center")
         text.grid(column=0, row=7, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
         
         self.app.RBF_kernels = ["thin_plate", "quintic", "cubic", "linear", "gaussian", "inverse", "multiquadratic"]
@@ -246,11 +287,11 @@ class Help_Panel():
         if "RBF_kernel" in self.app.prefs:
             self.app.RBF_kernel.set(self.app.prefs["RBF_kernel"])
 
-        self.kernel_menu = ttk.OptionMenu(self.advanced_panel, self.app.RBF_kernel, self.app.RBF_kernel.get(), *self.app.RBF_kernels)
+        self.kernel_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.RBF_kernel, self.app.RBF_kernel.get(), *self.app.RBF_kernels)
         self.kernel_menu.grid(column=0, row=8, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
         
         
-        text = tk.Message(self.advanced_panel, text=_("Language"), width=240 * scaling, font=heading_font2, anchor="center")
+        text = tk.Message(self.advanced_panel_window, text=_("Language"), width=240 * scaling, font=heading_font2, anchor="center")
         text.grid(column=0, row=9, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
     
         def lang_change(lang):
@@ -264,9 +305,17 @@ class Help_Panel():
         else:
             self.app.lang.set("English")
 
-        self.lang_menu = ttk.OptionMenu(self.advanced_panel, self.app.lang, self.app.lang.get(), *self.app.langs, command=lang_change)
+        self.lang_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.lang, self.app.lang.get(), *self.app.langs, command=lang_change)
         self.lang_menu.grid(column=0, row=10, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
         
+        
+        self.advanced_canvas.create_window((0,0), window=self.advanced_panel_window)
+        self.advanced_canvas.configure(yscrollcommand=self.advanced_scrollbar.set)
+        self.advanced_canvas.bind('<Configure>', lambda e: self.advanced_canvas.configure(scrollregion=self.advanced_canvas.bbox("all")))
+        self.advanced_panel_window.update()
+        width = self.advanced_panel_window.winfo_width()
+        self.advanced_canvas.configure(width=width)
+        self.advanced_canvas.yview_moveto("0.0")
         
     def help(self, event):
         
@@ -292,7 +341,7 @@ class Help_Panel():
         self.master.update()
         # force update of label to prevent white background on mac
         self.help_label.configure(background="#c46f1a")
-            
+        
 
     def advanced(self, event):
         

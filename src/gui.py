@@ -738,12 +738,39 @@ class Application(tk.Frame):
         self.zoom_fit(self.images[self.display_type.get()].width, self.images[self.display_type.get()].height)
         self.redraw_image()
 
+
     def mouse_wheel(self, event):
-        
-        if str(event.widget).startswith(".picture"):
-            if self.images[self.display_type.get()] is None:
+
+        if "help_canvas" in str(event.widget):
+            if self.help_panel.help_canvas.yview() == (0.0,1.0):
                 return
-    
+            
+            if (event.delta > 0 or event.num == 4):
+                self.help_panel.help_canvas.yview_scroll(-1, "units")
+            else:
+                self.help_panel.help_canvas.yview_scroll(1, "units")       
+                
+        elif "advanced_canvas" in str(event.widget):
+            if self.help_panel.advanced_canvas.yview() == (0.0,1.0):
+                return
+            
+            if (event.delta > 0 or event.num == 4):
+                self.help_panel.advanced_canvas.yview_scroll(-1, "units")
+            else:
+                self.help_panel.advanced_canvas.yview_scroll(1, "units") 
+        
+        elif "left_panel" in str(event.widget):
+            if self.side_canvas.yview() == (0.0,1.0):
+                return
+            
+            if (event.delta > 0 or event.num == 4):
+                self.side_canvas.yview_scroll(-1, "units")
+            else:
+                self.side_canvas.yview_scroll(1, "units")
+                
+        elif "picture" in str(event.widget):
+            if self.images[self.display_type.get()] is None:
+                return    
     
             if (event.delta > 0 or event.num == 4):
     
@@ -753,12 +780,7 @@ class Application(tk.Frame):
                 self.scale_at(5/6, event.x, event.y)
        
             self.redraw_image()
-        
-        elif str(event.widget).startswith(".left_panel"):
-            if (event.delta > 0 or event.num == 4):
-                self.side_canvas.yview_scroll(-1, "units")
-            else:
-                self.side_canvas.yview_scroll(1, "units")
+
         
 
     def reset_transform(self):

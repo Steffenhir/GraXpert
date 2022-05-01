@@ -5,6 +5,9 @@ Created on Mon Feb 14 16:44:29 2022
 @author: steff
 """
 
+import multiprocessing
+multiprocessing.freeze_support()
+
 import traceback
 import numpy as np
 from astropy.visualization import AsinhStretch
@@ -67,6 +70,7 @@ def stretch(data, bg, sigma):
 def stretch_all(datas, stretch_params):
     
     if stretch_params is None:
+        datas = [data.clip(min=0, max=1) for data in datas]
         return datas
     
     bg = stretch_params[0]

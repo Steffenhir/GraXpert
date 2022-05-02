@@ -63,12 +63,12 @@ class Help_Panel():
         self.help_label.bind("<Button-1>", self.help)
         self.help_label.pack(
             ipadx=int(5 * scaling),
-            ipady=int(20 * scaling)
+            ipady=int(20 * scaling),
         )
 
         self.help_button.grid(
             row=0,
-            column=0
+            column=0,
         )
         
         # Advanced Button
@@ -112,9 +112,9 @@ class Help_Panel():
         
         self.help_panel = tk.Frame(self.canvas)
         self.help_canvas = tk.Canvas(self.help_panel, borderwidth=0,  bd=0, highlightthickness=0, name="help_canvas")
-        self.help_canvas.pack(side=tk.RIGHT, fill=tk.Y, expand=True)
+        self.help_canvas.pack(side=tk.LEFT, fill=tk.Y, expand=True)
         self.help_scrollbar = ttk.Scrollbar(self.help_panel, orient=tk.VERTICAL, command=self.help_canvas.yview)
-        self.help_scrollbar.pack(side=tk.LEFT, fill=tk.Y)
+        self.help_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.help_panel_window = tk.Frame(self.help_canvas, borderwidth=0)
         
@@ -212,9 +212,9 @@ class Help_Panel():
         
         self.advanced_panel = tk.Frame(self.canvas)
         self.advanced_canvas = tk.Canvas(self.advanced_panel, borderwidth=0,  bd=0, highlightthickness=0, name="advanced_canvas")
-        self.advanced_canvas.pack(side=tk.RIGHT, fill=tk.Y, expand=True)
+        self.advanced_canvas.pack(side=tk.LEFT, fill=tk.Y, expand=True)
         self.advanced_scrollbar = ttk.Scrollbar(self.advanced_panel, orient=tk.VERTICAL, command=self.advanced_canvas.yview)
-        self.advanced_scrollbar.pack(side=tk.LEFT, fill=tk.Y)
+        self.advanced_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.advanced_panel_window = tk.Frame(self.advanced_canvas, borderwidth=0)
         

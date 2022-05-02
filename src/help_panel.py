@@ -58,11 +58,11 @@ class Help_Panel():
             self.help_button,
             text=_("H\nE\nL\nP"),
             style="Help.TLabel",
-            font=("Verdana","12","bold")
+            font=("Verdana","12","bold"),
+            width=2
         )
         self.help_label.bind("<Button-1>", self.help)
         self.help_label.pack(
-            ipadx=int(5 * scaling),
             ipady=int(20 * scaling),
         )
 
@@ -89,11 +89,11 @@ class Help_Panel():
             self.advanced_button,
             text=_("A\nD\nV\nA\nN\nC\nE\nD"),
             style="Advanced.TLabel",
-            font=("Verdana","12","bold")
+            font=("Verdana","12","bold"),
+            width=2
         )
         self.advanced_label.bind("<Button-1>", self.advanced)
         self.advanced_label.pack(
-            ipadx=int(5 * scaling),
             ipady=int(20 * scaling)
         )
 

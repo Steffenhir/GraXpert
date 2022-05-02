@@ -13,7 +13,7 @@ def get_scaling_factor(master):
         monitors = get_monitors()
 
         monitor = None
-        if len(monitors) != 1:
+        if len(monitors) == 1:
             # use the only available monitor
             monitor = monitors[0]
         else:

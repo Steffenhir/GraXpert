@@ -155,7 +155,8 @@ class SelectPointsHandler(PointHandler):
         data = cmd_args["data"]
         num_pts = cmd_args["num_pts"]
         tol = cmd_args["tol"]
-        automatic_points = background_selection(data, num_pts, tol)
+        sample_size = cmd_args["sample_size"]
+        automatic_points = background_selection(data, num_pts, tol, sample_size)
         for i in range(len(automatic_points)):
             automatic_points[i] = np.array([automatic_points[i][1],automatic_points[i][0],1.0])
             

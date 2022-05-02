@@ -1,4 +1,7 @@
+import json
 import os
+import shutil
+from datetime import datetime
 from typing import AnyStr, List, TypedDict
 
 import numpy as np
@@ -17,6 +20,10 @@ class Prefs(TypedDict):
     interpol_type_option: AnyStr
     smoothing_option: float
     saveas_option: AnyStr
+    sample_size: int
+    sample_color: int
+    RBF_kernel: AnyStr
+    lang: AnyStr
 
 DEFAULT_PREFS: Prefs = {
     "working_dir": os.getcwd(),
@@ -28,7 +35,12 @@ DEFAULT_PREFS: Prefs = {
     "bg_tol_option": 1.0,
     "interpol_type_option": "RBF",
     "smoothing_option": 1.0,
-    "saveas_option": "32 bit Tiff"
+    "saveas_option": "32 bit Tiff",
+    "sample_size": 25,
+    "sample_color": 55,
+    "RBF_kernel": "thin_plate",
+    "spline_order": 3,
+    "lang": None
 }
 
 def app_state_2_prefs(prefs: Prefs, app_state: AppState) -> Prefs:
@@ -62,4 +74,37 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["smoothing_option"] = json["smoothing_option"]
     if "saveas_option" in json:
         prefs["saveas_option"] = json["saveas_option"]
+    if "sample_size" in json:
+        prefs["sample_size"] = json["sample_size"]
+    if "sample_color" in json:
+        prefs["sample_color"] = json["sample_color"]
+    if "RBF_kernel" in json:
+        prefs["RBF_kernel"] = json["RBF_kernel"]
+    if "spline_order" in json:
+        prefs["spline_order"] = json["spline_order"]
+    if "lang" in json:
+        prefs["lang"] = json["lang"]
     return prefs
+
+def load_preferences(prefs_filename) -> Prefs:
+    prefs = DEFAULT_PREFS
+    try:
+        if os.path.isfile(prefs_filename):
+            with open(prefs_filename) as f:
+                json_prefs: Prefs = json.load(f)
+                prefs = merge_json(prefs, json_prefs)
+    except BaseException as e:
+        print("WARNING: could not load preferences.json from {}, error: {}".format(prefs_filename, e))
+        if os.path.isfile(prefs_filename):
+            # make a backup of the old preferences file so we don't loose it
+            backup_filename = os.path.join(os.path.dirname(prefs_filename), datetime.now().strftime("%m-%d-%Y_%H-%M-%S_{}".format(os.path.basename(prefs_filename))))
+            shutil.copyfile(prefs_filename, backup_filename)
+    return prefs
+
+def save_preferences(prefs_filename, prefs):
+    try:
+        os.makedirs(os.path.dirname(prefs_filename), exist_ok=True)
+        with open(prefs_filename, "w") as f:
+            json.dump(prefs, f)
+    except OSError as err:
+            print("error serializing preferences: {}".format(err))

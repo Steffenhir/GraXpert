@@ -20,7 +20,7 @@ from colorsys import hls_to_rgb
 from app_state import INITIAL_STATE
 import background_extraction
 from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, MOVE_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
-from preferences import DEFAULT_PREFS, Prefs, app_state_2_prefs, merge_json, prefs_2_app_state
+from preferences import app_state_2_prefs, load_preferences, prefs_2_app_state, save_preferences
 from stretch import stretch_all
 import tooltip
 from loadingframe import LoadingFrame
@@ -72,12 +72,8 @@ class Application(tk.Frame):
         self.my_title = "GraXpert | Release: '{}' ({})".format(release, version)
         self.master.title(self.my_title)
 
-        self.prefs: Prefs = DEFAULT_PREFS
-        prefs_file = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
-        if os.path.isfile(prefs_file):
-            with open(prefs_file) as f:
-                json_prefs: Prefs = json.load(f)
-                self.prefs = merge_json(self.prefs, json_prefs)
+        prefs_filename = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
+        self.prefs = load_preferences(prefs_filename)
 
         tmp_state = prefs_2_app_state(self.prefs, INITIAL_STATE)
         
@@ -957,29 +953,25 @@ class Application(tk.Frame):
         self.loading_frame.end()
     
     def on_closing(self):
-        prefs_file = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
-        try:
-            os.makedirs(os.path.dirname(prefs_file), exist_ok=True)
-            with open(prefs_file, "w") as f:
-                self.prefs = app_state_2_prefs(self.prefs, self.cmd.app_state)
-                self.prefs["bg_pts_option"] = self.bg_pts.get()
-                self.prefs["stretch_option"] = self.stretch_option_current.get()
-                self.prefs["bg_tol_option"] = self.bg_tol.get()
-                self.prefs["interpol_type_option"] = self.interpol_type.get()
-                self.prefs["smoothing_option"] = self.smoothing.get()
-                self.prefs["saveas_option"] = self.saveas_type.get()
-                self.prefs["sample_size"] = self.sample_size.get()
-                self.prefs["sample_color"] = self.sample_color.get()
-                self.prefs["RBF_kernel"] = self.RBF_kernel.get()
-                self.prefs["spline_order"] = self.spline_order.get()
-                self.prefs["lang"] = self.lang.get()
-                json.dump(self.prefs, f)
-        except OSError as err:
-            print("error serializing preferences: {0}".format(err))
+        
+        self.prefs = app_state_2_prefs(self.prefs, self.cmd.app_state)
+        self.prefs["bg_pts_option"] = self.bg_pts.get()
+        self.prefs["stretch_option"] = self.stretch_option_current.get()
+        self.prefs["bg_tol_option"] = self.bg_tol.get()
+        self.prefs["interpol_type_option"] = self.interpol_type.get()
+        self.prefs["smoothing_option"] = self.smoothing.get()
+        self.prefs["saveas_option"] = self.saveas_type.get()
+        self.prefs["sample_size"] = self.sample_size.get()
+        self.prefs["sample_color"] = self.sample_color.get()
+        self.prefs["RBF_kernel"] = self.RBF_kernel.get()
+        self.prefs["spline_order"] = self.spline_order.get()
+        self.prefs["lang"] = self.lang.get()
+        prefs_filename = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
+        save_preferences(prefs_filename, self.prefs)
         try:
             executor.shutdown(cancel_futures=True)
         except Exception as e:
-            print("error shutting down ProcessPoolExecutor: {0}".format(e))
+            print("error shutting down ProcessPoolExecutor: {}".format(e))
         root.destroy()
 
 def scale_img(path, scaling, shape):

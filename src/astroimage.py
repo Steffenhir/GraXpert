@@ -100,8 +100,8 @@ class AstroImage:
         elif(self.stretch_option.get() == "20% Bg, 3 sigma"):
                 bg, sigma = (0.2,3)
                 
-        elif(self.stretch_option.get() == "25% Bg, 1.25 sigma"):
-                bg, sigma = (0.25,1.25)
+        elif(self.stretch_option.get() == "30% Bg, 2 sigma"):
+                bg, sigma = (0.3,2)
             
         
         return stretch(self.img_array, bg, sigma)
@@ -115,8 +115,8 @@ class AstroImage:
             return (0.15, 3)
         elif(self.stretch_option.get() == "20% Bg, 3 sigma"):
             return (0.2, 3)
-        elif(self.stretch_option.get() == "25% Bg, 1.25 sigma"):
-            return (0.25, 1.25)
+        elif(self.stretch_option.get() == "30% Bg, 2 sigma"):
+            return (0.3, 2)
     
     def update_fits_header(self, original_header, background_mean):
         if(original_header is None):
@@ -129,8 +129,8 @@ class AstroImage:
         self.fits_header["CBG-2"] = background_mean
         self.fits_header["CBG-3"] = background_mean
         
-        if "ROWORDER" in original_header:
-            self.roworder = original_header["ROWORDER"]
+        if "ROWORDER" in self.fits_header:
+            self.roworder = self.fits_header["ROWORDER"]
                 
     def save(self, dir, saveas_type):
         if(self.img_array is None):

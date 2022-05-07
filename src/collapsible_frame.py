@@ -32,4 +32,5 @@ class CollapsibleFrame(tk.Frame):
         self.master.update()
         width = self.master.winfo_width()
         self.master.master.configure(width=width)
+        self.master.master.configure(scrollregion=self.master.master.bbox("all"))
         self.master.master.yview_moveto("0.0")

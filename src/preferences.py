@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import shutil
 from datetime import datetime
@@ -43,15 +44,18 @@ DEFAULT_PREFS: Prefs = {
     "lang": None
 }
 
+
 def app_state_2_prefs(prefs: Prefs, app_state: AppState) -> Prefs:
     if "background_points" in app_state:
         prefs["background_points"] = [p.tolist() for p in app_state["background_points"]]
     return prefs
 
+
 def prefs_2_app_state(prefs: Prefs, app_state: AppState) -> AppState:
     if "background_points" in prefs:
         app_state["background_points"] = [np.array(p) for p in prefs["background_points"]]
     return app_state
+
 
 def merge_json(prefs: Prefs, json) -> Prefs:
     if "working_dir" in json:
@@ -86,20 +90,24 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["lang"] = json["lang"]
     return prefs
 
+
 def load_preferences(prefs_filename) -> Prefs:
     prefs = DEFAULT_PREFS
     try:
         if os.path.isfile(prefs_filename):
             with open(prefs_filename) as f:
-                json_prefs: Prefs = json.load(f)
-                prefs = merge_json(prefs, json_prefs)
-    except BaseException as e:
-        print("WARNING: could not load preferences.json from {}, error: {}".format(prefs_filename, e))
+                    json_prefs: Prefs = json.load(f)
+                    prefs = merge_json(prefs, json_prefs)
+        else:
+            logging.info("{} appears to be missing. it will be created after program shutdown".format(prefs_filename))
+    except:
+        logging.exception("could not load preferences.json from {}".format(prefs_filename))
         if os.path.isfile(prefs_filename):
             # make a backup of the old preferences file so we don't loose it
             backup_filename = os.path.join(os.path.dirname(prefs_filename), datetime.now().strftime("%m-%d-%Y_%H-%M-%S_{}".format(os.path.basename(prefs_filename))))
             shutil.copyfile(prefs_filename, backup_filename)
     return prefs
+
 
 def save_preferences(prefs_filename, prefs):
     try:
@@ -107,4 +115,4 @@ def save_preferences(prefs_filename, prefs):
         with open(prefs_filename, "w") as f:
             json.dump(prefs, f)
     except OSError as err:
-            print("error serializing preferences: {}".format(err))
+        logging.exception("error serializing preferences")

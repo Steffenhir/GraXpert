@@ -23,6 +23,7 @@ from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_P
 from preferences import app_state_2_prefs, load_preferences, prefs_2_app_state, save_preferences
 from stretch import stretch_all
 import tooltip
+from collapsible_frame import CollapsibleFrame
 from loadingframe import LoadingFrame
 from help_panel import Help_Panel
 from astroimage import AstroImage
@@ -148,22 +149,26 @@ class Application(tk.Frame):
         
  
         scal = get_scaling_factor(self.master)*0.75
-        self.side_menu = tk.Frame(self.side_canvas, borderwidth=0)
-
+        self.side_menu = tk.Frame(self.side_canvas)
         
-        self.side_menu.grid_columnconfigure(0)
+        self.crop_menu = CollapsibleFrame(self.side_menu, text=_("Crop"))
+        self.crop_menu.grid(column=0, row=0, pady=(20*scal,5*scal), padx=15*scal, sticky="news")
+        
+        self.bgextr_menu = CollapsibleFrame(self.side_menu, text=_("Background Extraction"))
+        self.bgextr_menu.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
+        self.bgextr_menu.sub_frame.grid_columnconfigure(0)
         
         for i in range(21):
-            self.side_menu.grid_rowconfigure(i, weight=1)
+            self.bgextr_menu.sub_frame.grid_rowconfigure(i, weight=1)
         
         heading_font = "Verdana 10 bold"
         #---Open Image---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_1-scaled.png"))
-        text = tk.Label(self.side_menu, text=_(" Loading"), image=num_pic, font=heading_font, compound="left")
+        text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Loading"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=0, pady=(20*scal,5*scal), padx=0, sticky="w")
         
-        self.load_image_button = ttk.Button(self.side_menu, 
+        self.load_image_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Load Image"),
                          command=self.menu_open_clicked,
         )
@@ -172,7 +177,7 @@ class Application(tk.Frame):
         
         #--Stretch Options--
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_2-scaled.png"))
-        text = tk.Label(self.side_menu, text=_(" Stretch Options"), image=num_pic, font=heading_font, compound="left")
+        text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Stretch Options"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=2, pady=5*scal, padx=0, sticky="w")
         
@@ -181,20 +186,20 @@ class Application(tk.Frame):
         self.stretch_option_current.set(self.stretch_options[0])
         if "stretch_option" in self.prefs:
             self.stretch_option_current.set(self.prefs["stretch_option"])
-        self.stretch_menu = ttk.OptionMenu(self.side_menu, self.stretch_option_current, self.stretch_option_current.get(), *self.stretch_options, command=self.change_stretch)
+        self.stretch_menu = ttk.OptionMenu(self.bgextr_menu.sub_frame, self.stretch_option_current, self.stretch_option_current.get(), *self.stretch_options, command=self.change_stretch)
         self.stretch_menu.grid(column=0, row=3, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
         tt_stretch= tooltip.Tooltip(self.stretch_menu, text=tooltip.stretch_text)
         
       
         #---Sample Selection---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_3-scaled.png"))
-        text = tk.Label(self.side_menu, text=_(" Sample Selection"), image=num_pic, font=heading_font, compound="left")
+        text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Sample Selection"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=4, pady=5*scal, padx=0, sticky="w")
         
         self.display_pts = tk.BooleanVar()
         self.display_pts.set(True)
-        self.display_pts_switch = ttk.Checkbutton(self.side_menu, text="  "+_("Display points"), compound=tk.LEFT, var=self.display_pts, command=self.redraw_points)
+        self.display_pts_switch = ttk.Checkbutton(self.bgextr_menu.sub_frame, text="  "+_("Display points"), compound=tk.LEFT, var=self.display_pts, command=self.redraw_points)
         self.display_pts_switch.grid(column=0, row=5, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         self.bg_pts = tk.IntVar()
@@ -202,7 +207,7 @@ class Application(tk.Frame):
         if "bg_pts_option" in self.prefs:
             self.bg_pts.set(self.prefs["bg_pts_option"])
         
-        self.bg_selection_text = tk.Message(self.side_menu, text=_("Points per row: {}").format(self.bg_pts.get()))
+        self.bg_selection_text = tk.Message(self.bgextr_menu.sub_frame, text=_("Points per row: {}").format(self.bg_pts.get()))
         self.bg_selection_text.config(width=500 * scal)
         self.bg_selection_text.grid(column=0, row=6, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
@@ -211,7 +216,7 @@ class Application(tk.Frame):
             self.bg_selection_text.configure(text=_("Points per row: {}").format(self.bg_pts.get()))
 
         self.bg_pts_slider = ttk.Scale(
-            self.side_menu,
+            self.bgextr_menu.sub_frame,
             orient=tk.HORIZONTAL,
             from_=4,
             to=25,
@@ -228,7 +233,7 @@ class Application(tk.Frame):
         if "bg_tol_option" in self.prefs:
             self.bg_tol.set(self.prefs["bg_tol_option"])
         
-        self.bg_selection_tol = tk.Message(self.side_menu, text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
+        self.bg_selection_tol = tk.Message(self.bgextr_menu.sub_frame, text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
         self.bg_selection_tol.config(width=500)
         self.bg_selection_tol.grid(column=0, row=8, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
@@ -237,7 +242,7 @@ class Application(tk.Frame):
             self.bg_selection_tol.configure(text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
         
         self.bg_tol_slider = ttk.Scale(
-            self.side_menu,
+            self.bgextr_menu.sub_frame,
             orient=tk.HORIZONTAL,
             from_=-2,
             to=10,
@@ -248,13 +253,13 @@ class Application(tk.Frame):
         self.bg_tol_slider.grid(column=0, row=9, pady=(0,10*scal), padx=15*scal, sticky="ew")
         tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
-        self.bg_selection_button = ttk.Button(self.side_menu, 
+        self.bg_selection_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Create Grid"),
                          command=self.select_background)
         self.bg_selection_button.grid(column=0, row=10, pady=5*scal, padx=15*scal, sticky="news")
         tt_bg_select = tooltip.Tooltip(self.bg_selection_button, text= tooltip.bg_select_text)
         
-        self.reset_button = ttk.Button(self.side_menu, 
+        self.reset_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Reset Sample Points"),
                          command=self.reset_backgroundpts)
         self.reset_button.grid(column=0, row=11, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
@@ -262,11 +267,11 @@ class Application(tk.Frame):
         
         #---Calculation---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_4-scaled.png"))
-        text = tk.Label(self.side_menu, text=_(" Calculation"), image=num_pic, font=heading_font, compound="left")
+        text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Calculation"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=12, pady=5*scal, padx=0, sticky="w")
         
-        self.intp_type_text = tk.Message(self.side_menu, text=_("Interpolation Method:"))
+        self.intp_type_text = tk.Message(self.bgextr_menu.sub_frame, text=_("Interpolation Method:"))
         self.intp_type_text.config(width=500)
         self.intp_type_text.grid(column=0, row=13, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
@@ -275,7 +280,7 @@ class Application(tk.Frame):
         self.interpol_type.set(self.interpol_options[0])
         if "interpol_type_option" in self.prefs:
             self.interpol_type.set(self.prefs["interpol_type_option"])
-        self.interpol_menu = ttk.OptionMenu(self.side_menu, self.interpol_type, self.interpol_type.get(), *self.interpol_options)
+        self.interpol_menu = ttk.OptionMenu(self.bgextr_menu.sub_frame, self.interpol_type, self.interpol_type.get(), *self.interpol_options)
         self.interpol_menu.grid(column=0, row=14, pady=(0,5*scal), padx=15*scal, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.interpol_menu, text=tooltip.interpol_type_text)
         
@@ -284,7 +289,7 @@ class Application(tk.Frame):
         if "smoothing_option" in self.prefs:
             self.smoothing.set(self.prefs["smoothing_option"])
         
-        self.smooth_text = tk.Message(self.side_menu, text="Smoothing: {}".format(self.smoothing.get()))
+        self.smooth_text = tk.Message(self.bgextr_menu.sub_frame, text="Smoothing: {}".format(self.smoothing.get()))
         self.smooth_text.config(width=500)
         self.smooth_text.grid(column=0, row=15, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
@@ -293,7 +298,7 @@ class Application(tk.Frame):
             self.smooth_text.configure(text="Smoothing: {}".format(self.smoothing.get()))
         
         self.smoothing_slider = ttk.Scale(
-            self.side_menu,
+            self.bgextr_menu.sub_frame,
             orient=tk.HORIZONTAL,
             from_=0,
             to=1,
@@ -304,7 +309,7 @@ class Application(tk.Frame):
         self.smoothing_slider.grid(column=0, row=16, pady=(0,10*scal), padx=15*scal, sticky="ew")
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
-        self.calculate_button = ttk.Button(self.side_menu, 
+        self.calculate_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Calculate Background"),
                          command=self.calculate)
         self.calculate_button.grid(column=0, row=17, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
@@ -312,7 +317,7 @@ class Application(tk.Frame):
         
         #---Saving---  
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_5-scaled.png"))
-        self.saveas_text = tk.Label(self.side_menu, text=_(" Saving"), image=num_pic, font=heading_font, compound="left")
+        self.saveas_text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Saving"), image=num_pic, font=heading_font, compound="left")
         self.saveas_text.image = num_pic
         self.saveas_text.grid(column=0, row=18, pady=5*scal, padx=0, sticky="w")
         
@@ -321,18 +326,18 @@ class Application(tk.Frame):
         self.saveas_type.set(self.saveas_options[0])
         if "saveas_option" in self.prefs:
             self.saveas_type.set(self.prefs["saveas_option"])
-        self.saveas_menu = ttk.OptionMenu(self.side_menu, self.saveas_type, self.saveas_type.get(), *self.saveas_options)
+        self.saveas_menu = ttk.OptionMenu(self.bgextr_menu.sub_frame, self.saveas_type, self.saveas_type.get(), *self.saveas_options)
         self.saveas_menu.grid(column=0, row=19, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
         
-        self.save_background_button = ttk.Button(self.side_menu, 
+        self.save_background_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Save Background"),
                          command=self.save_background_image)
         self.save_background_button.grid(column=0, row=20, pady=5*scal, padx=15*scal, sticky="news")
         tt_save_bg = tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
               
         
-        self.save_button = ttk.Button(self.side_menu, 
+        self.save_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Save Processed"),
                          command=self.save_image)
         self.save_button.grid(column=0, row=21, pady=(5*scal,10*scal), padx=15*scal, sticky="news")

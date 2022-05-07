@@ -194,7 +194,7 @@ class Application(tk.Frame):
         
         self.display_pts = tk.BooleanVar()
         self.display_pts.set(True)
-        self.display_pts_switch = ttk.Checkbutton(self.side_menu, text=_("Display points"), var=self.display_pts, command=self.redraw_points)
+        self.display_pts_switch = ttk.Checkbutton(self.side_menu, text="  "+_("Display points"), compound=tk.LEFT, var=self.display_pts, command=self.redraw_points)
         self.display_pts_switch.grid(column=0, row=5, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         self.bg_pts = tk.IntVar()

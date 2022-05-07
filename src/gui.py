@@ -19,7 +19,7 @@ import sys
 from colorsys import hls_to_rgb
 from app_state import INITIAL_STATE
 import background_extraction
-from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, MOVE_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
+from commands import ADD_POINTS_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, MOVE_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
 from preferences import app_state_2_prefs, load_preferences, prefs_2_app_state, save_preferences
 from stretch import stretch_all
 import tooltip
@@ -623,7 +623,16 @@ class Application(tk.Frame):
         elif(len(self.to_image_point(event.x,event.y)) != 0 and (event.time - self.left_drag_timer < 100 or self.left_drag_timer == -1)):
 
             point = self.to_image_point(event.x,event.y)
-            self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
+            # self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
+            self.cmd = Command(
+                ADD_POINTS_HANDLER,
+                prev=self.cmd,
+                point=point,
+                tol=self.bg_tol.get(),
+                bg_pts=self.bg_pts.get(),
+                sample_size=self.sample_size.get(),
+                image=self.images["Original"]
+            )
             self.cmd.execute()
             
 

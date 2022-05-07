@@ -8,6 +8,7 @@ import numpy as np
 
 from app_state import INITIAL_STATE, AppState
 from background_selection import background_selection
+from flooded_samples_generation import compute_samples_flooded
 
 
 class ICommandHandler(ABC):
@@ -121,6 +122,23 @@ class AddPointHandler(PointHandler):
         return 1.0
 
 
+class AddPointsHandler(PointHandler):
+    def execute(self, app_state: AppState, cmd_args: Dict) -> AppState:
+        app_state_copy = deepcopy(app_state)
+        point = cmd_args["point"]
+        background_points = app_state_copy["background_points"]
+        tol = cmd_args["tol"]
+        bg_pts = cmd_args["bg_pts"]
+        sample_size = cmd_args["sample_size"]
+        image = cmd_args["image"]
+        new_points = compute_samples_flooded(point, background_points, tol, bg_pts, sample_size, image)
+        app_state_copy["background_points"].extend(new_points)
+        return app_state_copy
+
+    def progress(self) -> float:
+        return 1.0
+
+
 class RemovePointHandler(PointHandler):
     def execute(self, app_state: AppState, cmd_args: Dict) -> AppState:
         app_state_copy = deepcopy(app_state)
@@ -190,6 +208,7 @@ class ResetPointsHandler(PointHandler):
 
 INIT_HANDLER = InitHandler()
 ADD_POINT_HANDLER = AddPointHandler()
+ADD_POINTS_HANDLER = AddPointsHandler()
 RM_POINT_HANDLER = RemovePointHandler()
 MOVE_POINT_HANDLER = MovePointHandler()
 SEL_POINTS_HANDLER = SelectPointsHandler()

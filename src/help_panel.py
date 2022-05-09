@@ -36,7 +36,7 @@ class Help_Panel():
         
         self.button_frame = tk.Frame(self.canvas)
         
-        scaling = get_scaling_factor(master)
+        scaling = get_scaling_factor()
 
         s = ttk.Style(master)
         

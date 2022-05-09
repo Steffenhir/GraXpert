@@ -39,7 +39,7 @@ def get_logging_queue():
 
 
 def configure_logging():
-    logfile_name = os.path.join(user_log_dir(), ".graxpert", "graxpert.log")
+    logfile_name = os.path.join(user_log_dir(appname="GraXpert"), "graxpert.log")
     os.makedirs(os.path.dirname(logfile_name), exist_ok=True)
     root = logging.getLogger()
     root.setLevel(logging.INFO)

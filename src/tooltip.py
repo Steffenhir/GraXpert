@@ -43,7 +43,7 @@ class Tooltip:
                  wraplength=250):
 
         self.waittime = waittime  # in miliseconds, originally 500
-        self.wraplength = wraplength * get_scaling_factor(widget.master.master)  # in pixels, originally 180
+        self.wraplength = wraplength * get_scaling_factor()  # in pixels, originally 180
         self.widget = widget
         self.text = text
         self.widget.bind("<Enter>", self.onEnter)

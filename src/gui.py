@@ -80,7 +80,7 @@ class Application(tk.Frame):
         self.my_title = "GraXpert | Release: '{}' ({})".format(release, version)
         self.master.title(self.my_title)
 
-        prefs_filename = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
+        prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
         self.prefs = load_preferences(prefs_filename)
 
         tmp_state = prefs_2_app_state(self.prefs, INITIAL_STATE)
@@ -155,7 +155,7 @@ class Application(tk.Frame):
         self.scrollbar.pack(side=tk.LEFT, fill=tk.Y)
         
  
-        scal = get_scaling_factor(self.master)*0.75
+        scal = get_scaling_factor()*0.75
         self.side_menu = tk.Frame(self.side_canvas, borderwidth=0)
 
         
@@ -974,7 +974,7 @@ class Application(tk.Frame):
         self.prefs["RBF_kernel"] = self.RBF_kernel.get()
         self.prefs["spline_order"] = self.spline_order.get()
         self.prefs["lang"] = self.lang.get()
-        prefs_filename = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
+        prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
         save_preferences(prefs_filename, self.prefs)
         try:
             executor.shutdown(cancel_futures=True)
@@ -995,7 +995,7 @@ if __name__ == "__main__":
     logging_thread = initialize_logging()
 
     root = hdpitk.HdpiTk()
-    scaling = get_scaling_factor(root)
+    scaling = get_scaling_factor()
     
     scale_img("./forest-dark/vert-hover.png", scaling*0.9, (20,10))
     scale_img("./forest-dark/vert-basic.png", scaling*0.9, (20,10))

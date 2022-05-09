@@ -16,7 +16,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-prefs_file = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
+prefs_file = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
 prefs = load_preferences(prefs_file)
 
 lang = None

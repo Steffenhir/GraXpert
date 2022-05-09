@@ -103,7 +103,7 @@ class RadialBasisInterpolation:
     def __init__(self,X,f,degree=0,
                  epsilon=1,smooth=0,
                  kernel='gaussian',_solve=True):
-        self.X = X = np.atleast_2d(X)
+        self.X = X = np.atleast_2d(X).astype(np.uint)
         self.N,self.ndim = X.shape
         self.f = f = np.ravel(f)
         self.degree = degree
@@ -131,6 +131,10 @@ class RadialBasisInterpolation:
 
     def __call__(self,X):
         X = np.atleast_2d(X)
+        
+        # Precalculate Kernel matrix
+        Kernel_matrix = self._kernel(self._distance_pre(X))
+
         step_size = int(10*X.shape[0]/self.X.size + 1)
         i = 0
 
@@ -139,14 +143,24 @@ class RadialBasisInterpolation:
         while(i < X.shape[0]):
             start = i
             end = np.minimum(i+step_size,X.shape[0])
-            K = self._kernel( scipy.spatial.distance.cdist(X[start:end],self.X) )
+            distance = self._distance(X[start:end])
+            distance_x = np.transpose(distance[:,:,0])
+            distance_y = np.transpose(distance[:,:,1])
+            K = Kernel_matrix[distance_x, distance_y].T
+
             P = RadialBasisInterpolation.vandermond(X[start:end],degree=self.degree)
            
             result[start:end] = K.dot(self.rbf_coef) + P.dot(self.poly_coef)
             i = i + step_size
         
         return result
+    
+    def _distance_pre(self,X):
+        return np.sqrt(np.reshape(np.sum(X**2, axis=-1), newshape=(np.max(X[:,1])+1,-1))).T
 
+    def _distance(self,X):
+        return np.abs(X[:,np.newaxis] - self.X)
+    
     def _kernel(self,r):
         r = np.asarray(r)
         if callable(self.kernel):
@@ -213,3 +227,5 @@ class RadialBasisInterpolation:
         if sort:
             ind.sort(key=lambda a:(sum(a),(np.array(a)**2).sum(),a[::-1]))
         return ind
+
+

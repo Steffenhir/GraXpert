@@ -22,7 +22,9 @@ prefs = load_preferences(prefs_file)
 lang = None
 if prefs["lang"] is None:
     lang, enc = locale.getdefaultlocale()
-    if lang.startswith("de") or lang.startswith("gsw"):
+    if lang is None:
+        lang = "en_EN"
+    elif lang.startswith("de") or lang.startswith("gsw"):
         lang = "de_DE"
     else:
         lang = "en_EN"

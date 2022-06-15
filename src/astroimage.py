@@ -118,6 +118,12 @@ class AstroImage:
         elif(self.stretch_option.get() == "30% Bg, 2 sigma"):
             return (0.3, 2)
     
+    def crop(self, startx, endx, starty, endy):
+        self.img_array = self.img_array[startx:endx,starty:endy,:]
+        self.width = self.img_array.shape[1]
+        self.height = self.img_array.shape[0]        
+        return
+    
     def update_fits_header(self, original_header, background_mean):
         if(original_header is None):
             self.fits_header = fits.Header()

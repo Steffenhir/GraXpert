@@ -123,6 +123,8 @@ class Application(tk.Frame):
         self.clicked_inside_pt_idx = 0
         self.clicked_inside_pt_coord = None
         
+        self.crop_mode = False
+        
         self.master.bind("<Button-1>", self.mouse_down_left)  
         self.master.bind("<ButtonRelease-1>", self.mouse_release_left)         # Left Mouse Button
         self.master.bind("<Button-2>", self.mouse_down_right)                  # Middle Mouse Button (Right Mouse Button on macs)
@@ -141,6 +143,8 @@ class Application(tk.Frame):
         
         
         #Side menu
+        heading_font = "Verdana 10 bold"
+        
         self.side_canvas = tk.Canvas(self.master, borderwidth=0,  bd=0, highlightthickness=0, name="left_panel")
         self.side_canvas.pack(side=tk.TOP, fill=tk.Y, expand=True)
         
@@ -151,17 +155,34 @@ class Application(tk.Frame):
         scal = get_scaling_factor(self.master)*0.75
         self.side_menu = tk.Frame(self.side_canvas)
         
-        self.crop_menu = CollapsibleFrame(self.side_menu, text=_("Crop"))
+        #Crop menu
+        self.crop_menu = CollapsibleFrame(self.side_menu, text=_("Crop") + " ")
         self.crop_menu.grid(column=0, row=0, pady=(20*scal,5*scal), padx=15*scal, sticky="news")
+        self.crop_menu.sub_frame.grid_columnconfigure(0)
         
-        self.bgextr_menu = CollapsibleFrame(self.side_menu, text=_("Background Extraction"))
+        for i in range(2):
+            self.crop_menu.sub_frame.grid_rowconfigure(i, weight=1)
+            
+        self.cropmode_button = ttk.Button(self.crop_menu.sub_frame, 
+                          text=_("Toggle crop mode"),
+                          command=self.toggle_crop_mode,
+        )
+        self.cropmode_button.grid(column=0, row=0, pady=(30*scal,5*scal), padx=15*scal, sticky="news")
+        
+        self.cropapply_button = ttk.Button(self.crop_menu.sub_frame, 
+                          text=_("Apply crop"),
+                          command=self.crop_apply,
+        )
+        self.cropapply_button.grid(column=0, row=1, pady=(5*scal,5*scal), padx=15*scal, sticky="news")
+        
+        #Background extraction menu
+        self.bgextr_menu = CollapsibleFrame(self.side_menu, text=_("Background Extraction") + " ")
         self.bgextr_menu.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
         self.bgextr_menu.sub_frame.grid_columnconfigure(0)
         
         for i in range(21):
             self.bgextr_menu.sub_frame.grid_rowconfigure(i, weight=1)
         
-        heading_font = "Verdana 10 bold"
         #---Open Image---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_1-scaled.png"))
         text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Loading"), image=num_pic, font=heading_font, compound="left")
@@ -407,6 +428,42 @@ class Application(tk.Frame):
         self.loading_frame.end()
         return
     
+    def toggle_crop_mode(self):
+        
+        if self.images["Original"] is None:
+            messagebox.showerror("Error", _("Please load your picture first."))
+            return
+        
+        self.startx = 0
+        self.starty = 0
+        self.endx = self.images["Original"].width
+        self.endy = self.images["Original"].height
+
+        if(self.crop_mode):
+            self.crop_mode = False
+        else:
+            self.crop_mode = True
+        
+        self.redraw_points()
+        
+    def crop_apply(self):
+        
+        if (not self.crop_mode):
+            return
+        
+        for astroimg in self.images.values():
+            if(astroimg is not None):
+                astroimg.crop(self.startx, self.endx, self.starty, self.endy)
+
+        self.reset_backgroundpts()
+        self.crop_mode = False
+        self.zoom_fit(self.images[self.display_type.get()].width, self.images[self.display_type.get()].height)
+        self.redraw_image()
+        self.redraw_points()
+        return
+        
+        
+        
     def select_background(self,event=None):
         
         if self.images["Original"] is None:
@@ -609,6 +666,13 @@ class Application(tk.Frame):
                 self.clicked_inside_pt = True
                 self.clicked_inside_pt_idx = min_idx
                 self.clicked_inside_pt_coord = self.cmd.app_state["background_points"][min_idx]
+        
+        if(self.crop_mode):
+            #Check if inside circles to move crop corners
+            corner1 = self.to_canvas_point(self.startx, self.starty)
+            corner2 = self.to_canvas_point(self.endx, self.endy)
+            if((event.x - corner1[0])**2 + (event.y - corner1[1])**2 < 15**2 or (event.x - corner2[0])**2 + (event.y - corner2[1])**2 < 15**2):
+                self.clicked_inside_pt = True
                 
         self.__old_event = event
 
@@ -648,13 +712,29 @@ class Application(tk.Frame):
         if(self.left_drag_timer == -1):
             self.left_drag_timer = event.time
         
-        if self.clicked_inside_pt and self.display_pts.get():         
+        if(self.clicked_inside_pt and self.display_pts.get() and not self.crop_mode):         
             new_point = self.to_image_point(event.x, event.y)
             if len(new_point) != 0:
                 self.cmd.app_state["background_points"][self.clicked_inside_pt_idx] = new_point
                 
             self.redraw_points()
             
+        elif(self.clicked_inside_pt and self.crop_mode):
+            new_point = self.to_image_point_pinned(event.x, event.y)
+            corner1_canvas = self.to_canvas_point(self.startx, self.starty)
+            corner2_canvas = self.to_canvas_point(self.endx, self.endy)
+            
+            dist1 = (event.x - corner1_canvas[0])**2 + (event.y - corner1_canvas[1])**2
+            dist2 = (event.x - corner2_canvas[0])**2 + (event.y - corner2_canvas[1])**2
+            if(dist1 < dist2):
+                self.startx = int(new_point[0])
+                self.starty = int(new_point[1])
+            else:
+                self.endx = int(new_point[0])
+                self.endy = int(new_point[1])
+                
+            self.redraw_points()
+                
         else:
             if(event.time - self.left_drag_timer >= 100):            
                 self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
@@ -866,6 +946,28 @@ class Application(tk.Frame):
 
         return image_point
 
+    def to_image_point_pinned(self, x, y):
+        
+        if self.images[self.display_type.get()] is None:
+            return []
+
+        mat_inv = np.linalg.inv(self.mat_affine)
+        image_point = np.dot(mat_inv, (x, y, 1.))
+        
+        width = self.images[self.display_type.get()].width
+        height = self.images[self.display_type.get()].height
+        
+        if image_point[0] < 0:
+            image_point[0] = 0
+        if image_point[1] < 0:
+            image_point[1] = 0
+        if image_point[0] > width:
+            image_point[0] = width
+        if image_point[1] > height:
+            image_point[1] = height
+
+        return image_point
+    
     def to_canvas_point(self, x, y):
         
         return np.dot(self.mat_affine,(x,y,1.))
@@ -918,16 +1020,23 @@ class Application(tk.Frame):
         color = (int(color[0]*255), int(color[1]*255), int(color[2]*255))
         color = '#%02x%02x%02x' % color
         
-        self.canvas.delete("rectangle")      
+        self.canvas.delete("sample")
+        self.canvas.delete("crop")  
         rectsize = self.sample_size.get()
         background_points = self.cmd.app_state["background_points"]
         
-        if self.display_pts.get():
+        if self.display_pts.get() and not self.crop_mode:
             for point in background_points:        
                 corner1 = self.to_canvas_point(point[0]-rectsize,point[1]-rectsize)
                 corner2 = self.to_canvas_point(point[0]+rectsize,point[1]+rectsize)
-                self.canvas.create_rectangle(corner1[0],corner1[1], corner2[0],corner2[1],outline=color, width=2, tags="rectangle")
-            
+                self.canvas.create_rectangle(corner1[0],corner1[1], corner2[0],corner2[1],outline=color, width=2, tags="sample")
+        
+        if self.crop_mode:
+            corner1 = self.to_canvas_point(self.startx, self.starty)
+            corner2 = self.to_canvas_point(self.endx, self.endy)
+            self.canvas.create_rectangle(corner1[0],corner1[1], corner2[0],corner2[1], outline=color, width=2, tags="crop")
+            self.canvas.create_oval(corner1[0]-15,corner1[1]-15, corner1[0]+15,corner1[1]+15, outline=color, width=2, tags="crop")
+            self.canvas.create_oval(corner2[0]-15,corner2[1]-15, corner2[0]+15,corner2[1]+15, outline=color, width=2, tags="crop")
         return
 
     def redraw_image(self):

@@ -545,7 +545,8 @@ class Application(tk.Frame):
             imarray,np.array(background_points),
             self.interpol_type.get(),self.smoothing.get(),
             downscale_factor, self.sample_size.get(),
-            self.RBF_kernel.get(),self.spline_order.get()
+            self.RBF_kernel.get(),self.spline_order.get(),
+            self.corr_type.get()
             ))
 
         self.images["Processed"] = AstroImage(self.stretch_option_current)
@@ -971,6 +972,7 @@ class Application(tk.Frame):
         self.prefs["RBF_kernel"] = self.RBF_kernel.get()
         self.prefs["spline_order"] = self.spline_order.get()
         self.prefs["lang"] = self.lang.get()
+        self.prefs["corr_type"] = self.corr_type.get()
         prefs_filename = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
         save_preferences(prefs_filename, self.prefs)
         try:

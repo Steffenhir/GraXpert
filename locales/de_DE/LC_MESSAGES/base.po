@@ -204,6 +204,12 @@ msgstr "Samplefarbe: {}"
 msgid "Spline order"
 msgstr "Grad der Splines"
 
+msgid "Language"
+msgstr "Sprache"
+
+msgid "Correction"
+msgstr "Korrektur"
+
 #: src/loadingframe.py:18
 msgid "Calculating..."
 msgstr "Berechne..."

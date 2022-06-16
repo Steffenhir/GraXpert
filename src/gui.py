@@ -82,6 +82,8 @@ class Application(tk.Frame):
         self.cmd.execute()
 
         self.create_widget()
+        self.bgextr_menu.show.set(1)
+        self.bgextr_menu.toggle()
 
         self.reset_transform()
         
@@ -158,27 +160,27 @@ class Application(tk.Frame):
         #Crop menu
         self.crop_menu = CollapsibleFrame(self.side_menu, text=_("Crop") + " ")
         self.crop_menu.grid(column=0, row=0, pady=(20*scal,5*scal), padx=15*scal, sticky="news")
-        self.crop_menu.sub_frame.grid_columnconfigure(0)
+        self.crop_menu.sub_frame.grid_columnconfigure(0, weight=1)
         
         for i in range(2):
             self.crop_menu.sub_frame.grid_rowconfigure(i, weight=1)
             
         self.cropmode_button = ttk.Button(self.crop_menu.sub_frame, 
-                          text=_("Toggle crop mode"),
+                          text=_("Crop mode on/off"),
                           command=self.toggle_crop_mode,
         )
-        self.cropmode_button.grid(column=0, row=0, pady=(30*scal,5*scal), padx=15*scal, sticky="news")
+        self.cropmode_button.grid(column=0, row=0, pady=(20*scal,5*scal), padx=15*scal, sticky="news")
         
         self.cropapply_button = ttk.Button(self.crop_menu.sub_frame, 
                           text=_("Apply crop"),
                           command=self.crop_apply,
         )
-        self.cropapply_button.grid(column=0, row=1, pady=(5*scal,5*scal), padx=15*scal, sticky="news")
+        self.cropapply_button.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
         
         #Background extraction menu
         self.bgextr_menu = CollapsibleFrame(self.side_menu, text=_("Background Extraction") + " ")
         self.bgextr_menu.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
-        self.bgextr_menu.sub_frame.grid_columnconfigure(0)
+        self.bgextr_menu.sub_frame.grid_columnconfigure(0, weight=1)
         
         for i in range(21):
             self.bgextr_menu.sub_frame.grid_rowconfigure(i, weight=1)
@@ -364,7 +366,7 @@ class Application(tk.Frame):
         self.save_button.grid(column=0, row=21, pady=(5*scal,10*scal), padx=15*scal, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
         
-        
+
         self.side_canvas.create_window((0,0), window=self.side_menu)
         self.side_canvas.configure(yscrollcommand=self.scrollbar.set)
         self.side_canvas.bind('<Configure>', lambda e: self.side_canvas.configure(scrollregion=self.side_canvas.bbox("all")))
@@ -372,6 +374,7 @@ class Application(tk.Frame):
         width = self.side_menu.winfo_width()
         self.side_canvas.configure(width=width)
         self.side_canvas.yview_moveto("0.0")
+
     
     def menu_open_clicked(self, event=None):
 

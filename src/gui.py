@@ -686,7 +686,7 @@ class Application(tk.Frame):
             return
         
 
-        if self.clicked_inside_pt:            
+        if self.clicked_inside_pt and not self.crop_mode:            
             new_point = self.to_image_point(event.x,event.y)
             self.cmd.app_state["background_points"][self.clicked_inside_pt_idx] = self.clicked_inside_pt_coord
             self.cmd = Command(MOVE_POINT_HANDLER, prev=self.cmd, new_point=new_point, idx=self.clicked_inside_pt_idx)

@@ -1,4 +1,5 @@
 from screeninfo import get_monitors
+from platform import system
 
 scaling_factor = None
 
@@ -23,8 +24,14 @@ def get_scaling_factor(master):
             except:
                 # ... if that fails try the first one in the list
                 monitor = monitors[0]
-                
-        dpi = monitor.width / (monitor.width_mm / 24.0)
+        
+        if system().startswith("Linux"):
+            # winfo_screenmmwidth() may bot work on Linux
+            dpi = monitor.width / (monitor.width_mm / 24.0)
+        else:
+            dpi = monitor.width / (master.winfo_screenmmwidth() / 24.0)
+            
+            
         scaling_factor = dpi / 72.0
     except BaseException as e:
         print("WARNING: could not calculate monitor dpi:", e)

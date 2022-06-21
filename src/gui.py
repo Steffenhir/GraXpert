@@ -1129,8 +1129,9 @@ if __name__ == "__main__":
     
     root.tk.call("source", resource_path("forest-dark.tcl"))   
     style = ttk.Style(root)
-    style.configure("Scale.slider", sliderlength=100, sliderthickness=100)
     style.theme_use("forest-dark")
+    style.configure("TButton", padding=(8*scaling, 12*scaling, 8*scaling, 12*scaling))
+    style.configure("TMenubutton", padding=(8*scaling, 4*scaling, 4*scaling, 4*scaling))
     root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
     root.tk.call('tk', 'scaling', scaling)
     root.option_add("*TkFDialog*foreground", "black")

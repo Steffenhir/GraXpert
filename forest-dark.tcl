@@ -248,7 +248,7 @@ namespace eval ttk::theme::forest-dark {
             ] -border 4 -sticky nsew
 
         # Menubutton
-        ttk::style configure TMenubutton -padding {8 4 4 4}
+        ttk::style configure TMenubutton -padding {8 4 4 4} -anchor center
 
         ttk::style element create Menubutton.button image \
             [list $I(rect-basic) \

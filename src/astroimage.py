@@ -65,8 +65,8 @@ class AstroImage:
         img_display = self.stretch()
         img_display = img_display*255
         
-        if self.roworder == "TOP-DOWN":
-            img_display = np.flip(img_display, axis=0)
+        #if self.roworder == "TOP-DOWN":
+        #    img_display = np.flip(img_display, axis=0)
         
         if(img_display.shape[2] == 1):
             self.img_display = Image.fromarray(img_display[:,:,0].astype(np.uint8))
@@ -77,8 +77,8 @@ class AstroImage:
     def update_display_from_array(self, img_display):
         img_display = img_display*255
         
-        if self.roworder == "TOP-DOWN":
-            img_display = np.flip(img_display, axis=0)
+        #if self.roworder == "TOP-DOWN":
+        #    img_display = np.flip(img_display, axis=0)
         
         if(img_display.shape[2] == 1):
             self.img_display = Image.fromarray(img_display[:,:,0].astype(np.uint8))

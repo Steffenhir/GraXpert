@@ -322,6 +322,20 @@ class Help_Panel():
         self.lang_menu.grid(column=0, row=12, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         
+        text = tk.Message(self.advanced_panel_window, text=_("Correction"), width=240 * scaling, font=heading_font2, anchor="center")
+        text.grid(column=0, row=13, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+        
+        
+        self.app.corr_types = ["Subtraction", "Division"]
+        self.app.corr_type = tk.StringVar()
+        self.app.corr_type.set(self.app.corr_types[0])
+        if "corr_type" in self.app.prefs:
+            self.app.corr_type.set(self.app.prefs["corr_type"])
+
+        self.corr_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.corr_type, self.app.corr_type.get(), *self.app.corr_types)
+        self.corr_menu.grid(column=0, row=14, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
+        
+        
         self.advanced_canvas.create_window((0,0), window=self.advanced_panel_window)
         self.advanced_canvas.configure(yscrollcommand=self.advanced_scrollbar.set)
         self.advanced_canvas.bind('<Configure>', lambda e: self.advanced_canvas.configure(scrollregion=self.advanced_canvas.bbox("all")))

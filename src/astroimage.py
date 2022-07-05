@@ -65,8 +65,8 @@ class AstroImage:
         img_display = self.stretch()
         img_display = img_display*255
         
-        if self.roworder == "TOP-DOWN":
-            img_display = np.flip(img_display, axis=0)
+        #if self.roworder == "TOP-DOWN":
+        #    img_display = np.flip(img_display, axis=0)
         
         if(img_display.shape[2] == 1):
             self.img_display = Image.fromarray(img_display[:,:,0].astype(np.uint8))
@@ -77,8 +77,8 @@ class AstroImage:
     def update_display_from_array(self, img_display):
         img_display = img_display*255
         
-        if self.roworder == "TOP-DOWN":
-            img_display = np.flip(img_display, axis=0)
+        #if self.roworder == "TOP-DOWN":
+        #    img_display = np.flip(img_display, axis=0)
         
         if(img_display.shape[2] == 1):
             self.img_display = Image.fromarray(img_display[:,:,0].astype(np.uint8))
@@ -117,6 +117,13 @@ class AstroImage:
             return (0.2, 3)
         elif(self.stretch_option.get() == "30% Bg, 2 sigma"):
             return (0.3, 2)
+    
+    def crop(self, startx, endx, starty, endy):
+        self.img_array = self.img_array[starty:endy,startx:endx,:]
+        self.img_display = self.img_display.crop((startx, starty, endx, endy))
+        self.width = self.img_array.shape[1]
+        self.height = self.img_array.shape[0]        
+        return
     
     def update_fits_header(self, original_header, background_mean):
         if(original_header is None):

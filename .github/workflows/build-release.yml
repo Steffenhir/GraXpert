@@ -90,11 +90,13 @@ jobs:
         run: |
           pip install setuptools wheel && `
           cd .\pyinstaller\bootloader && `
+          (Get-Content .\wscript) -Replace "'run'", "'graxpert'" | Set-Content .\wscript && `
           (Get-Content .\src\main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\main.c && `
           (Get-Content .\src\pyi_main.h) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.h && `
           (Get-Content .\src\pyi_main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.c && `
           python ./waf all && `
           cd .. && `
+          (Get-Content .\setup.py) -Replace 'run.exe', 'graxpert.exe' | Set-Content .\setup.py && `
           python setup.py install && `
           cd .. && `
           pip install -r requirements.txt
@@ -132,11 +134,13 @@ jobs:
         run: |
           pip install setuptools wheel && `
           cd .\pyinstaller\bootloader && `
+          (Get-Content .\wscript) -Replace "'run'", "'graxpert'" | Set-Content .\wscript && `
           (Get-Content .\src\main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\main.c && `
           (Get-Content .\src\pyi_main.h) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.h && `
           (Get-Content .\src\pyi_main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.c && `
           python ./waf all && `
           cd .. && `
+          (Get-Content .\setup.py) -Replace 'run.exe', 'graxpert.exe' | Set-Content .\setup.py && `
           python setup.py install && `
           cd .. && `
           pip install -r requirements.txt

@@ -24,6 +24,7 @@ class Prefs(TypedDict):
     sample_color: int
     RBF_kernel: AnyStr
     lang: AnyStr
+    corr_type: AnyStr
 
 DEFAULT_PREFS: Prefs = {
     "working_dir": os.getcwd(),
@@ -40,7 +41,8 @@ DEFAULT_PREFS: Prefs = {
     "sample_color": 55,
     "RBF_kernel": "thin_plate",
     "spline_order": 3,
-    "lang": None
+    "lang": None,
+    "corr_type": "Subtraction"
 }
 
 def app_state_2_prefs(prefs: Prefs, app_state: AppState) -> Prefs:
@@ -84,6 +86,8 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["spline_order"] = json["spline_order"]
     if "lang" in json:
         prefs["lang"] = json["lang"]
+    if "corr_type" in json:
+        prefs["corr_type"] = json["corr_type"]
     return prefs
 
 def load_preferences(prefs_filename) -> Prefs:

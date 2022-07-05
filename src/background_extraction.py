@@ -23,7 +23,8 @@ from parallel_processing import executor
 from radialbasisinterpolation import RadialBasisInterpolation
 
 
-def extract_background(in_imarray, background_points, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order):
+def extract_background(in_imarray, background_points, interpolation_type, smoothing, 
+                       downscale_factor, sample_size, RBF_kernel, spline_order, corr_type):
 
     shm_imarray = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
     shm_background = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
@@ -40,10 +41,15 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
     for c in range(num_colors):
         futures.insert(c, executor.submit(interpol, shm_imarray.name, shm_background.name, c, x_sub, y_sub, in_imarray.shape, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, imarray.dtype))
     wait(futures)
-        
-    #Subtract background from image
-    mean = np.mean(background)
-    imarray[:,:,:] = imarray[:,:,:] - background[:,:,:] + mean
+    
+    #Correction
+    if(corr_type == "Subtraction"):
+        mean = np.mean(background)
+        imarray[:,:,:] = imarray[:,:,:] - background[:,:,:] + mean
+    elif(corr_type == "Division"):
+        for c in range(num_colors):
+            mean = np.mean(imarray[:,:,c])
+            imarray[:,:,c] = imarray[:,:,c] / background[:,:,c] * mean
 
     #clip image
     imarray[:,:,:] = imarray.clip(min=0.0,max=1.0)

@@ -154,7 +154,7 @@ class AstroImage:
         if(saveas_type == "16 bit Tiff" or saveas_type == "16 bit Fits" or saveas_type == "16 bit XISF"):
             image_converted = img_as_uint(self.img_array)
         else:
-            image_converted = self.img_array
+            image_converted = self.img_array.astype(np.float32)
          
         if(saveas_type == "16 bit Tiff" or saveas_type == "32 bit Tiff"):
             io.imsave(dir, image_converted)

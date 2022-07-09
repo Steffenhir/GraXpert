@@ -6,3 +6,4 @@ pykrige
 scikit-image
 scipy
 screeninfo
+xisf

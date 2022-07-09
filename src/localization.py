@@ -3,8 +3,7 @@ import sys
 import locale
 import os
 from appdirs import user_config_dir
-import json
-from preferences import DEFAULT_PREFS, Prefs, merge_json
+from preferences import load_preferences
 
 
 def resource_path(relative_path):
@@ -17,18 +16,15 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-prefs_file = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
-prefs = DEFAULT_PREFS
-if os.path.isfile(prefs_file):
-    with open(prefs_file) as f:
-        json_prefs: Prefs = json.load(f)
-        prefs = merge_json(prefs, json_prefs)
-
+prefs_file = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
+prefs = load_preferences(prefs_file)
 
 lang = None
 if prefs["lang"] is None:
     lang, enc = locale.getdefaultlocale()
-    if lang.startswith("de") or lang.startswith("gsw"):
+    if lang is None:
+        lang = "en_EN"
+    elif lang.startswith("de") or lang.startswith("gsw"):
         lang = "de_DE"
     else:
         lang = "en_EN"

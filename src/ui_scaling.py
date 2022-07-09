@@ -1,10 +1,12 @@
+import logging
+
 from screeninfo import get_monitors
 from platform import system
 
 scaling_factor = None
 
 
-def get_scaling_factor(master):
+def get_scaling_factor():
     global scaling_factor
 
     if scaling_factor is not None:
@@ -29,7 +31,7 @@ def get_scaling_factor(master):
         scaling_factor = dpi / 96.0
         
     except BaseException as e:
-        print("WARNING: could not calculate monitor dpi:", e)
+        logging.warning("WARNING: could not calculate monitor dpi, {}".format(e))
         scaling_factor = 1.0
 
     return scaling_factor

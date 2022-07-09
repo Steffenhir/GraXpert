@@ -5,37 +5,45 @@ Created on Sun Feb 13 10:05:08 2022
 """
 
 import multiprocessing
+
 multiprocessing.freeze_support()
 
-import tkinter as tk
-import hdpitkinter as hdpitk
-from tkinter import ttk
-from tkinter import filedialog
-from tkinter import messagebox
-from PIL import Image, ImageTk               
-import numpy as np            
+from mp_logging import configure_logging, initialize_logging, shutdown_logging
+
+configure_logging()
+
+import logging
 import os
 import sys
+import tkinter as tk
 from colorsys import hls_to_rgb
-from app_state import INITIAL_STATE
-import background_extraction
-from commands import ADD_POINT_HANDLER, INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, MOVE_POINT_HANDLER, Command, SEL_POINTS_HANDLER, InitHandler
-from preferences import app_state_2_prefs, load_preferences, prefs_2_app_state, save_preferences
-from stretch import stretch_all
-import tooltip
-from collapsible_frame import CollapsibleFrame
-from loadingframe import LoadingFrame
-from help_panel import Help_Panel
-from astroimage import AstroImage
-import json
+from tkinter import filedialog, messagebox, ttk
+
+import hdpitkinter as hdpitk
+import numpy as np
 from appdirs import user_config_dir
-from ui_scaling import get_scaling_factor
-from localization import _
-import traceback
+from PIL import Image, ImageTk
 from skimage import io
 from skimage.transform import resize
+
+import background_extraction
+import tooltip
+from app_state import INITIAL_STATE
+from astroimage import AstroImage
+from collapsible_frame import CollapsibleFrame
+from commands import (ADD_POINT_HANDLER, INIT_HANDLER, MOVE_POINT_HANDLER,
+                      RESET_POINTS_HANDLER, RM_POINT_HANDLER,
+                      SEL_POINTS_HANDLER, Command, InitHandler)
+from help_panel import Help_Panel
+from loadingframe import LoadingFrame
+from localization import _
 from parallel_processing import executor
+from preferences import (app_state_2_prefs, load_preferences,
+                         prefs_2_app_state, save_preferences)
+from stretch import stretch_all
+from ui_scaling import get_scaling_factor
 from version import release, version
+
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -73,7 +81,7 @@ class Application(tk.Frame):
         self.my_title = "GraXpert | Release: '{}' ({})".format(release, version)
         self.master.title(self.my_title)
 
-        prefs_filename = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
+        prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
         self.prefs = load_preferences(prefs_filename)
 
         tmp_state = prefs_2_app_state(self.prefs, INITIAL_STATE)
@@ -153,9 +161,8 @@ class Application(tk.Frame):
         self.scrollbar = ttk.Scrollbar(self.canvas, orient=tk.VERTICAL, command=self.side_canvas.yview)
         self.scrollbar.pack(side=tk.LEFT, fill=tk.Y)
         
- 
-        scal = get_scaling_factor(self.master)*0.75
-        self.side_menu = tk.Frame(self.side_canvas)
+        scal = get_scaling_factor()*0.75
+        self.side_menu = tk.Frame(self.side_canvas, borderwidth=0)
         
         #Crop menu
         self.crop_menu = CollapsibleFrame(self.side_menu, text=_("Crop") + " ")
@@ -176,6 +183,7 @@ class Application(tk.Frame):
                           command=self.crop_apply,
         )
         self.cropapply_button.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
+
         
         #Background extraction menu
         self.bgextr_menu = CollapsibleFrame(self.side_menu, text=_("Background Extraction") + " ")
@@ -401,9 +409,9 @@ class Application(tk.Frame):
             self.prefs["working_dir"] = os.path.dirname(filename)
             
         except Exception as e:
-            print("An error occurred while loading your picture")
-            print(traceback.format_exc())
-            messagebox.showerror("Error", _("An error occurred while loading your picture."))
+            msg = _("An error occurred while loading your picture.")
+            logging.exception(msg)
+            messagebox.showerror("Error", _(msg))
 
         
         self.display_type.set("Original")
@@ -1070,7 +1078,7 @@ class Application(tk.Frame):
         self.redraw_image()
         self.loading_frame.end()
     
-    def on_closing(self):
+    def on_closing(self, logging_thread):
         
         self.prefs = app_state_2_prefs(self.prefs, self.cmd.app_state)
         self.prefs["bg_pts_option"] = self.bg_pts.get()
@@ -1090,7 +1098,8 @@ class Application(tk.Frame):
         try:
             executor.shutdown(cancel_futures=True)
         except Exception as e:
-            print("error shutting down ProcessPoolExecutor: {}".format(e))
+            logging.exception("error shutting down ProcessPoolExecutor")
+        shutdown_logging(logging_thread)
         root.destroy()
 
 def scale_img(path, scaling, shape):
@@ -1101,8 +1110,11 @@ def scale_img(path, scaling, shape):
     io.imsave(resource_path(resource_path(path.replace('.png', '-scaled.png'))), img, check_contrast=False)
 
 if __name__ == "__main__":
+
+    logging_thread = initialize_logging()
+
     root = hdpitk.HdpiTk()
-    scaling = get_scaling_factor(root)
+    scaling = get_scaling_factor()
     
     scale_img("./forest-dark/vert-hover.png", scaling*0.9, (20,10))
     scale_img("./forest-dark/vert-basic.png", scaling*0.9, (20,10))
@@ -1136,7 +1148,7 @@ if __name__ == "__main__":
     root.tk.call('tk', 'scaling', scaling)
     root.option_add("*TkFDialog*foreground", "black")
     app = Application(master=root)
-    root.protocol("WM_DELETE_WINDOW", app.on_closing)
+    root.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(logging_thread))
 
     app.mainloop()
     

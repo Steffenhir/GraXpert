@@ -8,7 +8,7 @@ Created on Sat Feb 12 10:01:31 2022
 import multiprocessing
 multiprocessing.freeze_support()
 
-import traceback
+import logging
 from concurrent.futures import wait
 # from gpr_cuda import GPRegression
 from multiprocessing import shared_memory
@@ -19,6 +19,7 @@ from pykrige.ok import OrdinaryKriging
 from scipy import interpolate, linalg
 from skimage.transform import resize
 
+from mp_logging import get_logging_queue, worker_configurer
 from parallel_processing import executor
 from radialbasisinterpolation import RadialBasisInterpolation
 
@@ -38,8 +39,9 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
     y_sub = np.array(background_points[:,1],dtype=int)
         
     futures = []
+    logging_queue = get_logging_queue()
     for c in range(num_colors):
-        futures.insert(c, executor.submit(interpol, shm_imarray.name, shm_background.name, c, x_sub, y_sub, in_imarray.shape, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, imarray.dtype))
+        futures.insert(c, executor.submit(interpol, shm_imarray.name, shm_background.name, c, x_sub, y_sub, in_imarray.shape, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, imarray.dtype, logging_queue, worker_configurer))
     wait(futures)
     
     #Correction
@@ -77,7 +79,10 @@ def calc_mode_dataset(data, x_sub, y_sub, halfsize):
     return subsample
 
 
-def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, dtype):
+def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, dtype, logging_queue, logging_configurer):
+
+    logging_configurer(logging_queue)
+    logging.info("background_extraction.interpol started")
 
     try:
         existing_shm_imarray = shared_memory.SharedMemory(name=shm_imarray_name)
@@ -161,7 +166,7 @@ def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind
         #     del gpr
         
         else:
-            print("Interpolation method not recognized")
+            logging.warn("Interpolation method not recognized")
             return
         
         if(downscale_factor != 1):
@@ -169,8 +174,9 @@ def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind
             
         background[:,:,c] = result
     except Exception as e:
-        print("Error occured during interpol.")
-        print(traceback.format_exc(e))
+        logging.exception("Error occured during background_extraction.interpol")
     
     existing_shm_imarray.close()
     existing_shm_background.close()
+
+    logging.info("background_extraction.interpol finished")

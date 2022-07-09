@@ -344,7 +344,7 @@ class Application(tk.Frame):
         self.saveas_text.image = num_pic
         self.saveas_text.grid(column=0, row=18, pady=5*scal, padx=0, sticky="w")
         
-        self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits"]
+        self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits", "16 bit XISF", "32 bit XISF"]
         self.saveas_type = tk.StringVar()
         self.saveas_type.set(self.saveas_options[0])
         if "saveas_option" in self.prefs:
@@ -384,7 +384,8 @@ class Application(tk.Frame):
             initialdir = os.getcwd()
         
         filename = tk.filedialog.askopenfilename(
-            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits .fts"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits .fts")],
+            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits .fts .xisf"),
+                         ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits .fts"), ("XISF", ".xisf")],
             initialdir = initialdir
             )
         
@@ -511,7 +512,14 @@ class Application(tk.Frame):
                filetypes = [("Tiff", ".tiff")],
                defaultextension = ".tiff",
                initialdir = self.prefs["working_dir"]
-               )           
+               )         
+       elif(self.saveas_type.get() == "16 bit XISF" or self.saveas_type.get() == "32 bit XISF"):       
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile = self.filename + "_GraXpert.xisf",
+                filetypes = [("XISF", ".xisf")],
+                defaultextension = ".xisf",
+                initialdir = self.prefs["working_dir"]
+                )           
        else:
            dir = tk.filedialog.asksaveasfilename(
                initialfile = self.filename + "_GraXpert.fits",
@@ -519,7 +527,7 @@ class Application(tk.Frame):
                defaultextension = ".fits",
                initialdir = self.prefs["working_dir"]
                )
-       
+                           
        if(dir == ""):
            return
         
@@ -541,7 +549,14 @@ class Application(tk.Frame):
                 filetypes = [("Tiff", ".tiff")],
                 defaultextension = ".tiff",
                 initialdir = self.prefs["working_dir"]
-                )           
+                )
+        elif(self.saveas_type.get() == "16 bit XISF" or self.saveas_type.get() == "32 bit XISF"):
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile = self.filename + "_background.xisf",
+                filetypes = [("XISF", ".xisf")],
+                defaultextension = ".xisf",
+                initialdir = self.prefs["working_dir"]
+                ) 
         else:
             dir = tk.filedialog.asksaveasfilename(
                 initialfile = self.filename + "_background.fits",
@@ -612,10 +627,13 @@ class Application(tk.Frame):
         self.images["Processed"] = AstroImage(self.stretch_option_current)
         self.images["Processed"].set_from_array(imarray)
         
-        # Update fits header
+        # Update fits header and metadata
         background_mean = np.mean(self.images["Background"].img_array)
         self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean)
-        self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean)
+        self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean)#
+        
+        self.images["Processed"].copy_metadata(self.images["Original"])
+        self.images["Background"].copy_metadata(self.images["Original"])
 
         all_images = [self.images["Original"].img_array, self.images["Processed"].img_array, self.images["Background"].img_array]
         stretches = stretch_all(all_images, self.images["Original"].get_stretch())

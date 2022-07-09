@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from xisf import XISF
 from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
 from skimage import io, img_as_float32, exposure
@@ -13,6 +14,8 @@ class AstroImage:
         self.img_display = None
         self.img_format = None
         self.fits_header = None
+        self.xisf_metadata = {}
+        self.image_metadata = {}
         self.stretch_option = stretch_option
         self.width = 0
         self.height = 0
@@ -33,7 +36,12 @@ class AstroImage:
                
             if "ROWORDER" in self.fits_header:
                 self.roworder = self.fits_header["ROWORDER"]
-
+        
+        elif(self.img_format == ".xisf"):
+            xisf = XISF(directory)
+            self.xisf_metadata = xisf.get_file_metadata()
+            self.image_metadata = xisf.get_images_metadata()[0]
+            img_array = xisf.read_image(0)
         else:
             img_array = io.imread(directory)
         
@@ -143,13 +151,16 @@ class AstroImage:
         if(self.img_array is None):
             return
         
-        if(saveas_type == "16 bit Tiff" or saveas_type == "16 bit Fits"):
+        if(saveas_type == "16 bit Tiff" or saveas_type == "16 bit Fits" or saveas_type == "16 bit XISF"):
             image_converted = img_as_uint(self.img_array)
         else:
             image_converted = self.img_array
          
         if(saveas_type == "16 bit Tiff" or saveas_type == "32 bit Tiff"):
             io.imsave(dir, image_converted)
+            
+        elif(saveas_type == "16 bit XISF" or saveas_type == "32 bit XISF"):
+            XISF.write(dir, image_converted, creator_app = "GraXpert", image_metadata = self.image_metadata, xisf_metadata = self.xisf_metadata)
         else:
             if(image_converted.shape[-1] == 3):
                image_converted = np.moveaxis(image_converted,-1,0)
@@ -183,4 +194,7 @@ class AstroImage:
             
             return L
         
+    def copy_metadata(self, source_img):
+        self.xisf_metadata = source_img.xisf_metadata
+        self.image_metadata = source_img.image_metadata
             

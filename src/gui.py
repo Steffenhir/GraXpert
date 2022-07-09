@@ -1093,7 +1093,7 @@ class Application(tk.Frame):
         self.prefs["spline_order"] = self.spline_order.get()
         self.prefs["lang"] = self.lang.get()
         self.prefs["corr_type"] = self.corr_type.get()
-        prefs_filename = os.path.join(user_config_dir(), ".graxpert", "preferences.json")
+        prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
         save_preferences(prefs_filename, self.prefs)
         try:
             executor.shutdown(cancel_futures=True)

@@ -1201,6 +1201,7 @@ if __name__ == "__main__":
     root.option_add("*TkFDialog*foreground", "black")
     app = Application(master=root)
     root.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(logging_thread))
+    root.createcommand("::tk::mac::Quit", lambda: app.on_closing(logging_thread))
 
     app.mainloop()
     

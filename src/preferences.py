@@ -17,6 +17,7 @@ class Prefs(TypedDict):
     background_points: List
     bg_pts_option: int
     stretch_option: AnyStr
+    saturation: float
     bg_tol_option: float
     interpol_type_option: AnyStr
     smoothing_option: float
@@ -34,6 +35,7 @@ DEFAULT_PREFS: Prefs = {
     "background_points": [],
     "bg_pts_option": 15,
     "stretch_option": "No Stretch",
+    "saturation": 1.0,
     "bg_tol_option": 1.0,
     "interpol_type_option": "RBF",
     "smoothing_option": 1.0,
@@ -72,6 +74,8 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["bg_pts_option"] = json["bg_pts_option"]
     if "stretch_option" in json:
         prefs["stretch_option"] = json["stretch_option"]
+    if "saturation" in json:
+        prefs["saturation"] = json["saturation"]
     if "bg_tol_option" in json:
         prefs["bg_tol_option"] = json["bg_tol_option"]
     if "interpol_type_option" in json:

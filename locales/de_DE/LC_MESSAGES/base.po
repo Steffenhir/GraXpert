@@ -38,6 +38,9 @@ msgstr "Bild laden"
 msgid " Stretch Options"
 msgstr " Stretchoptionen"
 
+msgid "Saturation"
+msgstr "Farbsättigung"
+
 #: src/gui.py:176
 msgid " Sample Selection"
 msgstr " Punktauswahl"

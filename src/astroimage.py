@@ -137,6 +137,7 @@ class AstroImage:
     def crop(self, startx, endx, starty, endy):
         self.img_array = self.img_array[starty:endy,startx:endx,:]
         self.img_display = self.img_display.crop((startx, starty, endx, endy))
+        self.img_display_saturated = self.img_display_saturated.crop((startx, starty, endx, endy))
         self.width = self.img_array.shape[1]
         self.height = self.img_array.shape[0]        
         return
@@ -207,6 +208,8 @@ class AstroImage:
         self.image_metadata = source_img.image_metadata
     
     def update_saturation(self):
+        self.img_display_saturated = self.img_display
+        
         if self.img_array.shape[-1] == 3:
             self.img_display_saturated = ImageEnhance.Color(self.img_display)
             self.img_display_saturated = self.img_display_saturated.enhance(self.saturation.get())

@@ -207,6 +207,8 @@ class AstroImage:
         self.image_metadata = source_img.image_metadata
     
     def update_saturation(self):
+        self.img_display_saturated = self.img_display
+        
         if self.img_array.shape[-1] == 3:
             self.img_display_saturated = ImageEnhance.Color(self.img_display)
             self.img_display_saturated = self.img_display_saturated.enhance(self.saturation.get())

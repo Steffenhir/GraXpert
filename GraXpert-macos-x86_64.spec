@@ -52,6 +52,7 @@ app = BUNDLE(coll,
             icon='./img/Icon.ico',
             bundle_identifier=None,
             info_plist={
-                'CFBundleShortVersionString': 'RELEASE (SNAPSHOT)'
+                'CFBundleShortVersionString': 'RELEASE (SNAPSHOT)',
+                'NSHighResolutionCapable': 'True'
             }
             )

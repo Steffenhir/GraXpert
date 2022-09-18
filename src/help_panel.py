@@ -36,8 +36,8 @@ class Help_Panel():
         
         self.button_frame = tk.Frame(self.canvas)
         
-        scaling = get_scaling_factor(master)
-        
+        scaling = get_scaling_factor()
+
         s = ttk.Style(master)
         
         # Help Button
@@ -219,10 +219,10 @@ class Help_Panel():
         self.advanced_panel_window = tk.Frame(self.advanced_canvas, borderwidth=0)
         
         text = tk.Message(self.advanced_panel_window, text=_("Advanced Settings"), width=240 * scaling, font=heading_font, anchor="center")
-        text.grid(column=0, row=0, padx=(40*scaling,30*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+        text.grid(column=0, row=0, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
         
         text = tk.Message(self.advanced_panel_window, text=_("Sample Points"), width=240 * scaling, font=heading_font2, anchor="center")
-        text.grid(column=0, row=1, padx=(5*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+        text.grid(column=0, row=1, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
         
         self.app.sample_size = tk.IntVar()
         self.app.sample_size.set(25)
@@ -230,8 +230,8 @@ class Help_Panel():
             self.app.sample_size.set(self.app.prefs["sample_size"])
         
         self.sample_size_text = tk.Message(self.advanced_panel_window, text=_("Sample size: {}").format(self.app.sample_size.get()))
-        self.sample_size_text.config(width=500 * scaling)
-        self.sample_size_text.grid(column=0, row=2, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        self.sample_size_text.config(width=240 * scaling)
+        self.sample_size_text.grid(column=0, row=2, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         def on_sample_size_slider(sample_size):
             self.app.sample_size.set(float("{:.2f}".format(float(sample_size))))
@@ -245,9 +245,9 @@ class Help_Panel():
             to=50,
             var=self.app.sample_size,
             command=on_sample_size_slider,
-            length=150
+            length=240 * scaling,
             )
-        self.sample_size_slider.grid(column=0, row=3, pady=(0,10*scaling), padx=15*scaling, sticky="ew")
+        self.sample_size_slider.grid(column=0, row=3, pady=(0,10*scaling), padx=(40,30), sticky="ew")
         
         
         self.app.sample_color = tk.IntVar()
@@ -257,7 +257,7 @@ class Help_Panel():
         
         self.sample_color_text = tk.Message(self.advanced_panel_window, text=_("Sample color: {}").format(self.app.sample_color.get()))
         self.sample_color_text.config(width=500 * scaling)
-        self.sample_color_text.grid(column=0, row=4, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        self.sample_color_text.grid(column=0, row=4, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         def on_sample_color_slider(sample_color):
             self.app.sample_color.set(float("{:.2f}".format(float(sample_color))))
@@ -273,13 +273,13 @@ class Help_Panel():
             command=on_sample_color_slider,
             length=150
             )
-        self.sample_color_slider.grid(column=0, row=5, pady=(0,10*scaling), padx=15*scaling, sticky="ew")
+        self.sample_color_slider.grid(column=0, row=5, pady=(0,10*scaling), padx=(40,30), sticky="ew")
         
         text = tk.Message(self.advanced_panel_window, text=_("Interpolation"), width=240 * scaling, font=heading_font2, anchor="center")
         text.grid(column=0, row=6, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
         
         text = tk.Message(self.advanced_panel_window, text=_("RBF Kernel"), width=240*scaling, anchor="center")
-        text.grid(column=0, row=7, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        text.grid(column=0, row=7, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         self.app.RBF_kernels = ["thin_plate", "quintic", "cubic", "linear"]
         self.app.RBF_kernel = tk.StringVar()
@@ -288,11 +288,11 @@ class Help_Panel():
             self.app.RBF_kernel.set(self.app.prefs["RBF_kernel"])
 
         self.kernel_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.RBF_kernel, self.app.RBF_kernel.get(), *self.app.RBF_kernels)
-        self.kernel_menu.grid(column=0, row=8, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        self.kernel_menu.grid(column=0, row=8, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         
         text = tk.Message(self.advanced_panel_window, text=_("Spline order"), width=240*scaling, anchor="center")
-        text.grid(column=0, row=9, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        text.grid(column=0, row=9, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         self.app.spline_orders = [1,2,3,4,5]
         self.app.spline_order = tk.IntVar()
@@ -301,11 +301,11 @@ class Help_Panel():
             self.app.spline_order.set(self.app.prefs["spline_order"])
 
         self.spline_order_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.spline_order, self.app.spline_order.get(), *self.app.spline_orders)
-        self.spline_order_menu.grid(column=0, row=10, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        self.spline_order_menu.grid(column=0, row=10, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         
         text = tk.Message(self.advanced_panel_window, text=_("Language"), width=240 * scaling, font=heading_font2, anchor="center")
-        text.grid(column=0, row=11, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+        text.grid(column=0, row=11, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
     
         def lang_change(lang):
             messagebox.showerror("", _("Please restart the program to change the language."))
@@ -319,7 +319,21 @@ class Help_Panel():
             self.app.lang.set("English")
 
         self.lang_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.lang, self.app.lang.get(), *self.app.langs, command=lang_change)
-        self.lang_menu.grid(column=0, row=12, pady=(5*scaling,5*scaling), padx=15*scaling, sticky="ews")
+        self.lang_menu.grid(column=0, row=12, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
+        
+        
+        text = tk.Message(self.advanced_panel_window, text=_("Correction"), width=240 * scaling, font=heading_font2, anchor="center")
+        text.grid(column=0, row=13, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+        
+        
+        self.app.corr_types = ["Subtraction", "Division"]
+        self.app.corr_type = tk.StringVar()
+        self.app.corr_type.set(self.app.corr_types[0])
+        if "corr_type" in self.app.prefs:
+            self.app.corr_type.set(self.app.prefs["corr_type"])
+
+        self.corr_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.corr_type, self.app.corr_type.get(), *self.app.corr_types)
+        self.corr_menu.grid(column=0, row=14, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         
         self.advanced_canvas.create_window((0,0), window=self.advanced_panel_window)

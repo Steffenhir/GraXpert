@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import shutil
 from datetime import datetime
@@ -16,6 +17,7 @@ class Prefs(TypedDict):
     background_points: List
     bg_pts_option: int
     stretch_option: AnyStr
+    saturation: float
     bg_tol_option: float
     interpol_type_option: AnyStr
     smoothing_option: float
@@ -24,6 +26,7 @@ class Prefs(TypedDict):
     sample_color: int
     RBF_kernel: AnyStr
     lang: AnyStr
+    corr_type: AnyStr
 
 DEFAULT_PREFS: Prefs = {
     "working_dir": os.getcwd(),
@@ -32,6 +35,7 @@ DEFAULT_PREFS: Prefs = {
     "background_points": [],
     "bg_pts_option": 15,
     "stretch_option": "No Stretch",
+    "saturation": 1.0,
     "bg_tol_option": 1.0,
     "interpol_type_option": "RBF",
     "smoothing_option": 1.0,
@@ -40,18 +44,22 @@ DEFAULT_PREFS: Prefs = {
     "sample_color": 55,
     "RBF_kernel": "thin_plate",
     "spline_order": 3,
-    "lang": None
+    "lang": None,
+    "corr_type": "Subtraction"
 }
+
 
 def app_state_2_prefs(prefs: Prefs, app_state: AppState) -> Prefs:
     if "background_points" in app_state:
         prefs["background_points"] = [p.tolist() for p in app_state["background_points"]]
     return prefs
 
+
 def prefs_2_app_state(prefs: Prefs, app_state: AppState) -> AppState:
     if "background_points" in prefs:
         app_state["background_points"] = [np.array(p) for p in prefs["background_points"]]
     return app_state
+
 
 def merge_json(prefs: Prefs, json) -> Prefs:
     if "working_dir" in json:
@@ -66,6 +74,8 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["bg_pts_option"] = json["bg_pts_option"]
     if "stretch_option" in json:
         prefs["stretch_option"] = json["stretch_option"]
+    if "saturation" in json:
+        prefs["saturation"] = json["saturation"]
     if "bg_tol_option" in json:
         prefs["bg_tol_option"] = json["bg_tol_option"]
     if "interpol_type_option" in json:
@@ -84,22 +94,28 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["spline_order"] = json["spline_order"]
     if "lang" in json:
         prefs["lang"] = json["lang"]
+    if "corr_type" in json:
+        prefs["corr_type"] = json["corr_type"]
     return prefs
+
 
 def load_preferences(prefs_filename) -> Prefs:
     prefs = DEFAULT_PREFS
     try:
         if os.path.isfile(prefs_filename):
             with open(prefs_filename) as f:
-                json_prefs: Prefs = json.load(f)
-                prefs = merge_json(prefs, json_prefs)
-    except BaseException as e:
-        print("WARNING: could not load preferences.json from {}, error: {}".format(prefs_filename, e))
+                    json_prefs: Prefs = json.load(f)
+                    prefs = merge_json(prefs, json_prefs)
+        else:
+            logging.info("{} appears to be missing. it will be created after program shutdown".format(prefs_filename))
+    except:
+        logging.exception("could not load preferences.json from {}".format(prefs_filename))
         if os.path.isfile(prefs_filename):
             # make a backup of the old preferences file so we don't loose it
             backup_filename = os.path.join(os.path.dirname(prefs_filename), datetime.now().strftime("%m-%d-%Y_%H-%M-%S_{}".format(os.path.basename(prefs_filename))))
             shutil.copyfile(prefs_filename, backup_filename)
     return prefs
+
 
 def save_preferences(prefs_filename, prefs):
     try:
@@ -107,4 +123,4 @@ def save_preferences(prefs_filename, prefs):
         with open(prefs_filename, "w") as f:
             json.dump(prefs, f)
     except OSError as err:
-            print("error serializing preferences: {}".format(err))
+        logging.exception("error serializing preferences")

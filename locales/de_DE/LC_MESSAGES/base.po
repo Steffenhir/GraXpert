@@ -14,6 +14,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 
+msgid "Crop"
+msgstr "Zuschneiden"
+
+msgid "Crop mode on/off"
+msgstr "Zuschnittsmodus an/aus"
+
+msgid "Apply crop"
+msgstr "Zuschnitt anwenden"
+
+msgid "Background Extraction"
+msgstr "Hintergrundentfernung"
 
 #: src/gui.py:147
 msgid " Loading"
@@ -21,11 +32,14 @@ msgstr " Laden"
 
 #: src/gui.py:152
 msgid "Load Image"
-msgstr "Lade Bild"
+msgstr "Bild laden"
 
 #: src/gui.py:160
 msgid " Stretch Options"
 msgstr " Stretchoptionen"
+
+msgid "Saturation"
+msgstr "Farbsättigung"
 
 #: src/gui.py:176
 msgid " Sample Selection"
@@ -33,7 +47,7 @@ msgstr " Punktauswahl"
 
 #: src/gui.py:176
 msgid "Display points"
-msgstr "Zeige Punkte"
+msgstr "Punkte anzeigen"
 
 #: src/gui.py:185 src/gui.py:191
 msgid "Points per row: {}"
@@ -45,7 +59,7 @@ msgstr "Gittertoleranz: {}"
 
 #: src/gui.py:231
 msgid "Create Grid"
-msgstr "Erstelle Gitter"
+msgstr "Gitter erstellen"
 
 #: src/gui.py:237
 msgid "Reset Sample Points"
@@ -61,7 +75,7 @@ msgstr "Interpolationsmethode"
 
 #: src/gui.py:287
 msgid "Calculate Background"
-msgstr "Berechne Hintergrund"
+msgstr "Hintergrund berechnen"
 
 #: src/gui.py:294
 msgid " Saving"
@@ -69,11 +83,11 @@ msgstr " Speichern"
 
 #: src/gui.py:308
 msgid "Save Background"
-msgstr "Speichere Hintergrund"
+msgstr "Hintergrund speichern"
 
 #: src/gui.py:315
 msgid "Save Processed"
-msgstr "Speichere Bild"
+msgstr "Bild speichern"
 
 #: src/gui.py:345
 msgid "An error occurred while loading your picture."
@@ -203,6 +217,12 @@ msgstr "Samplefarbe: {}"
 #: src/help_panel.py
 msgid "Spline order"
 msgstr "Grad der Splines"
+
+msgid "Language"
+msgstr "Sprache"
+
+msgid "Correction"
+msgstr "Korrektur"
 
 #: src/loadingframe.py:18
 msgid "Calculating..."

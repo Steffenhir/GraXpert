@@ -103,7 +103,7 @@ namespace eval ttk::theme::forest-dark {
         ttk::style layout TCheckbutton {
             Checkbutton.button -children {
                 Checkbutton.padding -children {
-                    Checkbutton.indicator -side left
+                    Checkbutton.indicator -side left 
                     Checkbutton.label -side right -expand true
                 }
             }
@@ -248,7 +248,7 @@ namespace eval ttk::theme::forest-dark {
             ] -border 4 -sticky nsew
 
         # Menubutton
-        ttk::style configure TMenubutton -padding {8 4 4 4}
+        ttk::style configure TMenubutton -padding {8 4 4 4} -anchor center
 
         ttk::style element create Menubutton.button image \
             [list $I(rect-basic) \
@@ -309,7 +309,7 @@ namespace eval ttk::theme::forest-dark {
                 selected $I(check-accent-scaled) \
                 {pressed !selected} $I(check-unsel-pressed-scaled) \
                 active $I(check-unsel-hover-scaled) \
-            ] -width 26 -sticky w
+            ] -sticky w
 
         # Switch
         ttk::style element create Switch.indicator image \

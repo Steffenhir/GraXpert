@@ -50,4 +50,9 @@ coll = COLLECT(
 app = BUNDLE(coll,
             name='GraXpert.app',
             icon='./img/Icon.ico',
-            bundle_identifier=None)
+            bundle_identifier=None,
+            info_plist={
+                'CFBundleShortVersionString': 'RELEASE (SNAPSHOT)',
+                'NSHighResolutionCapable': 'True'
+            }
+            )

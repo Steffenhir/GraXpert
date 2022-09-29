@@ -49,9 +49,22 @@ DEFAULT_PREFS: Prefs = {
 }
 
 
-def app_state_2_prefs(prefs: Prefs, app_state: AppState) -> Prefs:
+def app_state_2_prefs(prefs: Prefs, app_state: AppState, app) -> Prefs:
     if "background_points" in app_state:
         prefs["background_points"] = [p.tolist() for p in app_state["background_points"]]
+        prefs["bg_pts_option"] = app.bg_pts.get()
+        prefs["stretch_option"] = app.stretch_option_current.get()
+        prefs["saturation"] = app.saturation.get()
+        prefs["bg_tol_option"] = app.bg_tol.get()
+        prefs["interpol_type_option"] = app.interpol_type.get()
+        prefs["smoothing_option"] = app.smoothing.get()
+        prefs["saveas_option"] = app.saveas_type.get()
+        prefs["sample_size"] = app.sample_size.get()
+        prefs["sample_color"] = app.sample_color.get()
+        prefs["RBF_kernel"] = app.RBF_kernel.get()
+        prefs["spline_order"] = app.spline_order.get()
+        prefs["lang"] = app.lang.get()
+        prefs["corr_type"] = app.corr_type.get()
     return prefs
 
 
@@ -124,3 +137,19 @@ def save_preferences(prefs_filename, prefs):
             json.dump(prefs, f)
     except OSError as err:
         logging.exception("error serializing preferences")
+
+
+def app_state_2_fitsheader(app, app_state, fits_header):
+    prefs = Prefs()
+    prefs = app_state_2_prefs(prefs, app_state, app)
+    fits_header["BG-PTS"] = str(prefs["background_points"])
+    
+    return fits_header
+
+
+def fitsheader_2_app_state(app_state, fits_header):
+    if "BG-PTS" in fits_header.keys():
+        app_state["background_points"] = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
+    
+    return app_state
+    

@@ -157,7 +157,7 @@ def fitsheader_2_app_state(app, app_state, fits_header):
     if "BG-PTS" in fits_header.keys():
         app_state["background_points"] = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
     
-    if "BG-EXTR" in fits_header.keys():
+    if "INTP-OPT" in fits_header.keys():
         app.interpol_type.set(fits_header["INTP-OPT"])
         app.smoothing_slider.set(fits_header["SMOOTHING"])
         app.help_panel.sample_size_slider.set(fits_header["SAMPLE-SIZE"])

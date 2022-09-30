@@ -462,7 +462,7 @@ class Application(tk.Frame):
         self.prefs["width"] = width
         self.prefs["height"] = height
         
-        tmp_state = fitsheader_2_app_state(self.cmd.app_state, self.images["Original"].fits_header)
+        tmp_state = fitsheader_2_app_state(self, self.cmd.app_state, self.images["Original"].fits_header)
         self.cmd: Command = Command(INIT_HANDLER, background_points=tmp_state["background_points"])
         self.cmd.execute()
         

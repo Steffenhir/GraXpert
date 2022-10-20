@@ -50,6 +50,7 @@ class AstroImage:
             img_array = xisf.read_image(0)
         else:
             img_array = io.imread(directory)
+            self.fits_header = fits.Header()
         
         # Reshape greyscale picture to shape (y,x,1)
         if(len(img_array.shape) == 2):            

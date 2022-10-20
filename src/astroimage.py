@@ -44,6 +44,10 @@ class AstroImage:
             self.xisf_metadata = xisf.get_file_metadata()
             self.image_metadata = xisf.get_images_metadata()[0]
             img_array = xisf.read_image(0)
+            
+            entry = {'id': 'BackgroundExtraction', 'type': 'String', 'value': 'GraXpert'}
+            self.image_metadata['XISFProperties'] = {"ProcessingHistory": entry}
+            
         else:
             img_array = io.imread(directory)
         

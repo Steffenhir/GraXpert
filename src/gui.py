@@ -12,6 +12,7 @@ from mp_logging import configure_logging, initialize_logging, shutdown_logging
 
 configure_logging()
 
+import importlib
 import logging
 import os
 import sys
@@ -31,9 +32,10 @@ import tooltip
 from app_state import INITIAL_STATE
 from astroimage import AstroImage
 from collapsible_frame import CollapsibleFrame
-from commands import (ADD_POINT_HANDLER, ADD_POINTS_HANDLER, INIT_HANDLER, 
-                      MOVE_POINT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER,
-                      SEL_POINTS_HANDLER, Command, InitHandler)
+from commands import (ADD_POINT_HANDLER, ADD_POINTS_HANDLER, INIT_HANDLER,
+                      MOVE_POINT_HANDLER, RESET_POINTS_HANDLER,
+                      RM_POINT_HANDLER, SEL_POINTS_HANDLER, Command,
+                      InitHandler)
 from help_panel import Help_Panel
 from loadingframe import LoadingFrame
 from localization import _
@@ -1224,6 +1226,10 @@ if __name__ == "__main__":
     app = Application(master=root)
     root.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(logging_thread))
     root.createcommand("::tk::mac::Quit", lambda: app.on_closing(logging_thread))
+
+    if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
+        import pyi_splash
+        pyi_splash.close()
 
     app.mainloop()
     

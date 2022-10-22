@@ -97,6 +97,10 @@ class Application(tk.Frame):
 
         self.reset_transform()
         
+        if len(sys.argv) > 1 and sys.argv[1].endswith((".bmp", ".png", ".jpg", ".tif", ".tiff", ".fit", ".fits", ".fts", ".xisf")):
+            filename = sys.argv[1]
+            self.menu_open_clicked(None, filename)
+        
 
     def create_widget(self):
         
@@ -424,18 +428,19 @@ class Application(tk.Frame):
         self.side_canvas.yview_moveto("0.0")
 
     
-    def menu_open_clicked(self, event=None):
+    def menu_open_clicked(self, event=None, filename=None):
 
         if self.prefs["working_dir"] != "" and os.path.exists(self.prefs["working_dir"]):
             initialdir = self.prefs["working_dir"]
         else:
             initialdir = os.getcwd()
         
-        filename = tk.filedialog.askopenfilename(
-            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits .fts .xisf"),
-                         ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits .fts"), ("XISF", ".xisf")],
-            initialdir = initialdir
-            )
+        if filename is None:
+            filename = tk.filedialog.askopenfilename(
+                filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits .fts .xisf"),
+                            ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits .fts"), ("XISF", ".xisf")],
+                initialdir = initialdir
+                )
         
         if filename == "":
             return

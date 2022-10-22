@@ -19,9 +19,19 @@ a = Analysis(['./src/gui.py'],
     noarchive=False)
 pyz = PYZ(a.pure, a.zipped_data,
     cipher=block_cipher)
+splash = Splash(
+    'img/graXpert_Startbadge_Tethys.png',
+    binaries=a.binaries,
+    datas=a.datas,
+    text_pos=None,
+    text_size=12,
+    minify_script=True,
+    always_on_top=True,
+)
 
 exe = EXE(pyz,
     a.scripts,
+    splash,
     a.binaries,
     Tree('locales', prefix='locales/'),
     a.zipfiles,

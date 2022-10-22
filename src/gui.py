@@ -267,7 +267,8 @@ class Application(tk.Frame):
         self.flood_select_pts.set(False)
         if "bg_flood_selection_option" in self.prefs:
             self.flood_select_pts.set(self.prefs["bg_flood_selection_option"])
-        self.flood_select_pts_switch = ttk.Checkbutton(self.bgextr_menu.sub_frame, text="  "+_("Flood selection"), compound=tk.LEFT, var=self.flood_select_pts)
+        self.flood_select_pts_switch = ttk.Checkbutton(self.bgextr_menu.sub_frame, text="  "+_("Flooded generation"), compound=tk.LEFT, var=self.flood_select_pts)
+        tt_load = tooltip.Tooltip(self.flood_select_pts_switch, text=tooltip.bg_flood_text)
         self.flood_select_pts_switch.grid(column=0, row=8, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         self.bg_pts = tk.IntVar()

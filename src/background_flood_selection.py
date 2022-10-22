@@ -42,7 +42,7 @@ def candidate_valid(
 
     pt, local_median = find_darkest_quadrant(x_pt, y_pt, data_mono_padded, halfsize)
 
-    if local_median < (selected_median + tol * mad / 10):
+    if (selected_median - tol * mad / 10) <= local_median and local_median <= (selected_median + tol * mad / 10):
         return True
 
     return False

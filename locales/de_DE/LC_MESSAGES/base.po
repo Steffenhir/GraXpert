@@ -49,6 +49,10 @@ msgstr " Punktauswahl"
 msgid "Display points"
 msgstr "Punkte anzeigen"
 
+#: src/gui.py:176
+msgid "Flooded generation"
+msgstr "Geflutete Generierung"
+
 #: src/gui.py:185 src/gui.py:191
 msgid "Points per row: {}"
 msgstr "Punkte pro Reihe: {}"
@@ -259,6 +263,9 @@ msgstr "Die Toleranz bestimmt einen Schwellwert für das Ignorieren von Punkten 
 #: src/tooltip.py:170
 msgid "Adjust the number of points per row for the grid created by automatic background selection."
 msgstr "Bestimmt die Anzahl an Punkten pro Reihe, die mit der Gitterauswahl erstellt werden"
+
+msgid "If enabled, additional grid points are automatically created based on 1) the luminance of the sample just added and 2) the grid tolerance slider below."
+msgstr "Wenn aktiviert, werden automatisch zusätzliche Gitterpunkte erstellt, die 1) auf der Luminanz des soeben hinzugefügten Punkts und 2) auf dem Toleranz-Schieberegler (s.u.) basieren."
 
 #: src/tooltip.py:173
 msgid "Choose between different interpolation methods."

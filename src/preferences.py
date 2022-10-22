@@ -15,6 +15,7 @@ class Prefs(TypedDict):
     width: int
     height: int
     background_points: List
+    bg_flood_selection_option: bool
     bg_pts_option: int
     stretch_option: AnyStr
     saturation: float
@@ -33,6 +34,7 @@ DEFAULT_PREFS: Prefs = {
     "width": None,
     "height": None,
     "background_points": [],
+    "bg_flood_selection_option": False,
     "bg_pts_option": 15,
     "stretch_option": "No Stretch",
     "saturation": 1.0,
@@ -70,6 +72,8 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["height"] = json["height"]
     if "background_points" in json:
         prefs["background_points"] = json["background_points"]
+    if "bg_flood_selection_option" in json:
+        prefs["bg_flood_selection_option"] = json["bg_flood_selection_option"]
     if "bg_pts_option" in json:
         prefs["bg_pts_option"] = json["bg_pts_option"]
     if "stretch_option" in json:

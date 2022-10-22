@@ -7,7 +7,8 @@ from typing import Dict
 import numpy as np
 
 from app_state import INITIAL_STATE, AppState
-from background_selection import background_selection
+from background_grid_selection import background_grid_selection
+from background_flood_selection import background_flood_selection
 
 
 class ICommandHandler(ABC):
@@ -121,6 +122,23 @@ class AddPointHandler(PointHandler):
         return 1.0
 
 
+class AddPointsHandler(PointHandler):
+    def execute(self, app_state: AppState, cmd_args: Dict) -> AppState:
+        app_state_copy = deepcopy(app_state)
+        point = cmd_args["point"]
+        background_points = app_state_copy["background_points"]
+        tol = cmd_args["tol"]
+        bg_pts = cmd_args["bg_pts"]
+        sample_size = cmd_args["sample_size"]
+        image = cmd_args["image"]
+        new_points = background_flood_selection(point, background_points, tol, bg_pts, sample_size, image)
+        app_state_copy["background_points"].extend(new_points)
+        return app_state_copy
+
+    def progress(self) -> float:
+        return 1.0
+
+
 class RemovePointHandler(PointHandler):
     def execute(self, app_state: AppState, cmd_args: Dict) -> AppState:
         app_state_copy = deepcopy(app_state)
@@ -156,22 +174,7 @@ class SelectPointsHandler(PointHandler):
         num_pts = cmd_args["num_pts"]
         tol = cmd_args["tol"]
         sample_size = cmd_args["sample_size"]
-        automatic_points = background_selection(data, num_pts, tol, sample_size)
-        for i in range(len(automatic_points)):
-            automatic_points[i] = np.array([automatic_points[i][1],automatic_points[i][0],1.0])
-            
-        """
-        for a in automatic_points:
-            match = False
-            for e in app_state["background_points"]:
-                if int(e[0]) == int(a[0]) and int(e[1]) == int(a[1]):
-                    match = True
-                    break
-            if match:
-                continue
-            app_state_copy["background_points"].append(a)
-        """
-        
+        automatic_points = background_grid_selection(data, num_pts, tol, sample_size)
         app_state_copy["background_points"] = automatic_points
         return app_state_copy
 
@@ -190,6 +193,7 @@ class ResetPointsHandler(PointHandler):
 
 INIT_HANDLER = InitHandler()
 ADD_POINT_HANDLER = AddPointHandler()
+ADD_POINTS_HANDLER = AddPointsHandler()
 RM_POINT_HANDLER = RemovePointHandler()
 MOVE_POINT_HANDLER = MovePointHandler()
 SEL_POINTS_HANDLER = SelectPointsHandler()

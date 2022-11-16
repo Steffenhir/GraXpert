@@ -20,7 +20,7 @@ a = Analysis(['./src/gui.py'],
 pyz = PYZ(a.pure, a.zipped_data,
     cipher=block_cipher)
 splash = Splash(
-    'img/graXpert_Startbadge_Tethys.png',
+    'img/graXpert_Startbadge_Dione.png',
     binaries=a.binaries,
     datas=a.datas,
     text_pos=None,

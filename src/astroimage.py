@@ -1,4 +1,5 @@
 import os
+import json
 import numpy as np
 from xisf import XISF
 from astropy.io import fits
@@ -7,6 +8,7 @@ from skimage import io, img_as_float32, exposure
 from skimage.util import img_as_ubyte, img_as_uint
 from PIL import Image, ImageEnhance
 from stretch import stretch
+from preferences import app_state_2_fitsheader
 
 class AstroImage:
     def __init__(self, stretch_option, saturation):
@@ -16,7 +18,7 @@ class AstroImage:
         self.img_format = None
         self.fits_header = None
         self.xisf_metadata = {}
-        self.image_metadata = {}
+        self.image_metadata = {"FITSKeywords": {}}
         self.stretch_option = stretch_option
         self.saturation = saturation
         self.width = 0
@@ -43,6 +45,8 @@ class AstroImage:
             xisf = XISF(directory)
             self.xisf_metadata = xisf.get_file_metadata()
             self.image_metadata = xisf.get_images_metadata()[0]
+            self.fits_header = fits.Header()
+            self.xisf_imagedata_2_fitsheader()
             img_array = xisf.read_image(0)
             
             entry = {'id': 'BackgroundExtraction', 'type': 'String', 'value': 'GraXpert'}
@@ -50,6 +54,7 @@ class AstroImage:
             
         else:
             img_array = io.imread(directory)
+            self.fits_header = fits.Header()
         
         # Reshape greyscale picture to shape (y,x,1)
         if(len(img_array.shape) == 2):            
@@ -146,16 +151,18 @@ class AstroImage:
         self.height = self.img_array.shape[0]        
         return
     
-    def update_fits_header(self, original_header, background_mean):
-        if(original_header is None):
+    def update_fits_header(self, original_header, background_mean, app, app_state):
+        if(self.fits_header is None):
             self.fits_header = fits.Header()
         else:
             self.fits_header = original_header
-            
+        
         self.fits_header["BG-EXTR"] = "GraXpert"
         self.fits_header["CBG-1"] = background_mean
         self.fits_header["CBG-2"] = background_mean
         self.fits_header["CBG-3"] = background_mean
+        self.fits_header = app_state_2_fitsheader(app, app_state, self.fits_header)
+                
         
         if "ROWORDER" in self.fits_header:
             self.roworder = self.fits_header["ROWORDER"]
@@ -173,6 +180,7 @@ class AstroImage:
             io.imsave(dir, image_converted)
             
         elif(saveas_type == "16 bit XISF" or saveas_type == "32 bit XISF"):
+            self.update_xisf_imagedata()
             XISF.write(dir, image_converted, creator_app = "GraXpert", image_metadata = self.image_metadata, xisf_metadata = self.xisf_metadata)
         else:
             if(image_converted.shape[-1] == 3):
@@ -219,3 +227,30 @@ class AstroImage:
             self.img_display_saturated = self.img_display_saturated.enhance(self.saturation.get())
             
         return
+    
+    def update_xisf_imagedata(self):
+        for key in self.fits_header.keys():
+            if key == "BG-PTS":
+                bg_pts = json.loads(self.fits_header["BG-PTS"])
+                
+                for i in range(len(bg_pts)):
+                    self.image_metadata["FITSKeywords"]["BG-PTS" + str(i)] = [{"value": bg_pts[i],"comment": ""}]
+            else:
+                
+                value = str(self.fits_header[key])
+                comment = str(self.fits_header.comments[key])
+                self.image_metadata["FITSKeywords"][key] = [{"value": value, "comment":comment}]
+            
+    def xisf_imagedata_2_fitsheader(self):
+        bg_pts = []
+        for key in self.image_metadata["FITSKeywords"].keys():
+            if key.startswith("BG-PTS"):
+                bg_pts.append(json.loads(self.image_metadata["FITSKeywords"][key][0]["value"]))
+                      
+            value = self.image_metadata["FITSKeywords"][key][0]["value"]
+            comment = self.image_metadata["FITSKeywords"][key][0]["comment"]
+            
+            self.fits_header[key] = (value, comment)
+        
+        if len(bg_pts) > 0:
+            self.fits_header["BG-PTS"] = str(bg_pts)

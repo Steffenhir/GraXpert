@@ -15,6 +15,7 @@ class Prefs(TypedDict):
     width: int
     height: int
     background_points: List
+    bg_flood_selection_option: bool
     bg_pts_option: int
     stretch_option: AnyStr
     saturation: float
@@ -33,6 +34,7 @@ DEFAULT_PREFS: Prefs = {
     "width": None,
     "height": None,
     "background_points": [],
+    "bg_flood_selection_option": False,
     "bg_pts_option": 15,
     "stretch_option": "No Stretch",
     "saturation": 1.0,
@@ -49,9 +51,23 @@ DEFAULT_PREFS: Prefs = {
 }
 
 
-def app_state_2_prefs(prefs: Prefs, app_state: AppState) -> Prefs:
+def app_state_2_prefs(prefs: Prefs, app_state: AppState, app) -> Prefs:
     if "background_points" in app_state:
         prefs["background_points"] = [p.tolist() for p in app_state["background_points"]]
+        prefs["bg_pts_option"] = app.bg_pts.get()
+        prefs["stretch_option"] = app.stretch_option_current.get()
+        prefs["saturation"] = app.saturation.get()
+        prefs["bg_tol_option"] = app.bg_tol.get()
+        prefs["interpol_type_option"] = app.interpol_type.get()
+        prefs["smoothing_option"] = app.smoothing.get()
+        prefs["saveas_option"] = app.saveas_type.get()
+        prefs["sample_size"] = app.sample_size.get()
+        prefs["sample_color"] = app.sample_color.get()
+        prefs["RBF_kernel"] = app.RBF_kernel.get()
+        prefs["spline_order"] = app.spline_order.get()
+        prefs["lang"] = app.lang.get()
+        prefs["corr_type"] = app.corr_type.get()
+        prefs["bg_flood_selection_option"] = app.flood_select_pts.get()
     return prefs
 
 
@@ -70,6 +86,8 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["height"] = json["height"]
     if "background_points" in json:
         prefs["background_points"] = json["background_points"]
+    if "bg_flood_selection_option" in json:
+        prefs["bg_flood_selection_option"] = json["bg_flood_selection_option"]
     if "bg_pts_option" in json:
         prefs["bg_pts_option"] = json["bg_pts_option"]
     if "stretch_option" in json:
@@ -124,3 +142,33 @@ def save_preferences(prefs_filename, prefs):
             json.dump(prefs, f)
     except OSError as err:
         logging.exception("error serializing preferences")
+
+
+def app_state_2_fitsheader(app, app_state, fits_header):
+    prefs = Prefs()
+    prefs = app_state_2_prefs(prefs, app_state, app)
+    fits_header["INTP-OPT"] = prefs["interpol_type_option"]
+    fits_header["SMOOTHING"] = prefs["smoothing_option"]
+    fits_header["SAMPLE-SIZE"] = prefs["sample_size"]
+    fits_header["RBF-KERNEL"] = prefs["RBF_kernel"]
+    fits_header["SPLINE-ORDER"] = prefs["spline_order"]
+    fits_header["CORR-TYPE"] = prefs["corr_type"]
+    fits_header["BG-PTS"] = str(prefs["background_points"])
+    
+    return fits_header
+
+
+def fitsheader_2_app_state(app, app_state, fits_header):
+    if "BG-PTS" in fits_header.keys():
+        app_state["background_points"] = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
+    
+    if "INTP-OPT" in fits_header.keys():
+        app.interpol_type.set(fits_header["INTP-OPT"])
+        app.smoothing_slider.set(fits_header["SMOOTHING"])
+        app.help_panel.sample_size_slider.set(fits_header["SAMPLE-SIZE"])
+        app.RBF_kernel.set(fits_header["RBF-KERNEL"])
+        app.spline_order.set(fits_header["SPLINE-ORDER"])
+        app.corr_type.set(fits_header["CORR-TYPE"])
+    
+    return app_state
+    

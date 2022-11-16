@@ -176,6 +176,9 @@ msgstr ""
 msgid "Adjust the number of points per row for the grid created by automatic background selection."
 msgstr ""
 
+msgid "If enabled, additional grid points are automatically created based on 1) the luminance of the sample just added and 2) the grid tolerance slider below."
+msgstr ""
+
 #: src/tooltip.py:173
 msgid "Choose between different interpolation methods."
 msgstr ""

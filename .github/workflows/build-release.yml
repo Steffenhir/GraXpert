@@ -13,12 +13,12 @@ jobs:
       - name: setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: checkout repository
         uses: actions/checkout@v3
       - name: install dependencies
         run: |
-          pip install setuptools wheel pyinstaller && \
+          pip install setuptools wheel pyinstaller==5.6.2 && \
           pip install -r requirements.txt
       - name: patch version
         run: |
@@ -43,12 +43,12 @@ jobs:
       - name: setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: checkout repository
         uses: actions/checkout@v3
       - name: install dependencies
         run: |
-          pip install setuptools wheel pyinstaller && \
+          pip install setuptools wheel pyinstaller==5.6.2 && \
           pip install -r requirements.txt
       - name: patch version
         run: |
@@ -77,7 +77,7 @@ jobs:
       - name: setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: checkout repository
         uses: actions/checkout@v3
       - name: checkout pyinstaller
@@ -85,7 +85,7 @@ jobs:
         with:
           repository: pyinstaller/pyinstaller
           path: ./pyinstaller
-          ref: v5.0
+          ref: v5.6.2
       - name: install dependencies
         run: |
           pip install setuptools wheel && `
@@ -121,7 +121,7 @@ jobs:
       - name: setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: checkout repository
         uses: actions/checkout@v3
       - name: checkout pyinstaller
@@ -129,7 +129,7 @@ jobs:
         with:
           repository: pyinstaller/pyinstaller
           path: ./pyinstaller
-          ref: v5.0
+          ref: v5.6.2
       - name: install dependencies
         run: |
           pip install setuptools wheel && `
@@ -165,12 +165,12 @@ jobs:
     runs-on: macos-10.15
     steps:
       - name: setup python
-        run: brew install python-tk@3.9
+        run: brew install python-tk@3.10
       - name: checkout repository
         uses: actions/checkout@v3
       - name: install dependencies
         run: |
-          pip3 install setuptools wheel pyinstaller && \
+          pip3 install setuptools wheel pyinstaller==5.6.2 && \
           pip3 install -r requirements.txt
       - name: patch version
         run: |

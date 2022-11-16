@@ -167,6 +167,10 @@ bg_select_text = _("Creates a grid with the specified amount of points per row "
 bg_tol_text = _("The tolerance adjusts the threshold for rejection of background points " 
                "with automatic background selection")
 
+bg_flood_text = _("If enabled, additional grid points are automatically created based on "
+                 "1) the luminance of the sample just added and "
+                 "2) the grid tolerance slider below.")
+
 num_points_text = _("Adjust the number of points per row for the grid created by"
                    " automatic background selection.")
 

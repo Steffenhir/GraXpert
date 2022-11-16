@@ -41,7 +41,8 @@ from loadingframe import LoadingFrame
 from localization import _
 from parallel_processing import executor
 from preferences import (app_state_2_prefs, load_preferences,
-                         prefs_2_app_state, save_preferences)
+                         prefs_2_app_state, save_preferences,
+                         app_state_2_fitsheader, fitsheader_2_app_state)
 from stretch import stretch_all
 from ui_scaling import get_scaling_factor
 from version import release, version
@@ -480,6 +481,10 @@ class Application(tk.Frame):
         self.prefs["width"] = width
         self.prefs["height"] = height
         
+        tmp_state = fitsheader_2_app_state(self, self.cmd.app_state, self.images["Original"].fits_header)
+        self.cmd: Command = Command(INIT_HANDLER, background_points=tmp_state["background_points"])
+        self.cmd.execute()
+        
         self.zoom_fit(width, height)
         self.redraw_image()
         self.loading_frame.end()
@@ -689,8 +694,8 @@ class Application(tk.Frame):
         
         # Update fits header and metadata
         background_mean = np.mean(self.images["Background"].img_array)
-        self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean)
-        self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean)#
+        self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
+        self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
         
         self.images["Processed"].copy_metadata(self.images["Original"])
         self.images["Background"].copy_metadata(self.images["Original"])
@@ -1159,21 +1164,9 @@ class Application(tk.Frame):
     
     def on_closing(self, logging_thread):
         
-        self.prefs = app_state_2_prefs(self.prefs, self.cmd.app_state)
-        self.prefs["bg_flood_selection_option"] = self.flood_select_pts.get()
-        self.prefs["bg_pts_option"] = self.bg_pts.get()
-        self.prefs["stretch_option"] = self.stretch_option_current.get()
-        self.prefs["saturation"] = self.saturation.get()
-        self.prefs["bg_tol_option"] = self.bg_tol.get()
-        self.prefs["interpol_type_option"] = self.interpol_type.get()
-        self.prefs["smoothing_option"] = self.smoothing.get()
-        self.prefs["saveas_option"] = self.saveas_type.get()
-        self.prefs["sample_size"] = self.sample_size.get()
-        self.prefs["sample_color"] = self.sample_color.get()
-        self.prefs["RBF_kernel"] = self.RBF_kernel.get()
-        self.prefs["spline_order"] = self.spline_order.get()
-        self.prefs["lang"] = self.lang.get()
-        self.prefs["corr_type"] = self.corr_type.get()
+
+        self.prefs = app_state_2_prefs(self.prefs, self.cmd.app_state, self)
+
         prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
         save_preferences(prefs_filename, self.prefs)
         try:

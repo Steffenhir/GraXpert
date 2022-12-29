@@ -152,7 +152,7 @@ class AstroImage:
         return
     
     def update_fits_header(self, original_header, background_mean, app, app_state):
-        if(self.fits_header is None):
+        if(original_header is None):
             self.fits_header = fits.Header()
         else:
             self.fits_header = original_header

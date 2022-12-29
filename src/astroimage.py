@@ -152,7 +152,7 @@ class AstroImage:
         return
     
     def update_fits_header(self, original_header, background_mean, app, app_state):
-        if(self.fits_header is None):
+        if(original_header is None):
             self.fits_header = fits.Header()
         else:
             self.fits_header = original_header
@@ -229,7 +229,9 @@ class AstroImage:
         return
     
     def update_xisf_imagedata(self):
-        for key in self.fits_header.keys():
+        unique_keys = list(dict.fromkeys(self.fits_header.keys()))
+        
+        for key in unique_keys:
             if key == "BG-PTS":
                 bg_pts = json.loads(self.fits_header["BG-PTS"])
                 
@@ -237,9 +239,27 @@ class AstroImage:
                     self.image_metadata["FITSKeywords"]["BG-PTS" + str(i)] = [{"value": bg_pts[i],"comment": ""}]
             else:
                 
-                value = str(self.fits_header[key])
-                comment = str(self.fits_header.comments[key])
-                self.image_metadata["FITSKeywords"][key] = [{"value": value, "comment":comment}]
+                value = str(self.fits_header[key]).splitlines()
+                comment = str(self.fits_header.comments[key]).splitlines()
+                
+                entry = []
+                
+                for i in range(max(len(comment), len(value))):
+                    value_i = ""
+                    comment_i = ""
+                    
+                    if i < len(comment):
+                        comment_i = comment[i]
+                    if i < len(value):
+                        value_i = value[i]
+                        
+                    entry.append({"value": value_i, "comment": comment_i})
+                
+                if len(entry) == 0:
+                    entry = [{"value": "", "comment": ""}]
+
+                self.image_metadata["FITSKeywords"][key] = entry
+
             
     def xisf_imagedata_2_fitsheader(self):
         bg_pts = []
@@ -247,10 +267,11 @@ class AstroImage:
             if key.startswith("BG-PTS"):
                 bg_pts.append(json.loads(self.image_metadata["FITSKeywords"][key][0]["value"]))
                       
-            value = self.image_metadata["FITSKeywords"][key][0]["value"]
-            comment = self.image_metadata["FITSKeywords"][key][0]["comment"]
+            for i in range(len(self.image_metadata["FITSKeywords"][key])):
+                value = self.image_metadata["FITSKeywords"][key][i]["value"]
+                comment = self.image_metadata["FITSKeywords"][key][i]["comment"]
             
-            self.fits_header[key] = (value, comment)
+                self.fits_header[key] = (value, comment)
         
         if len(bg_pts) > 0:
             self.fits_header["BG-PTS"] = str(bg_pts)

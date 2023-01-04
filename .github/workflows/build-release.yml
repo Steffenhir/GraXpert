@@ -8,7 +8,7 @@ on:
 jobs:
   
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: setup python
         uses: actions/setup-python@v2
@@ -38,7 +38,7 @@ jobs:
           retention-days: 5
 
   build-linux-zip:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: setup python
         uses: actions/setup-python@v2

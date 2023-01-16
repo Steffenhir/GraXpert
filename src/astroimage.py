@@ -194,6 +194,36 @@ class AstroImage:
             hdul.close()
             
         return
+
+    def save_stretched(self, dir, saveas_type):
+        if(self.img_array is None):
+            return
+
+        stretched_img = self.stretch()
+        
+        if(saveas_type == "16 bit Tiff" or saveas_type == "16 bit Fits" or saveas_type == "16 bit XISF"):
+            image_converted = img_as_uint(stretched_img)
+        else:
+            image_converted = stretched_img.astype(np.float32)
+         
+        if(saveas_type == "16 bit Tiff" or saveas_type == "32 bit Tiff"):
+            io.imsave(dir, image_converted)
+            
+        elif(saveas_type == "16 bit XISF" or saveas_type == "32 bit XISF"):
+            self.update_xisf_imagedata()
+            XISF.write(dir, image_converted, creator_app = "GraXpert", image_metadata = self.image_metadata, xisf_metadata = self.xisf_metadata)
+        else:
+            if(image_converted.shape[-1] == 3):
+               image_converted = np.moveaxis(image_converted,-1,0)
+            else:
+                image_converted = image_converted[:,:,0]
+ 
+            hdu = fits.PrimaryHDU(data=image_converted, header=self.fits_header)
+            hdul = fits.HDUList([hdu])
+            hdul.writeto(dir, output_verify="warn", overwrite=True)
+            hdul.close()
+            
+        return
         
     def get_local_median(self, img_point):
         sample_radius = 25

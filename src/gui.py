@@ -201,7 +201,7 @@ class Application(tk.Frame):
         self.bgextr_menu.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
         self.bgextr_menu.sub_frame.grid_columnconfigure(0, weight=1)
         
-        for i in range(21):
+        for i in range(26):
             self.bgextr_menu.sub_frame.grid_rowconfigure(i, weight=1)
         
         #---Open Image---
@@ -416,8 +416,14 @@ class Application(tk.Frame):
         self.save_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Save Processed"),
                          command=self.save_image)
-        self.save_button.grid(column=0, row=24, pady=(5*scal,10*scal), padx=15*scal, sticky="news")
+        self.save_button.grid(column=0, row=24, pady=5*scal, padx=15*scal, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
+
+        self.save_stretched_button = ttk.Button(self.bgextr_menu.sub_frame, 
+                         text=_("Save Stretched & Processed"),
+                         command=self.save_stretched_image)
+        self.save_stretched_button.grid(column=0, row=25, pady=(5*scal,10*scal), padx=15*scal, sticky="news")
+        tt_save_pic= tooltip.Tooltip(self.save_stretched_button, text=tooltip.save_stretched_pic_text)
         
 
         self.side_canvas.create_window((0,0), window=self.side_menu)
@@ -600,6 +606,43 @@ class Application(tk.Frame):
        
        try:
            self.images["Processed"].save(dir, self.saveas_type.get())
+       except:
+           messagebox.showerror("Error", _("Error occured when saving the image."))
+           
+       self.loading_frame.end()
+
+    def save_stretched_image(self):
+       
+       
+       if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
+           dir = tk.filedialog.asksaveasfilename(
+               initialfile = self.filename + "_stretched_GraXpert.tiff",
+               filetypes = [("Tiff", ".tiff")],
+               defaultextension = ".tiff",
+               initialdir = self.prefs["working_dir"]
+               )         
+       elif(self.saveas_type.get() == "16 bit XISF" or self.saveas_type.get() == "32 bit XISF"):       
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile = self.filename + "_stretched_GraXpert.xisf",
+                filetypes = [("XISF", ".xisf")],
+                defaultextension = ".xisf",
+                initialdir = self.prefs["working_dir"]
+                )           
+       else:
+           dir = tk.filedialog.asksaveasfilename(
+               initialfile = self.filename + "_stretched_GraXpert.fits",
+               filetypes = [("Fits", ".fits")],
+               defaultextension = ".fits",
+               initialdir = self.prefs["working_dir"]
+               )
+                           
+       if(dir == ""):
+           return
+        
+       self.loading_frame.start()
+       
+       try:
+           self.images["Processed"].save_stretched(dir, self.saveas_type.get())
        except:
            messagebox.showerror("Error", _("Error occured when saving the image."))
            

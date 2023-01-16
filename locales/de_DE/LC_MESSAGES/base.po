@@ -93,6 +93,10 @@ msgstr "Hintergrund speichern"
 msgid "Save Processed"
 msgstr "Bild speichern"
 
+#: src/gui.py:422
+msgid "Save Stretched & Processed"
+msgstr "Gestretchtes Bild speichern"
+
 #: src/gui.py:345
 msgid "An error occurred while loading your picture."
 msgstr "Ein Fehler ist beim Laden des Bildes aufgetreten."

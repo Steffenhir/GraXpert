@@ -198,7 +198,9 @@ class AstroImage:
     def save_stretched(self, dir, saveas_type):
         if(self.img_array is None):
             return
-
+        
+        self.fits_header["STRETCH"] = self.stretch_option.get()
+        
         stretched_img = self.stretch()
         
         if(saveas_type == "16 bit Tiff" or saveas_type == "16 bit Fits" or saveas_type == "16 bit XISF"):

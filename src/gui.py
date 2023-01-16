@@ -642,7 +642,10 @@ class Application(tk.Frame):
        self.loading_frame.start()
        
        try:
-           self.images["Processed"].save_stretched(dir, self.saveas_type.get())
+           if self.images["Processed"] is None:
+               self.images["Original"].save_stretched(dir, self.saveas_type.get())
+           else:
+               self.images["Processed"].save_stretched(dir, self.saveas_type.get())
        except:
            messagebox.showerror("Error", _("Error occured when saving the image."))
            

@@ -109,9 +109,6 @@ msgstr "Bitte zuerst ein Bild laden."
 msgid "Error occured when saving the image."
 msgstr "Ein Fehler ist beim Speichern des Bildes aufgetreten."
 
-#:src/gui.py:505
-msgid "Please load your picture first."
-msgstr "Bitte zuerst ein Bild laden."
 
 #: src/gui.py:471
 msgid "Please select background points with left click."
@@ -291,11 +288,14 @@ msgstr "Bestimme die Bittiefe des gespeicherten Bildes sowie das Format. Falls d
 
 #: src/tooltip.py:186
 msgid "Save the background model"
-msgstr "Speichere das Hintergrundmodell."
+msgstr "Speichere das Hintergrundmodell"
 
 #: src/tooltip.py:187
 msgid "Save the processed picture"
-msgstr "Speichere das bearbeitete Bild."
+msgstr "Speichere das bearbeitete Bild"
+
+msgid "Save the stretched and processed picture. The color saturation is not changed."
+msgstr "Speichere das gestretchte und bearbeitete Bild. Die Farbsättigung wird dabei nicht verändert."
 
 #: src/tooltip.py:189
 msgid ""

@@ -71,6 +71,10 @@ msgstr ""
 msgid "Save Processed"
 msgstr ""
 
+#: src/gui.py:422
+msgid "Save Stretched & Processed"
+msgstr ""
+
 #: src/gui.py:345
 msgid "An error occurred while loading your picture."
 msgstr ""

@@ -30,7 +30,7 @@ class Slider(tk.Frame):
             var = self.var,
             command = self.on_slider,
             takefocus = False,
-            length = 180)
+            length = 200*scale)
            
         if self.command:
             self.slider.bind("<ButtonRelease-1>", lambda event: self.command())
@@ -38,7 +38,10 @@ class Slider(tk.Frame):
         self.entry.bind("<Up>", self.up)
         self.entry.bind("<Down>", self.down)
         
-        self.text.grid(column=0, row=0, pady=0, padx=(0,5*scale), sticky="e")
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        
+        self.text.grid(column=0, row=0, pady=0, padx=0, sticky="e")
         self.entry.grid(column=1, row=0, pady=0, padx=0, sticky="w")
         self.slider.grid(column=0, row=1, pady=5*scale, padx=0, sticky="news", columnspan=2)
         

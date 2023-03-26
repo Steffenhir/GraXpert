@@ -108,7 +108,7 @@ class Help_Panel():
         
         # ------------Help Panel-----------------
         heading_font = "Verdana 18 bold"
-        heading_font2 = "Verdana 10 bold"
+        heading_font2 = "Verdana 11 bold"
         
         
         self.help_panel = tk.Frame(self.canvas)
@@ -124,7 +124,9 @@ class Help_Panel():
             int(logo.width/6 * scaling),
             int(logo.height/6 * scaling)
         ))
-
+        
+        self.help_panel_window.columnconfigure(0, weight=1)
+        
         logo = ImageTk.PhotoImage(logo)
         self.label = tk.Label(self.help_panel_window, image=logo)
         self.label.image= logo
@@ -218,6 +220,8 @@ class Help_Panel():
         self.advanced_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.advanced_panel_window = tk.Frame(self.advanced_canvas, borderwidth=0)
+        
+        self.advanced_panel_window.columnconfigure(0, weight=1)
         
         text = tk.Message(self.advanced_panel_window, text=_("Advanced Settings"), width=240 * scaling, font=heading_font, anchor="center")
         text.grid(column=0, row=0, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")

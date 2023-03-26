@@ -1203,13 +1203,13 @@ if __name__ == "__main__":
     root.tk.call('tk', 'scaling', scaling)
     root.option_add("*TkFDialog*foreground", "black")
     app = Application(master=root)
-    check_for_new_version()
     root.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(logging_thread))
     root.createcommand("::tk::mac::Quit", lambda: app.on_closing(logging_thread))
 
     if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
         import pyi_splash
-        pyi_splash.close()
-
+        pyi_splash.close()        
+        
+    check_for_new_version()
     app.mainloop()
     

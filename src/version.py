@@ -9,7 +9,7 @@ version = "SNAPSHOT"
 def check_for_new_version():
     try:
         response = requests.get("https://api.github.com/repos/Steffenhir/GraXpert/releases/latest")
-        newest_version = print(response.json()["name"])
+        newest_version = response.json()["name"]
         
         if newest_version != version:
             messagebox.showinfo(title = "New version available!",

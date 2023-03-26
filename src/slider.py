@@ -35,6 +35,9 @@ class Slider(tk.Frame):
         if self.command:
             self.slider.bind("<ButtonRelease-1>", lambda event: self.command())
         
+        self.entry.bind("<Up>", self.up)
+        self.entry.bind("<Down>", self.down)
+        
         self.text.grid(column=0, row=0, pady=0, padx=(0,5*scale), sticky="e")
         self.entry.grid(column=1, row=0, pady=0, padx=0, sticky="w")
         self.slider.grid(column=0, row=1, pady=5*scale, padx=0, sticky="news", columnspan=2)
@@ -67,3 +70,31 @@ class Slider(tk.Frame):
         
         except:
             return False
+        
+    def up(self, event):
+        
+       
+        value = self.var.get() + 10**(-self.precision)
+        
+        if value > self.stop:
+            return
+        
+        if self.precision == 0:
+            value = int(float(value))
+        else:
+            value = round(float(value), self.precision)
+            
+        self.var.set(value)
+        
+    def down(self,event):
+        value = self.var.get() - 10**(-self.precision)
+
+        if value < self.start:
+            return        
+        
+        if self.precision == 0:
+            value = int(float(value))
+        else:
+            value = round(float(value), self.precision)
+            
+        self.var.set(value)

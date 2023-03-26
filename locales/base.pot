@@ -216,3 +216,6 @@ msgid ""
 "Background: The background model"
 msgstr ""
 
+msgid "A newer version of GraXpert is available at"
+msgstr ""
+

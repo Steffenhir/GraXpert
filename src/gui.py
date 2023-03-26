@@ -46,7 +46,7 @@ from preferences import (app_state_2_prefs, load_preferences,
                          app_state_2_fitsheader, fitsheader_2_app_state)
 from stretch import stretch_all
 from ui_scaling import get_scaling_factor
-from version import release, version
+from version import release, version, check_for_new_version
 
 
 def resource_path(relative_path):
@@ -1203,6 +1203,7 @@ if __name__ == "__main__":
     root.tk.call('tk', 'scaling', scaling)
     root.option_add("*TkFDialog*foreground", "black")
     app = Application(master=root)
+    check_for_new_version()
     root.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(logging_thread))
     root.createcommand("::tk::mac::Quit", lambda: app.on_closing(logging_thread))
 

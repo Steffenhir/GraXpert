@@ -310,3 +310,6 @@ msgstr ""
 "Original: originales Bild \n"
 "Processed: bearbeitetes Bild \n"
 "Background: Hintergrundmodell"
+
+msgid "A newer version of GraXpert is available at"
+msgstr "Eine neuere Version von GraXpert ist verfügbar unter"

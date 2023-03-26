@@ -32,6 +32,7 @@ import tooltip
 from app_state import INITIAL_STATE
 from astroimage import AstroImage
 from collapsible_frame import CollapsibleFrame
+from slider import Slider
 from commands import (ADD_POINT_HANDLER, ADD_POINTS_HANDLER, INIT_HANDLER,
                       MOVE_POINT_HANDLER, RESET_POINTS_HANDLER,
                       RM_POINT_HANDLER, SEL_POINTS_HANDLER, Command,
@@ -142,6 +143,7 @@ class Application(tk.Frame):
         
         self.crop_mode = False
         
+        self.master.bind_all("<Button-1>", lambda event: event.widget.focus_set())
         self.master.bind("<Button-1>", self.mouse_down_left)  
         self.master.bind("<ButtonRelease-1>", self.mouse_release_left) # Left Mouse Button
         self.master.bind("<Button-2>", self.mouse_down_right)          # Middle Mouse Button (Right Mouse Button on macs)
@@ -156,7 +158,7 @@ class Application(tk.Frame):
         self.master.bind("<MouseWheel>", self.mouse_wheel)             # Mouse Wheel
         self.master.bind("<Button-4>", self.mouse_wheel)               # Mouse Wheel Linux
         self.master.bind("<Button-5>", self.mouse_wheel)               # Mouse Wheel Linux
-        self.master.bind("<Return>", self.enter_key)                   # Enter Key
+        #self.master.bind("<Return>", self.enter_key)                   # Enter Key
         self.master.bind("<Control-z>", self.undo)                     # undo
         self.master.bind("<Control-y>", self.redo)                     # redo
         self.master.bind("<Command-z>", self.undo)                     # undo on macs
@@ -237,27 +239,9 @@ class Application(tk.Frame):
         if "saturation" in self.prefs:
             self.saturation.set(self.prefs["saturation"])
         
-        self.saturation_text = tk.Message(self.bgextr_menu.sub_frame, text=_("Saturation") + ": {:.1f}".format(self.saturation.get()))
-        self.saturation_text.config(width=500 * scal)
-        self.saturation_text.grid(column=0, row=4, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
-        
-        def on_saturation_slider(saturation):
-            self.saturation.set(saturation)
-            self.saturation_text.configure(text=_("Saturation") + ": {:.1f}".format(self.saturation.get()))
-                
+        self.saturation_slider = Slider(self.bgextr_menu.sub_frame, self.saturation, "Saturation", 0, 3, 1, scal, self.update_saturation)
+        self.saturation_slider.grid(column=0, row=4, pady=(0,30*scal), padx=15*scal, sticky="ew")     
 
-        self.saturation_slider = ttk.Scale(
-            self.bgextr_menu.sub_frame,
-            orient=tk.HORIZONTAL,
-            from_=0,
-            to=3,
-            var=self.saturation,
-            command=on_saturation_slider,
-            length=150
-            )
-        
-        self.saturation_slider.bind("<ButtonRelease-1>", self.update_saturation)
-        self.saturation_slider.grid(column=0, row=5, pady=(0,30*scal), padx=15*scal, sticky="ew")
       
         #---Sample Selection---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_3-scaled.png"))
@@ -283,24 +267,7 @@ class Application(tk.Frame):
         if "bg_pts_option" in self.prefs:
             self.bg_pts.set(self.prefs["bg_pts_option"])
         
-        self.bg_selection_text = tk.Message(self.bgextr_menu.sub_frame, text=_("Points per row: {}").format(self.bg_pts.get()))
-        self.bg_selection_text.config(width=500 * scal)
-        self.bg_selection_text.grid(column=0, row=9, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
-        
-        def on_bg_pts_slider(bgs_points):
-            self.bg_pts.set(int(float(bgs_points)))
-            self.bg_selection_text.configure(text=_("Points per row: {}").format(self.bg_pts.get()))
-
-        self.bg_pts_slider = ttk.Scale(
-            self.bgextr_menu.sub_frame,
-            orient=tk.HORIZONTAL,
-            from_=4,
-            to=25,
-            var=self.bg_pts,
-            command=on_bg_pts_slider,
-            length=150
-            )
-        
+        self.bg_pts_slider = Slider(self.bgextr_menu.sub_frame, self.bg_pts, "Points per row", 4, 25, 0, scal)        
         self.bg_pts_slider.grid(column=0, row=10, pady=(0,0), padx=15*scal, sticky="ew")
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
         
@@ -309,23 +276,7 @@ class Application(tk.Frame):
         if "bg_tol_option" in self.prefs:
             self.bg_tol.set(self.prefs["bg_tol_option"])
         
-        self.bg_selection_tol = tk.Message(self.bgextr_menu.sub_frame, text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
-        self.bg_selection_tol.config(width=500)
-        self.bg_selection_tol.grid(column=0, row=11, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
-        
-        def on_bg_tol_slider(bg_tol):
-            self.bg_tol.set(float("{:.1f}".format(float(bg_tol))))
-            self.bg_selection_tol.configure(text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
-        
-        self.bg_tol_slider = ttk.Scale(
-            self.bgextr_menu.sub_frame,
-            orient=tk.HORIZONTAL,
-            from_=-2,
-            to=10,
-            var=self.bg_tol,
-            command=on_bg_tol_slider,
-            length=150
-            )
+        self.bg_tol_slider = Slider(self.bgextr_menu.sub_frame, self.bg_tol, "Grid Tolerance", -2, 10, 1, scal)
         self.bg_tol_slider.grid(column=0, row=12, pady=(0,10*scal), padx=15*scal, sticky="ew")
         tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
@@ -365,23 +316,7 @@ class Application(tk.Frame):
         if "smoothing_option" in self.prefs:
             self.smoothing.set(self.prefs["smoothing_option"])
         
-        self.smooth_text = tk.Message(self.bgextr_menu.sub_frame, text="Smoothing: {}".format(self.smoothing.get()))
-        self.smooth_text.config(width=500)
-        self.smooth_text.grid(column=0, row=18, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
-        
-        def on_smoothing_slider(smoothing):
-            self.smoothing.set(float("{:.2f}".format(float(smoothing))))
-            self.smooth_text.configure(text="Smoothing: {}".format(self.smoothing.get()))
-        
-        self.smoothing_slider = ttk.Scale(
-            self.bgextr_menu.sub_frame,
-            orient=tk.HORIZONTAL,
-            from_=0,
-            to=1,
-            var=self.smoothing,
-            command=on_smoothing_slider,
-            length=150
-            )
+        self.smoothing_slider = Slider(self.bgextr_menu.sub_frame, self.smoothing, "Smoothing", 0, 1, 2, scal)
         self.smoothing_slider.grid(column=0, row=19, pady=(0,10*scal), padx=15*scal, sticky="ew")
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         

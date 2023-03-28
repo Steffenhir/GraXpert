@@ -44,7 +44,10 @@ class Slider(tk.Frame):
         self.text.grid(column=0, row=0, pady=0, padx=0, sticky="e")
         self.entry.grid(column=1, row=0, pady=0, padx=0, sticky="w")
         self.slider.grid(column=0, row=1, pady=5*scale, padx=0, sticky="news", columnspan=2)
-        
+    
+    def set(self, value):
+        self.slider.set(value)
+    
     def on_slider(self, value):
         if self.precision == 0:    
             value = int(float(value))

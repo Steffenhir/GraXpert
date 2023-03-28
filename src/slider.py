@@ -21,7 +21,7 @@ class Slider(tk.Frame):
         # See https://stackoverflow.com/questions/4140437/interactively-validating-entry-widget-content-in-tkinter for explanation of validation
         vcmd = (self.register(self.on_entry), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
         
-        self.entry = ttk.Entry(self, textvariable = self.var, validate="focusout", validatecommand = vcmd, width = int(5*scale))
+        self.entry = ttk.Entry(self, textvariable = self.var, validate="focusout", validatecommand = vcmd, width = 4)
         self.slider = ttk.Scale(
             self,
             orient = tk.HORIZONTAL,

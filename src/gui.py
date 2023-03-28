@@ -32,6 +32,7 @@ import tooltip
 from app_state import INITIAL_STATE
 from astroimage import AstroImage
 from collapsible_frame import CollapsibleFrame
+from slider import Slider
 from commands import (ADD_POINT_HANDLER, ADD_POINTS_HANDLER, INIT_HANDLER,
                       MOVE_POINT_HANDLER, RESET_POINTS_HANDLER,
                       RM_POINT_HANDLER, SEL_POINTS_HANDLER, Command,
@@ -45,7 +46,7 @@ from preferences import (app_state_2_prefs, load_preferences,
                          app_state_2_fitsheader, fitsheader_2_app_state)
 from stretch import stretch_all
 from ui_scaling import get_scaling_factor
-from version import release, version
+from version import release, version, check_for_new_version
 
 
 def resource_path(relative_path):
@@ -142,6 +143,7 @@ class Application(tk.Frame):
         
         self.crop_mode = False
         
+        self.master.bind_all("<Button-1>", lambda event: event.widget.focus_set())
         self.master.bind("<Button-1>", self.mouse_down_left)  
         self.master.bind("<ButtonRelease-1>", self.mouse_release_left) # Left Mouse Button
         self.master.bind("<Button-2>", self.mouse_down_right)          # Middle Mouse Button (Right Mouse Button on macs)
@@ -156,7 +158,7 @@ class Application(tk.Frame):
         self.master.bind("<MouseWheel>", self.mouse_wheel)             # Mouse Wheel
         self.master.bind("<Button-4>", self.mouse_wheel)               # Mouse Wheel Linux
         self.master.bind("<Button-5>", self.mouse_wheel)               # Mouse Wheel Linux
-        self.master.bind("<Return>", self.enter_key)                   # Enter Key
+        #self.master.bind("<Return>", self.enter_key)                   # Enter Key
         self.master.bind("<Control-z>", self.undo)                     # undo
         self.master.bind("<Control-y>", self.redo)                     # redo
         self.master.bind("<Command-z>", self.undo)                     # undo on macs
@@ -164,7 +166,7 @@ class Application(tk.Frame):
         
         
         #Side menu
-        heading_font = "Verdana 10 bold"
+        heading_font = "Verdana 11 bold"
         
         self.side_canvas = tk.Canvas(self.master, borderwidth=0,  bd=0, highlightthickness=0, name="left_panel")
         self.side_canvas.pack(side=tk.TOP, fill=tk.Y, expand=True)
@@ -201,7 +203,7 @@ class Application(tk.Frame):
         self.bgextr_menu.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
         self.bgextr_menu.sub_frame.grid_columnconfigure(0, weight=1)
         
-        for i in range(26):
+        for i in range(21):
             self.bgextr_menu.sub_frame.grid_rowconfigure(i, weight=1)
         
         #---Open Image---
@@ -237,38 +239,20 @@ class Application(tk.Frame):
         if "saturation" in self.prefs:
             self.saturation.set(self.prefs["saturation"])
         
-        self.saturation_text = tk.Message(self.bgextr_menu.sub_frame, text=_("Saturation") + ": {:.1f}".format(self.saturation.get()))
-        self.saturation_text.config(width=500 * scal)
-        self.saturation_text.grid(column=0, row=4, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
-        
-        def on_saturation_slider(saturation):
-            self.saturation.set(saturation)
-            self.saturation_text.configure(text=_("Saturation") + ": {:.1f}".format(self.saturation.get()))
-                
+        self.saturation_slider = Slider(self.bgextr_menu.sub_frame, self.saturation, "Saturation", 0, 3, 1, scal, self.update_saturation)
+        self.saturation_slider.grid(column=0, row=4, pady=(5*scal,30*scal), padx=15*scal, sticky="ew")     
 
-        self.saturation_slider = ttk.Scale(
-            self.bgextr_menu.sub_frame,
-            orient=tk.HORIZONTAL,
-            from_=0,
-            to=3,
-            var=self.saturation,
-            command=on_saturation_slider,
-            length=150
-            )
-        
-        self.saturation_slider.bind("<ButtonRelease-1>", self.update_saturation)
-        self.saturation_slider.grid(column=0, row=5, pady=(0,30*scal), padx=15*scal, sticky="ew")
       
         #---Sample Selection---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_3-scaled.png"))
         text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Sample Selection"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
-        text.grid(column=0, row=6, pady=5*scal, padx=0, sticky="w")
+        text.grid(column=0, row=5, pady=5*scal, padx=0, sticky="w")
         
         self.display_pts = tk.BooleanVar()
         self.display_pts.set(True)
         self.display_pts_switch = ttk.Checkbutton(self.bgextr_menu.sub_frame, text="  "+_("Display points"), compound=tk.LEFT, var=self.display_pts, command=self.redraw_points)
-        self.display_pts_switch.grid(column=0, row=7, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
+        self.display_pts_switch.grid(column=0, row=6, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         self.flood_select_pts = tk.BooleanVar()
         self.flood_select_pts.set(False)
@@ -276,32 +260,15 @@ class Application(tk.Frame):
             self.flood_select_pts.set(self.prefs["bg_flood_selection_option"])
         self.flood_select_pts_switch = ttk.Checkbutton(self.bgextr_menu.sub_frame, text="  "+_("Flooded generation"), compound=tk.LEFT, var=self.flood_select_pts)
         tt_load = tooltip.Tooltip(self.flood_select_pts_switch, text=tooltip.bg_flood_text)
-        self.flood_select_pts_switch.grid(column=0, row=8, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
+        self.flood_select_pts_switch.grid(column=0, row=7, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         self.bg_pts = tk.IntVar()
         self.bg_pts.set(10)
         if "bg_pts_option" in self.prefs:
             self.bg_pts.set(self.prefs["bg_pts_option"])
         
-        self.bg_selection_text = tk.Message(self.bgextr_menu.sub_frame, text=_("Points per row: {}").format(self.bg_pts.get()))
-        self.bg_selection_text.config(width=500 * scal)
-        self.bg_selection_text.grid(column=0, row=9, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
-        
-        def on_bg_pts_slider(bgs_points):
-            self.bg_pts.set(int(float(bgs_points)))
-            self.bg_selection_text.configure(text=_("Points per row: {}").format(self.bg_pts.get()))
-
-        self.bg_pts_slider = ttk.Scale(
-            self.bgextr_menu.sub_frame,
-            orient=tk.HORIZONTAL,
-            from_=4,
-            to=25,
-            var=self.bg_pts,
-            command=on_bg_pts_slider,
-            length=150
-            )
-        
-        self.bg_pts_slider.grid(column=0, row=10, pady=(0,0), padx=15*scal, sticky="ew")
+        self.bg_pts_slider = Slider(self.bgextr_menu.sub_frame, self.bg_pts, "Points per row", 4, 25, 0, scal)        
+        self.bg_pts_slider.grid(column=0, row=8, pady=(5*scal,5*scal), padx=15*scal, sticky="ew")
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
         
         self.bg_tol = tk.DoubleVar()
@@ -309,47 +276,31 @@ class Application(tk.Frame):
         if "bg_tol_option" in self.prefs:
             self.bg_tol.set(self.prefs["bg_tol_option"])
         
-        self.bg_selection_tol = tk.Message(self.bgextr_menu.sub_frame, text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
-        self.bg_selection_tol.config(width=500)
-        self.bg_selection_tol.grid(column=0, row=11, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
-        
-        def on_bg_tol_slider(bg_tol):
-            self.bg_tol.set(float("{:.1f}".format(float(bg_tol))))
-            self.bg_selection_tol.configure(text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
-        
-        self.bg_tol_slider = ttk.Scale(
-            self.bgextr_menu.sub_frame,
-            orient=tk.HORIZONTAL,
-            from_=-2,
-            to=10,
-            var=self.bg_tol,
-            command=on_bg_tol_slider,
-            length=150
-            )
-        self.bg_tol_slider.grid(column=0, row=12, pady=(0,10*scal), padx=15*scal, sticky="ew")
+        self.bg_tol_slider = Slider(self.bgextr_menu.sub_frame, self.bg_tol, "Grid Tolerance", -2, 10, 1, scal)
+        self.bg_tol_slider.grid(column=0, row=9, pady=(5*scal,10*scal), padx=15*scal, sticky="ew")
         tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
         self.bg_selection_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Create Grid"),
                          command=self.select_background)
-        self.bg_selection_button.grid(column=0, row=13, pady=5*scal, padx=15*scal, sticky="news")
+        self.bg_selection_button.grid(column=0, row=10, pady=5*scal, padx=15*scal, sticky="news")
         tt_bg_select = tooltip.Tooltip(self.bg_selection_button, text= tooltip.bg_select_text)
         
         self.reset_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Reset Sample Points"),
                          command=self.reset_backgroundpts)
-        self.reset_button.grid(column=0, row=14, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
+        self.reset_button.grid(column=0, row=11, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
         tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
         
         #---Calculation---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_4-scaled.png"))
         text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Calculation"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
-        text.grid(column=0, row=15, pady=5*scal, padx=0, sticky="w")
+        text.grid(column=0, row=12, pady=5*scal, padx=0, sticky="w")
         
         self.intp_type_text = tk.Message(self.bgextr_menu.sub_frame, text=_("Interpolation Method:"))
         self.intp_type_text.config(width=500)
-        self.intp_type_text.grid(column=0, row=16, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
+        self.intp_type_text.grid(column=0, row=13, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         self.interpol_options = ["RBF", "Splines", "Kriging"]
         self.interpol_type = tk.StringVar()
@@ -357,7 +308,7 @@ class Application(tk.Frame):
         if "interpol_type_option" in self.prefs:
             self.interpol_type.set(self.prefs["interpol_type_option"])
         self.interpol_menu = ttk.OptionMenu(self.bgextr_menu.sub_frame, self.interpol_type, self.interpol_type.get(), *self.interpol_options)
-        self.interpol_menu.grid(column=0, row=17, pady=(0,5*scal), padx=15*scal, sticky="news")
+        self.interpol_menu.grid(column=0, row=14, pady=(0,5*scal), padx=15*scal, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.interpol_menu, text=tooltip.interpol_type_text)
         
         self.smoothing = tk.DoubleVar()
@@ -365,37 +316,21 @@ class Application(tk.Frame):
         if "smoothing_option" in self.prefs:
             self.smoothing.set(self.prefs["smoothing_option"])
         
-        self.smooth_text = tk.Message(self.bgextr_menu.sub_frame, text="Smoothing: {}".format(self.smoothing.get()))
-        self.smooth_text.config(width=500)
-        self.smooth_text.grid(column=0, row=18, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
-        
-        def on_smoothing_slider(smoothing):
-            self.smoothing.set(float("{:.2f}".format(float(smoothing))))
-            self.smooth_text.configure(text="Smoothing: {}".format(self.smoothing.get()))
-        
-        self.smoothing_slider = ttk.Scale(
-            self.bgextr_menu.sub_frame,
-            orient=tk.HORIZONTAL,
-            from_=0,
-            to=1,
-            var=self.smoothing,
-            command=on_smoothing_slider,
-            length=150
-            )
-        self.smoothing_slider.grid(column=0, row=19, pady=(0,10*scal), padx=15*scal, sticky="ew")
+        self.smoothing_slider = Slider(self.bgextr_menu.sub_frame, self.smoothing, "Smoothing", 0, 1, 2, scal)
+        self.smoothing_slider.grid(column=0, row=15, pady=(0,10*scal), padx=15*scal, sticky="ew")
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
         self.calculate_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Calculate Background"),
                          command=self.calculate)
-        self.calculate_button.grid(column=0, row=20, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
+        self.calculate_button.grid(column=0, row=16, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
         #---Saving---  
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_5-scaled.png"))
         self.saveas_text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Saving"), image=num_pic, font=heading_font, compound="left")
         self.saveas_text.image = num_pic
-        self.saveas_text.grid(column=0, row=21, pady=5*scal, padx=0, sticky="w")
+        self.saveas_text.grid(column=0, row=17, pady=5*scal, padx=0, sticky="w")
         
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits", "16 bit XISF", "32 bit XISF"]
         self.saveas_type = tk.StringVar()
@@ -403,26 +338,26 @@ class Application(tk.Frame):
         if "saveas_option" in self.prefs:
             self.saveas_type.set(self.prefs["saveas_option"])
         self.saveas_menu = ttk.OptionMenu(self.bgextr_menu.sub_frame, self.saveas_type, self.saveas_type.get(), *self.saveas_options)
-        self.saveas_menu.grid(column=0, row=22, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
+        self.saveas_menu.grid(column=0, row=18, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
         
         self.save_background_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Save Background"),
                          command=self.save_background_image)
-        self.save_background_button.grid(column=0, row=23, pady=5*scal, padx=15*scal, sticky="news")
+        self.save_background_button.grid(column=0, row=19, pady=5*scal, padx=15*scal, sticky="news")
         tt_save_bg = tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
               
         
         self.save_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Save Processed"),
                          command=self.save_image)
-        self.save_button.grid(column=0, row=24, pady=5*scal, padx=15*scal, sticky="news")
+        self.save_button.grid(column=0, row=20, pady=5*scal, padx=15*scal, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
 
         self.save_stretched_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Save Stretched & Processed"),
                          command=self.save_stretched_image)
-        self.save_stretched_button.grid(column=0, row=25, pady=(5*scal,10*scal), padx=15*scal, sticky="news")
+        self.save_stretched_button.grid(column=0, row=21, pady=(5*scal,10*scal), padx=15*scal, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_stretched_button, text=tooltip.save_stretched_pic_text)
         
 
@@ -1273,7 +1208,8 @@ if __name__ == "__main__":
 
     if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
         import pyi_splash
-        pyi_splash.close()
-
+        pyi_splash.close()        
+        
+    check_for_new_version()
     app.mainloop()
     

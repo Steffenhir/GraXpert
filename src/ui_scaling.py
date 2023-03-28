@@ -33,5 +33,8 @@ def get_scaling_factor():
     except BaseException as e:
         logging.warning("WARNING: could not calculate monitor dpi, {}".format(e))
         scaling_factor = 1.0
-
-    return scaling_factor
+    
+    if isinstance(scaling_factor, float):
+        return scaling_factor
+    else:
+        return 1.0

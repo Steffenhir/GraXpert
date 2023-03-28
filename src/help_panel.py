@@ -10,6 +10,7 @@ from PIL import Image, ImageTk
 
 from localization import _, lang
 from ui_scaling import get_scaling_factor
+from slider import Slider
 # from version import release, version
 
 
@@ -107,7 +108,7 @@ class Help_Panel():
         
         # ------------Help Panel-----------------
         heading_font = "Verdana 18 bold"
-        heading_font2 = "Verdana 10 bold"
+        heading_font2 = "Verdana 11 bold"
         
         
         self.help_panel = tk.Frame(self.canvas)
@@ -123,7 +124,9 @@ class Help_Panel():
             int(logo.width/6 * scaling),
             int(logo.height/6 * scaling)
         ))
-
+        
+        self.help_panel_window.columnconfigure(0, weight=1)
+        
         logo = ImageTk.PhotoImage(logo)
         self.label = tk.Label(self.help_panel_window, image=logo)
         self.label.image= logo
@@ -218,6 +221,8 @@ class Help_Panel():
         
         self.advanced_panel_window = tk.Frame(self.advanced_canvas, borderwidth=0)
         
+        self.advanced_panel_window.columnconfigure(0, weight=1)
+        
         text = tk.Message(self.advanced_panel_window, text=_("Advanced Settings"), width=240 * scaling, font=heading_font, anchor="center")
         text.grid(column=0, row=0, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
         
@@ -229,24 +234,8 @@ class Help_Panel():
         if "sample_size" in self.app.prefs:
             self.app.sample_size.set(self.app.prefs["sample_size"])
         
-        self.sample_size_text = tk.Message(self.advanced_panel_window, text=_("Sample size: {}").format(self.app.sample_size.get()))
-        self.sample_size_text.config(width=240 * scaling)
-        self.sample_size_text.grid(column=0, row=2, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
-        def on_sample_size_slider(sample_size):
-            self.app.sample_size.set(float("{:.2f}".format(float(sample_size))))
-            self.sample_size_text.configure(text=_("Sample size: {}").format(self.app.sample_size.get()))
-            self.app.redraw_points()
-        
-        self.sample_size_slider = ttk.Scale(
-            self.advanced_panel_window,
-            orient=tk.HORIZONTAL,
-            from_=5,
-            to=50,
-            var=self.app.sample_size,
-            command=on_sample_size_slider,
-            length=240 * scaling,
-            )
+        self.sample_size_slider = Slider(self.advanced_panel_window, self.app.sample_size, "Sample size", 5, 50, 0, scaling, self.app.redraw_points)
         self.sample_size_slider.grid(column=0, row=3, pady=(0,10*scaling), padx=(40,30), sticky="ew")
         
         
@@ -255,24 +244,7 @@ class Help_Panel():
         if "sample_color" in self.app.prefs:
             self.app.sample_color.set(self.app.prefs["sample_color"])
         
-        self.sample_color_text = tk.Message(self.advanced_panel_window, text=_("Sample color: {}").format(self.app.sample_color.get()))
-        self.sample_color_text.config(width=500 * scaling)
-        self.sample_color_text.grid(column=0, row=4, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
-        
-        def on_sample_color_slider(sample_color):
-            self.app.sample_color.set(float("{:.2f}".format(float(sample_color))))
-            self.sample_color_text.configure(text=_("Sample color: {}").format(self.app.sample_color.get()))
-            self.app.redraw_points()
-        
-        self.sample_color_slider = ttk.Scale(
-            self.advanced_panel_window,
-            orient=tk.HORIZONTAL,
-            from_=0,
-            to=360,
-            var=self.app.sample_color,
-            command=on_sample_color_slider,
-            length=150
-            )
+        self.sample_color_slider = Slider(self.advanced_panel_window, self.app.sample_color, "Sample color", 0, 360, 0, scaling, self.app.redraw_points)
         self.sample_color_slider.grid(column=0, row=5, pady=(0,10*scaling), padx=(40,30), sticky="ew")
         
         text = tk.Message(self.advanced_panel_window, text=_("Interpolation"), width=240 * scaling, font=heading_font2, anchor="center")

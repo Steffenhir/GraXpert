@@ -37,6 +37,13 @@ class Slider(tk.Frame):
         
         self.entry.bind("<Up>", self.up)
         self.entry.bind("<Down>", self.down)
+        self.entry.bind("<Left>", self.down)
+        self.entry.bind("<Right>", self.up)
+        
+        self.slider.bind("<Up>", self.up)
+        self.slider.bind("<Down>", self.down)
+        self.slider.bind("<Left>", self.down)
+        self.slider.bind("<Right>", self.up)
         
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
@@ -83,7 +90,7 @@ class Slider(tk.Frame):
         value = self.var.get() + 10**(-self.precision)
         
         if value > self.stop:
-            return
+            return "break"
         
         if self.precision == 0:
             value = int(float(value))
@@ -91,12 +98,13 @@ class Slider(tk.Frame):
             value = round(float(value), self.precision)
             
         self.var.set(value)
+        return "break"
         
     def down(self,event):
         value = self.var.get() - 10**(-self.precision)
 
         if value < self.start:
-            return        
+            return "break"     
         
         if self.precision == 0:
             value = int(float(value))
@@ -104,3 +112,4 @@ class Slider(tk.Frame):
             value = round(float(value), self.precision)
             
         self.var.set(value)
+        return "break"

@@ -1,0 +1,78 @@
+name: testing
+
+on: 
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - develop
+
+jobs: 
+  test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+      - name: checkout repository
+        uses: actions/checkout@v3
+      - name: install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: patch version
+        run: |
+          chmod u+x ./releng/patch_version.sh && \
+          ./releng/patch_version.sh
+      - name: test version
+        run: cat ./graxpert/version.py
+      - name: Run tests
+        run: python -m pytest --import-mode=append tests/
+
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+      - name: checkout repository
+        uses: actions/checkout@v3
+      - name: checkout pyinstaller
+        uses: actions/checkout@v3
+        with:
+          repository: pyinstaller/pyinstaller
+          path: ./pyinstaller
+          ref: v5.6.2
+      - name: install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: patch version
+        run: ./releng/patch_version.ps1
+      - name: test version
+        run: type ./graxpert/version.py
+      - name: Run tests
+        run: python -m pytest --import-mode=append tests/
+
+  test-macos-x86_64:
+    runs-on: macos-10.15
+    steps:
+      - name: setup python
+        run: brew install python-tk@3.10
+      - name: checkout repository
+        uses: actions/checkout@v3
+      - name: install dependencies
+        run: |
+          pip3 install -r requirements.txt
+      - name: patch version
+        run: |
+          chmod u+x ./releng/patch_version.sh && \
+          ./releng/patch_version.sh
+      - name: test version
+        run: cat ./graxpert/version.py
+      - name: Run tests
+        run: python -m pytest --import-mode=append tests/
+
+
+

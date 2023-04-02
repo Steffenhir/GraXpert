@@ -175,6 +175,13 @@ class AstroImage:
             image_converted = img_as_uint(self.img_array)
         else:
             image_converted = self.img_array.astype(np.float32)
+        
+        if(saveas_type != "16 bit XISF" and saveas_type != "32 bit XISF"):
+            if(image_converted.shape[-1] == 3):
+                if(saveas_type == "16 bit Fits" or saveas_type == "32 bit Fits"):
+                    image_converted = np.moveaxis(image_converted,-1,0)
+            else:
+                image_converted = image_converted[:,:,0]
          
         if(saveas_type == "16 bit Tiff" or saveas_type == "32 bit Tiff"):
             io.imsave(dir, image_converted)
@@ -182,12 +189,7 @@ class AstroImage:
         elif(saveas_type == "16 bit XISF" or saveas_type == "32 bit XISF"):
             self.update_xisf_imagedata()
             XISF.write(dir, image_converted, creator_app = "GraXpert", image_metadata = self.image_metadata, xisf_metadata = self.xisf_metadata)
-        else:
-            if(image_converted.shape[-1] == 3):
-               image_converted = np.moveaxis(image_converted,-1,0)
-            else:
-                image_converted = image_converted[:,:,0]
- 
+        else:           
             hdu = fits.PrimaryHDU(data=image_converted, header=self.fits_header)
             hdul = fits.HDUList([hdu])
             hdul.writeto(dir, output_verify="warn", overwrite=True)
@@ -207,6 +209,13 @@ class AstroImage:
             image_converted = img_as_uint(stretched_img)
         else:
             image_converted = stretched_img.astype(np.float32)
+            
+        if(saveas_type != "16 bit XISF" and saveas_type != "32 bit XISF"):
+            if(image_converted.shape[-1] == 3):
+                if(saveas_type == "16 bit Fits" or saveas_type == "32 bit Fits"):
+                    image_converted = np.moveaxis(image_converted,-1,0)
+            else:
+                image_converted = image_converted[:,:,0]
          
         if(saveas_type == "16 bit Tiff" or saveas_type == "32 bit Tiff"):
             io.imsave(dir, image_converted)
@@ -214,12 +223,7 @@ class AstroImage:
         elif(saveas_type == "16 bit XISF" or saveas_type == "32 bit XISF"):
             self.update_xisf_imagedata()
             XISF.write(dir, image_converted, creator_app = "GraXpert", image_metadata = self.image_metadata, xisf_metadata = self.xisf_metadata)
-        else:
-            if(image_converted.shape[-1] == 3):
-               image_converted = np.moveaxis(image_converted,-1,0)
-            else:
-                image_converted = image_converted[:,:,0]
- 
+        else:            
             hdu = fits.PrimaryHDU(data=image_converted, header=self.fits_header)
             hdul = fits.HDUList([hdu])
             hdul.writeto(dir, output_verify="warn", overwrite=True)

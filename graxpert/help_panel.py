@@ -8,10 +8,10 @@ from tkinter import messagebox
 from numpy import pad
 from PIL import Image, ImageTk
 
-from localization import _, lang
-from ui_scaling import get_scaling_factor
-from slider import Slider
-# from version import release, version
+from graxpert.localization import _, lang
+from graxpert.ui_scaling import get_scaling_factor
+from graxpert.slider import Slider
+
 
 
 def resource_path(relative_path):

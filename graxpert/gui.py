@@ -1,14 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Feb 13 10:05:08 2022
-@author: steff
-"""
-
 import multiprocessing
 
 multiprocessing.freeze_support()
 
-from mp_logging import configure_logging, initialize_logging, shutdown_logging
+from graxpert.mp_logging import configure_logging, initialize_logging, shutdown_logging
 
 configure_logging()
 
@@ -27,26 +21,26 @@ from PIL import Image, ImageTk
 from skimage import io
 from skimage.transform import resize
 
-import background_extraction
-import tooltip
-from app_state import INITIAL_STATE
-from astroimage import AstroImage
-from collapsible_frame import CollapsibleFrame
-from slider import Slider
-from commands import (ADD_POINT_HANDLER, ADD_POINTS_HANDLER, INIT_HANDLER,
+import graxpert.background_extraction as background_extraction
+import graxpert.tooltip as tooltip
+from graxpert.app_state import INITIAL_STATE
+from graxpert.astroimage import AstroImage
+from graxpert.collapsible_frame import CollapsibleFrame
+from graxpert.slider import Slider
+from graxpert.commands import (ADD_POINT_HANDLER, ADD_POINTS_HANDLER, INIT_HANDLER,
                       MOVE_POINT_HANDLER, RESET_POINTS_HANDLER,
                       RM_POINT_HANDLER, SEL_POINTS_HANDLER, Command,
                       InitHandler)
-from help_panel import Help_Panel
-from loadingframe import LoadingFrame
-from localization import _
-from parallel_processing import executor
-from preferences import (app_state_2_prefs, load_preferences,
+from graxpert.help_panel import Help_Panel
+from graxpert.loadingframe import LoadingFrame
+from graxpert.localization import _
+from graxpert.parallel_processing import executor
+from graxpert.preferences import (app_state_2_prefs, load_preferences,
                          prefs_2_app_state, save_preferences,
                          app_state_2_fitsheader, fitsheader_2_app_state)
-from stretch import stretch_all
-from ui_scaling import get_scaling_factor
-from version import release, version, check_for_new_version
+from graxpert.stretch import stretch_all
+from graxpert.ui_scaling import get_scaling_factor
+from graxpert.version import release, version, check_for_new_version
 
 
 def resource_path(relative_path):

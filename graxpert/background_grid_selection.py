@@ -1,18 +1,10 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Feb 15 15:09:15 2022
-
-@author: Steffen
-"""
-
-
 import numpy as np
 from skimage import color
 from skimage.transform import rescale
 
-import skyall
-import stretch
-from grid_utils import find_darkest_quadrant
+import graxpert.skyall
+import graxpert.stretch
+from graxpert.grid_utils import find_darkest_quadrant
 
 
 def background_grid_selection(data, num_pts_per_row, tol, sample_size):

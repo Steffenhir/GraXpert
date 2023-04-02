@@ -6,9 +6,9 @@ from typing import Dict
 
 import numpy as np
 
-from app_state import INITIAL_STATE, AppState
-from background_grid_selection import background_grid_selection
-from background_flood_selection import background_flood_selection
+from graxpert.app_state import INITIAL_STATE, AppState
+from graxpert.background_grid_selection import background_grid_selection
+from graxpert.background_flood_selection import background_flood_selection
 
 
 class ICommandHandler(ABC):

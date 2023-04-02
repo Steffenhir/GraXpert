@@ -7,7 +7,7 @@ from typing import AnyStr, List, TypedDict
 
 import numpy as np
 
-from app_state import AppState
+from graxpert.app_state import AppState
 
 
 class Prefs(TypedDict):

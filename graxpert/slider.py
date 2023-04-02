@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from localization import _
+from graxpert.localization import _
 
 class Slider(tk.Frame):
     def __init__(self, frame, var, name, start, stop, precision, scale, command=None):

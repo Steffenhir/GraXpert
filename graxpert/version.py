@@ -1,5 +1,5 @@
 import requests
-from localization import _
+from graxpert.localization import _
 from tkinter import messagebox
 
 release = "RELEASE"

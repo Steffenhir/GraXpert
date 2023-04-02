@@ -7,8 +7,8 @@ from astropy.stats import sigma_clipped_stats
 from skimage import io, img_as_float32, exposure
 from skimage.util import img_as_ubyte, img_as_uint
 from PIL import Image, ImageEnhance
-from stretch import stretch
-from preferences import app_state_2_fitsheader
+from graxpert.stretch import stretch
+from graxpert.preferences import app_state_2_fitsheader
 
 class AstroImage:
     def __init__(self, stretch_option, saturation):

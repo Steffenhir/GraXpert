@@ -1,17 +1,10 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar 17 18:16:05 2022
-
-@author: Steffen
-"""
-
 import sys
 from os import path
 from tkinter import LEFT, ttk
 
 from PIL import ImageTk
 
-from localization import _
+from graxpert.localization import _
 
 
 def resource_path(relative_path):

@@ -3,7 +3,7 @@ import sys
 import locale
 import os
 from appdirs import user_config_dir
-from preferences import load_preferences
+from graxpert.preferences import load_preferences
 
 
 def resource_path(relative_path):

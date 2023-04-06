@@ -8,11 +8,7 @@ from graxpert.preferences import load_preferences
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
-    
-    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        base_path = os.path.abspath(os.path.dirname(__file__))
-    else:
-        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 
     return os.path.join(base_path, relative_path)
 

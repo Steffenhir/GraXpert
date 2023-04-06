@@ -313,3 +313,12 @@ msgstr ""
 
 msgid "A newer version of GraXpert is available at"
 msgstr "Eine neuere Version von GraXpert ist verfügbar unter"
+
+msgid "Interface"
+msgstr "Nutzeroberfläche"
+
+msgid "Scaling"
+msgstr "Skalierung"
+
+msgid "Please restart the program to apply the changes to UI scaling."
+msgstr "Bitte das Programm neu starten, um die Änderungen an der Nutzeroberflächenskalierung anzuwenden."

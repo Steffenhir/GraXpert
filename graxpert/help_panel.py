@@ -276,8 +276,25 @@ class Help_Panel():
         self.spline_order_menu.grid(column=0, row=10, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         
-        text = tk.Message(self.advanced_panel_window, text=_("Language"), width=240 * scaling, font=heading_font2, anchor="center")
-        text.grid(column=0, row=11, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
+        text = tk.Message(self.advanced_panel_window, text=_("Correction"), width=240 * scaling, font=heading_font2, anchor="center")
+        text.grid(column=0, row=11, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+        
+        
+        self.app.corr_types = ["Subtraction", "Division"]
+        self.app.corr_type = tk.StringVar()
+        self.app.corr_type.set(self.app.corr_types[0])
+        if "corr_type" in self.app.prefs:
+            self.app.corr_type.set(self.app.prefs["corr_type"])
+
+        self.corr_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.corr_type, self.app.corr_type.get(), *self.app.corr_types)
+        self.corr_menu.grid(column=0, row=12, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
+        
+        
+        text = tk.Message(self.advanced_panel_window, text=_("Interface"), width=240 * scaling, font=heading_font2, anchor="center")
+        text.grid(column=0, row=13, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
+        
+        text = tk.Message(self.advanced_panel_window, text=_("Language"), width=240*scaling, anchor="center")
+        text.grid(column=0, row=14, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
     
         def lang_change(lang):
             messagebox.showerror("", _("Please restart the program to change the language."))
@@ -291,21 +308,21 @@ class Help_Panel():
             self.app.lang.set("English")
 
         self.lang_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.lang, self.app.lang.get(), *self.app.langs, command=lang_change)
-        self.lang_menu.grid(column=0, row=12, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
+        self.lang_menu.grid(column=0, row=15, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         
-        text = tk.Message(self.advanced_panel_window, text=_("Correction"), width=240 * scaling, font=heading_font2, anchor="center")
-        text.grid(column=0, row=13, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+        def scaling_change():
+            messagebox.showerror("", _("Please restart the program to apply the changes to UI scaling."))
+        
+        self.app.scaling = tk.DoubleVar()
+        self.app.scaling.set(1.0)
+        if "scaling" in self.app.prefs:
+            self.app.scaling.set(self.app.prefs["scaling"])
         
         
-        self.app.corr_types = ["Subtraction", "Division"]
-        self.app.corr_type = tk.StringVar()
-        self.app.corr_type.set(self.app.corr_types[0])
-        if "corr_type" in self.app.prefs:
-            self.app.corr_type.set(self.app.prefs["corr_type"])
-
-        self.corr_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.corr_type, self.app.corr_type.get(), *self.app.corr_types)
-        self.corr_menu.grid(column=0, row=14, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
+        self.scaling_slider = Slider(self.advanced_panel_window, self.app.scaling, "Scaling", 0.5, 2, 1, scaling, scaling_change)
+        self.scaling_slider.grid(column=0, row=16, pady=(10*scaling,10*scaling), padx=(40,30), sticky="ew")
+        
         
         
         self.advanced_canvas.create_window((0,0), window=self.advanced_panel_window)

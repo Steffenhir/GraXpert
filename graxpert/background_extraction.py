@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Feb 12 10:01:31 2022
-
-@author: Steffen
-"""
-
 import multiprocessing
 multiprocessing.freeze_support()
 
@@ -19,9 +12,9 @@ from pykrige.ok import OrdinaryKriging
 from scipy import interpolate, linalg
 from skimage.transform import resize
 
-from mp_logging import get_logging_queue, worker_configurer
-from parallel_processing import executor
-from radialbasisinterpolation import RadialBasisInterpolation
+from graxpert.mp_logging import get_logging_queue, worker_configurer
+from graxpert.parallel_processing import executor
+from graxpert.radialbasisinterpolation import RadialBasisInterpolation
 
 
 def extract_background(in_imarray, background_points, interpolation_type, smoothing, 

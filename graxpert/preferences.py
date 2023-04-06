@@ -7,7 +7,7 @@ from typing import AnyStr, List, TypedDict
 
 import numpy as np
 
-from app_state import AppState
+from graxpert.app_state import AppState
 
 
 class Prefs(TypedDict):
@@ -28,6 +28,7 @@ class Prefs(TypedDict):
     RBF_kernel: AnyStr
     lang: AnyStr
     corr_type: AnyStr
+    scaling: float
 
 DEFAULT_PREFS: Prefs = {
     "working_dir": os.getcwd(),
@@ -47,7 +48,8 @@ DEFAULT_PREFS: Prefs = {
     "RBF_kernel": "thin_plate",
     "spline_order": 3,
     "lang": None,
-    "corr_type": "Subtraction"
+    "corr_type": "Subtraction",
+    "scaling": 1.0
 }
 
 
@@ -68,6 +70,7 @@ def app_state_2_prefs(prefs: Prefs, app_state: AppState, app) -> Prefs:
         prefs["lang"] = app.lang.get()
         prefs["corr_type"] = app.corr_type.get()
         prefs["bg_flood_selection_option"] = app.flood_select_pts.get()
+        prefs["scaling"] = app.scaling.get()
     return prefs
 
 
@@ -114,6 +117,8 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["lang"] = json["lang"]
     if "corr_type" in json:
         prefs["corr_type"] = json["corr_type"]
+    if "scaling" in json:
+        prefs["scaling"] = json["scaling"]
     return prefs
 
 

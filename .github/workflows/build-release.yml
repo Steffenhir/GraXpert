@@ -25,7 +25,7 @@ jobs:
           chmod u+x ./releng/patch_version.sh && \
           ./releng/patch_version.sh
       - name: test version
-        run: cat ./src/version.py
+        run: cat ./graxpert/version.py
       - name: create GraXpert-linux bundle
         run: |
           pyinstaller \
@@ -55,7 +55,7 @@ jobs:
           chmod u+x ./releng/patch_version.sh && \
           ./releng/patch_version.sh
       - name: test version
-        run: cat ./src/version.py
+        run: cat ./graxpert/version.py
       - name: create GraXpert-linux bundle
         run: |
           pyinstaller \
@@ -103,7 +103,7 @@ jobs:
       - name: patch version
         run: ./releng/patch_version.ps1
       - name: test version
-        run: type ./src/version.py
+        run: type ./graxpert/version.py
       - name: create GraXpert-win64 bundle
         run: |
           pyinstaller `
@@ -147,7 +147,7 @@ jobs:
       - name: patch version
         run: ./releng/patch_version.ps1
       - name: test version
-        run: type ./src/version.py
+        run: type ./graxpert/version.py
       - name: create GraXpert-win64 bundle
         run: |
           pyinstaller `
@@ -177,7 +177,7 @@ jobs:
           chmod u+x ./releng/patch_version.sh && \
           ./releng/patch_version.sh
       - name: test version
-        run: cat ./src/version.py
+        run: cat ./graxpert/version.py
       - name: create GraXpert-macos-x86_64 bundle
         run: |
           pyinstaller \

@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Feb 14 16:44:29 2022
-
-@author: steff
-"""
-
 import multiprocessing
 multiprocessing.freeze_support()
 
@@ -16,8 +9,8 @@ import numpy as np
 from astropy.visualization import AsinhStretch
 from scipy.optimize import root
 
-from mp_logging import get_logging_queue, worker_configurer
-from parallel_processing import executor
+from graxpert.mp_logging import get_logging_queue, worker_configurer
+from graxpert.parallel_processing import executor
 
 
 def stretch_channel(shm_name, c, bg, sigma, shape, dtype, logging_queue, logging_configurer):

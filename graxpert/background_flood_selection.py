@@ -3,8 +3,8 @@ import numpy as np
 from scipy.spatial import KDTree
 from skimage.color import rgb2gray
 
-from astroimage import AstroImage
-from grid_utils import find_darkest_quadrant
+from graxpert.astroimage import AstroImage
+from graxpert.grid_utils import find_darkest_quadrant
 
 
 def idx_to_coords(idx, dist):

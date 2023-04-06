@@ -91,9 +91,9 @@ jobs:
           pip install setuptools wheel && `
           cd .\pyinstaller\bootloader && `
           (Get-Content .\wscript) -Replace "'run'", "'graxpert'" | Set-Content .\wscript && `
-          (Get-Content .\graxpert\main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\graxpert\main.c && `
-          (Get-Content .\graxpert\pyi_main.h) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\graxpert\pyi_main.h && `
-          (Get-Content .\graxpert\pyi_main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\graxpert\pyi_main.c && `
+          (Get-Content .\src\main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\main.c && `
+          (Get-Content .\src\pyi_main.h) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.h && `
+          (Get-Content .\src\pyi_main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.c && `
           python ./waf all && `
           cd .. && `
           (Get-Content .\setup.py) -Replace 'run.exe', 'graxpert.exe' | Set-Content .\setup.py && `
@@ -135,9 +135,9 @@ jobs:
           pip install setuptools wheel && `
           cd .\pyinstaller\bootloader && `
           (Get-Content .\wscript) -Replace "'run'", "'graxpert'" | Set-Content .\wscript && `
-          (Get-Content .\graxpert\main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\graxpert\main.c && `
-          (Get-Content .\graxpert\pyi_main.h) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\graxpert\pyi_main.h && `
-          (Get-Content .\graxpert\pyi_main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\graxpert\pyi_main.c && `
+          (Get-Content .\src\main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\main.c && `
+          (Get-Content .\src\pyi_main.h) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.h && `
+          (Get-Content .\src\pyi_main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.c && `
           python ./waf all && `
           cd .. && `
           (Get-Content .\setup.py) -Replace 'run.exe', 'graxpert.exe' | Set-Content .\setup.py && `

@@ -296,7 +296,7 @@ class Application(tk.Frame):
         self.intp_type_text.config(width=500)
         self.intp_type_text.grid(column=0, row=13, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
-        self.interpol_options = ["RBF", "Splines", "Kriging"]
+        self.interpol_options = ["RBF", "Splines", "Kriging","AI"]
         self.interpol_type = tk.StringVar()
         self.interpol_type.set(self.interpol_options[0])
         if "interpol_type_option" in self.prefs:
@@ -634,7 +634,7 @@ class Application(tk.Frame):
         background_points = self.cmd.app_state["background_points"]
         
         #Error messages if not enough points
-        if(len(background_points) == 0):
+        if(len(background_points) == 0 and self.interpol_type.get() != 'AI'):
             messagebox.showerror("Error", _("Please select background points with left click."))
             return
         

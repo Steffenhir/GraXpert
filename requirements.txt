@@ -3,8 +3,8 @@ astropy
 hdpitkinter
 Pillow
 pykrige
-scikit-image == 0.19.0
-scipy == 1.8.1
+scikit-image
+scipy
 screeninfo
 xisf
 requests

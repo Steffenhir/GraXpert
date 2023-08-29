@@ -85,6 +85,7 @@ jobs:
         with:
           repository: pyinstaller/pyinstaller
           path: ./pyinstaller
+          ref: v5.6.2
       - name: install dependencies
         run: |
           pip install setuptools wheel && `
@@ -128,6 +129,7 @@ jobs:
         with:
           repository: pyinstaller/pyinstaller
           path: ./pyinstaller
+          ref: v5.6.2
       - name: install dependencies
         run: |
           pip install setuptools wheel && `

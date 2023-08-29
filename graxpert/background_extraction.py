@@ -21,17 +21,6 @@ from graxpert.parallel_processing import executor
 from graxpert.radialbasisinterpolation import RadialBasisInterpolation
 
 
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    
-    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        base_path = os.path.abspath(os.path.dirname(__file__))
-    else:
-        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
-
-    return os.path.join(base_path, relative_path)
-
-
 def extract_background(in_imarray, background_points, interpolation_type, smoothing, 
                        downscale_factor, sample_size, RBF_kernel, spline_order, corr_type):
     
@@ -54,11 +43,19 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
             mad.append(np.median(np.abs(imarray_shrink[:,:,c] - median[c])))
         
         imarray_shrink = (imarray_shrink - median) / mad * 0.04
-        model = tf.keras.models.load_model(resource_path('bg_model'))
+        imarray_shrink = np.clip(imarray_shrink, -1.0, 1.0)
+        
+        AI_dir = ""
+        if getattr(sys, 'frozen', False):
+            AI_dir = os.path.join(os.path.dirname(sys.executable), 'bg_model')
+        else:
+            AI_dir = os.path.join(os.path.dirname(__file__), '../bg_model')
+            
+        model = tf.keras.models.load_model(AI_dir)
 
         background = np.array(model(np.expand_dims(imarray_shrink, axis=0))[0])
         background = background / 0.04 * mad + median
-        background = tf.image.resize(background,size=(in_imarray.shape[0],in_imarray.shape[1]))
+        background = tf.image.resize(background,size=(in_imarray.shape[0],in_imarray.shape[1]),method='gaussian')
               
     
     else:

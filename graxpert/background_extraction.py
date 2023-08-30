@@ -30,7 +30,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
     background = np.ndarray(in_imarray.shape, dtype=np.float32, buffer=shm_background.buf)
     np.copyto(imarray, in_imarray)
     
-    
+    num_colors = imarray.shape[2]
     
     if interpolation_type == 'AI':
         imarray_shrink = tf.image.resize(imarray,size=(256,256))
@@ -58,10 +58,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         background = tf.image.resize(background,size=(in_imarray.shape[0],in_imarray.shape[1]),method='gaussian')
               
     
-    else:
-    
-        num_colors = imarray.shape[2]
-    
+    else:    
         x_sub = np.array(background_points[:,0],dtype=int)
         y_sub = np.array(background_points[:,1],dtype=int)
             

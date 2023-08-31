@@ -10,7 +10,9 @@ import numpy as np
 from astropy.stats import sigma_clipped_stats
 from pykrige.ok import OrdinaryKriging
 from scipy import interpolate, linalg
+
 from skimage.transform import resize
+from skimage.filters import  gaussian
 
 import tensorflow as tf
 import os
@@ -59,6 +61,10 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
 
         background = np.array(model(np.expand_dims(imarray_shrink, axis=0))[0])
         background = background / 0.04 * mad + median
+        
+        if smoothing != 0:
+            sigma = smoothing * 20
+            background = gaussian(background,sigma)
         
         if num_colors == 1:
             background = np.array([background[:,:,0]])

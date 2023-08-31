@@ -30,7 +30,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
     background = np.ndarray(in_imarray.shape, dtype=np.float32, buffer=shm_background.buf)
     np.copyto(imarray, in_imarray)
     
-    num_colors = imarray.shape[2]
+    num_colors = imarray.shape[-1]
     
     if interpolation_type == 'AI':
         imarray_shrink = tf.image.resize(imarray,size=(256,256))
@@ -38,12 +38,16 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         median = []
         mad = []
         
-        for c in range(imarray.shape[-1]):
+        for c in range(num_colors):
             median.append(np.median(imarray_shrink[:,:,c]))
             mad.append(np.median(np.abs(imarray_shrink[:,:,c] - median[c])))
         
         imarray_shrink = (imarray_shrink - median) / mad * 0.04
         imarray_shrink = np.clip(imarray_shrink, -1.0, 1.0)
+        
+        if num_colors == 1:
+            imarray_shrink = np.array([imarray_shrink[:,:,0],imarray_shrink[:,:,0],imarray_shrink[:,:,0]])
+            imarray_shrink = np.moveaxis(imarray_shrink, 0, -1)
         
         AI_dir = ""
         if getattr(sys, 'frozen', False):
@@ -55,6 +59,11 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
 
         background = np.array(model(np.expand_dims(imarray_shrink, axis=0))[0])
         background = background / 0.04 * mad + median
+        
+        if num_colors == 1:
+            background = np.array([background[:,:,0]])
+            background = np.moveaxis(background, 0, -1)
+        
         background = tf.image.resize(background,size=(in_imarray.shape[0],in_imarray.shape[1]),method='gaussian')
               
     

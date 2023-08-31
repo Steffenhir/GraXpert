@@ -298,6 +298,8 @@ class AstroImage:
 
             
     def xisf_imagedata_2_fitsheader(self):
+        commentary_keys = ['HISTORY','COMMENT','']
+        
         bg_pts = []
         for key in self.image_metadata["FITSKeywords"].keys():
             if key.startswith("BG-PTS"):
@@ -306,7 +308,12 @@ class AstroImage:
             for i in range(len(self.image_metadata["FITSKeywords"][key])):
                 value = self.image_metadata["FITSKeywords"][key][i]["value"]
                 comment = self.image_metadata["FITSKeywords"][key][i]["comment"]
-            
+                
+                # Commentary cards have to comments in Fits standard
+                if key in commentary_keys:
+                    if value == "":
+                        value = comment
+                        
                 self.fits_header[key] = (value, comment)
         
         if len(bg_pts) > 0:

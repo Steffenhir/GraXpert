@@ -35,8 +35,10 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
     num_colors = imarray.shape[-1]
     
     if interpolation_type == 'AI':
-        imarray_shrink = tf.image.resize(imarray,size=(256,256))
-        
+        # Shrink and pad to avoid artifacts on borders
+        imarray_shrink = tf.image.resize(imarray,size=(250,250))      
+        imarray_shrink = np.pad(imarray_shrink, ((3,3),(3,3),(0,0)), mode='edge')
+
         median = []
         mad = []
         
@@ -70,6 +72,8 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
             background = np.array([background[:,:,0]])
             background = np.moveaxis(background, 0, -1)
         
+        # Slice to unpadded size of shrinked image, then resize to original size
+        background = background[3:-3,3:-3,:]
         background = tf.image.resize(background,size=(in_imarray.shape[0],in_imarray.shape[1]),method='gaussian')
               
     

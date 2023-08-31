@@ -154,11 +154,13 @@ def app_state_2_fitsheader(app, app_state, fits_header):
     prefs = app_state_2_prefs(prefs, app_state, app)
     fits_header["INTP-OPT"] = prefs["interpol_type_option"]
     fits_header["SMOOTHING"] = prefs["smoothing_option"]
-    fits_header["SAMPLE-SIZE"] = prefs["sample_size"]
-    fits_header["RBF-KERNEL"] = prefs["RBF_kernel"]
-    fits_header["SPLINE-ORDER"] = prefs["spline_order"]
     fits_header["CORR-TYPE"] = prefs["corr_type"]
-    fits_header["BG-PTS"] = str(prefs["background_points"])
+    
+    if prefs["interpol_type_option"] != "AI": 
+        fits_header["SAMPLE-SIZE"] = prefs["sample_size"]
+        fits_header["RBF-KERNEL"] = prefs["RBF_kernel"]
+        fits_header["SPLINE-ORDER"] = prefs["spline_order"]
+        fits_header["BG-PTS"] = str(prefs["background_points"])
     
     return fits_header
 
@@ -170,10 +172,12 @@ def fitsheader_2_app_state(app, app_state, fits_header):
     if "INTP-OPT" in fits_header.keys():
         app.interpol_type.set(fits_header["INTP-OPT"])
         app.smoothing_slider.set(fits_header["SMOOTHING"])
-        app.help_panel.sample_size_slider.set(fits_header["SAMPLE-SIZE"])
-        app.RBF_kernel.set(fits_header["RBF-KERNEL"])
-        app.spline_order.set(fits_header["SPLINE-ORDER"])
         app.corr_type.set(fits_header["CORR-TYPE"])
+        
+        if fits_header["INTP-OPT"] != "AI":
+            app.help_panel.sample_size_slider.set(fits_header["SAMPLE-SIZE"])
+            app.RBF_kernel.set(fits_header["RBF-KERNEL"])
+            app.spline_order.set(fits_header["SPLINE-ORDER"])
     
     return app_state
     

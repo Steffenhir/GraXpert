@@ -2,6 +2,9 @@ import multiprocessing
 
 multiprocessing.freeze_support()
 
+import sys,os
+sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+
 from graxpert.mp_logging import configure_logging, initialize_logging, shutdown_logging
 
 configure_logging()

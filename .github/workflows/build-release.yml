@@ -30,6 +30,10 @@ jobs:
         run: |
           pyinstaller \
           ./GraXpert-linux.spec \
+      - name: make executable
+        run: |
+          chmod u+x \
+          ./GraXpert-linux \
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:

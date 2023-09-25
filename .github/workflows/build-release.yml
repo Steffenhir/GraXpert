@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v3
       - name: install dependencies
         run: |
-          pip install setuptools wheel pyinstaller==5.6.2 && \
+          pip install setuptools wheel pyinstaller && \
           pip install -r requirements.txt
       - name: patch version
         run: |
@@ -30,6 +30,10 @@ jobs:
         run: |
           pyinstaller \
           ./GraXpert-linux.spec \
+      - name: make executable
+        run: |
+          chmod u+x \
+          ./dist/GraXpert-linux \
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -48,7 +52,7 @@ jobs:
         uses: actions/checkout@v3
       - name: install dependencies
         run: |
-          pip install setuptools wheel pyinstaller==5.6.2 && \
+          pip install setuptools wheel pyinstaller && \
           pip install -r requirements.txt
       - name: patch version
         run: |
@@ -162,7 +166,7 @@ jobs:
           retention-days: 5
 
   build-macos-x86_64:
-    runs-on: macos-10.15
+    runs-on: macos-11
     steps:
       - name: setup python
         run: brew install python-tk@3.10
@@ -170,7 +174,7 @@ jobs:
         uses: actions/checkout@v3
       - name: install dependencies
         run: |
-          pip3 install setuptools wheel pyinstaller==5.6.2 && \
+          pip3 install setuptools wheel pyinstaller && \
           pip3 install -r requirements.txt
       - name: patch version
         run: |

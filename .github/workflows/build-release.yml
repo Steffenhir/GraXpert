@@ -30,6 +30,10 @@ jobs:
         run: |
           pyinstaller \
           ./GraXpert-linux.spec \
+      - name: make executable
+        run: |
+          chmod u+x \
+          ./dist/GraXpert-linux \
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -162,7 +166,7 @@ jobs:
           retention-days: 5
 
   build-macos-x86_64:
-    runs-on: macos-10.15
+    runs-on: macos-11
     steps:
       - name: setup python
         run: brew install python-tk@3.10

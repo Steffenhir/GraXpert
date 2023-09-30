@@ -24,7 +24,7 @@ from graxpert.radialbasisinterpolation import RadialBasisInterpolation
 
 
 def extract_background(in_imarray, background_points, interpolation_type, smoothing, 
-                       downscale_factor, sample_size, RBF_kernel, spline_order, corr_type):
+                       downscale_factor, sample_size, RBF_kernel, spline_order, corr_type, AI_dir):
     
     shm_imarray = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
     shm_background = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
@@ -53,12 +53,6 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         if num_colors == 1:
             imarray_shrink = np.array([imarray_shrink[:,:,0],imarray_shrink[:,:,0],imarray_shrink[:,:,0]])
             imarray_shrink = np.moveaxis(imarray_shrink, 0, -1)
-        
-        AI_dir = ""
-        if getattr(sys, 'frozen', False):
-            AI_dir = os.path.join(os.path.dirname(sys.executable), 'bg_model')
-        else:
-            AI_dir = os.path.join(os.path.dirname(__file__), '../bg_model')
             
         model = tf.keras.models.load_model(AI_dir)
 

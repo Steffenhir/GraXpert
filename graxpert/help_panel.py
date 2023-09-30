@@ -272,8 +272,25 @@ class Help_Panel():
         self.spline_order_menu.grid(column=0, row=10, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         
+        
+        def AI_directory_clicked():
+            AI_directory = tk.filedialog.askdirectory(
+                initialdir = self.app.prefs["AI_directory"]
+                )
+            
+            if AI_directory != "":
+                self.app.prefs["AI_directory"] = AI_directory
+                
+        self.AI_directory_button = ttk.Button(self.advanced_panel_window, 
+                         text=_("Select AI directory"),
+                         command=AI_directory_clicked)
+        
+        self.AI_directory_button.grid(column=0, row=11, pady=(30*scaling,5*scaling), padx=(40,30), sticky="ews")
+        
+               
+        
         text = tk.Message(self.advanced_panel_window, text=_("Correction"), width=240 * scaling, font=heading_font2, anchor="center")
-        text.grid(column=0, row=11, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+        text.grid(column=0, row=12, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
         
         
         self.app.corr_types = ["Subtraction", "Division"]
@@ -283,14 +300,14 @@ class Help_Panel():
             self.app.corr_type.set(self.app.prefs["corr_type"])
 
         self.corr_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.corr_type, self.app.corr_type.get(), *self.app.corr_types)
-        self.corr_menu.grid(column=0, row=12, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
+        self.corr_menu.grid(column=0, row=13, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         
         text = tk.Message(self.advanced_panel_window, text=_("Interface"), width=240 * scaling, font=heading_font2, anchor="center")
-        text.grid(column=0, row=13, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
+        text.grid(column=0, row=14, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
         
         text = tk.Message(self.advanced_panel_window, text=_("Language"), width=240*scaling, anchor="center")
-        text.grid(column=0, row=14, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
+        text.grid(column=0, row=15, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
     
         def lang_change(lang):
             messagebox.showerror("", _("Please restart the program to change the language."))
@@ -304,7 +321,7 @@ class Help_Panel():
             self.app.lang.set("English")
 
         self.lang_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.lang, self.app.lang.get(), *self.app.langs, command=lang_change)
-        self.lang_menu.grid(column=0, row=15, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
+        self.lang_menu.grid(column=0, row=16, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         
         def scaling_change():
@@ -317,7 +334,7 @@ class Help_Panel():
         
         
         self.scaling_slider = Slider(self.advanced_panel_window, self.app.scaling, "Scaling", 0.5, 2, 1, scaling, scaling_change)
-        self.scaling_slider.grid(column=0, row=16, pady=(10*scaling,10*scaling), padx=(40,30), sticky="ew")
+        self.scaling_slider.grid(column=0, row=17, pady=(10*scaling,10*scaling), padx=(40,30), sticky="ew")
         
         
         

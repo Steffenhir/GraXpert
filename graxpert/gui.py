@@ -663,7 +663,7 @@ class Application(tk.Frame):
                 self.interpol_type.get(),self.smoothing.get(),
                 downscale_factor, self.sample_size.get(),
                 self.RBF_kernel.get(),self.spline_order.get(),
-                self.corr_type.get()
+                self.corr_type.get(), self.prefs["AI_directory"]
                 ))
     
             self.images["Processed"] = AstroImage(self.stretch_option_current, self.saturation)

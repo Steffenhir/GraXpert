@@ -337,3 +337,6 @@ msgstr "Skalierung"
 
 msgid "Please restart the program to apply the changes to UI scaling."
 msgstr "Bitte das Programm neu starten, um die Änderungen an der Nutzeroberflächenskalierung anzuwenden."
+
+msgid "Select AI directory"
+msgstr "AI Verzeichnis auswählen"

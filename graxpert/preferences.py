@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys
 import shutil
 from datetime import datetime
 from typing import AnyStr, List, TypedDict
@@ -29,6 +30,7 @@ class Prefs(TypedDict):
     lang: AnyStr
     corr_type: AnyStr
     scaling: float
+    AI_directory: AnyStr
 
 DEFAULT_PREFS: Prefs = {
     "working_dir": os.getcwd(),
@@ -49,7 +51,8 @@ DEFAULT_PREFS: Prefs = {
     "spline_order": 3,
     "lang": None,
     "corr_type": "Subtraction",
-    "scaling": 1.0
+    "scaling": 1.0,
+    "AI_directory": os.path.join(os.path.dirname(sys.executable), 'bg_model')
 }
 
 
@@ -119,6 +122,8 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["corr_type"] = json["corr_type"]
     if "scaling" in json:
         prefs["scaling"] = json["scaling"]
+    if "AI_dir" in json:
+        prefs["AI_directory"] = json["AI_directory"]
     return prefs
 
 

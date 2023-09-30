@@ -311,8 +311,23 @@ msgstr ""
 "Processed: bearbeitetes Bild \n"
 "Background: Hintergrundmodell"
 
+msgid "This is a Beta release!"
+msgstr "Dies ist eine Beta Version!"
+
+msgid "New official release available!"
+msgstr "Neue offizielle Version verfügbar!"
+
+msgid "New version available!"
+msgstr "Neue Version verfügbar!"
+
 msgid "A newer version of GraXpert is available at"
 msgstr "Eine neuere Version von GraXpert ist verfügbar unter"
+
+msgid "This Beta version is deprecated. A newer official release of GraXpert is available at"
+msgstr "Diese Beta Version is veraltet. Eine neue offizielle Version ist ist verfügbar unter"
+
+msgid "Please note that this is a Beta release of GraXpert. You will be notified when a newer official version is available."
+msgstr "Bitte beachten Sie, dass dies eine Beta Version von GraXpert ist. Sie werden benachrichtigt, sobald eine neuere offizielle Version verfügbar ist."
 
 msgid "Interface"
 msgstr "Nutzeroberfläche"

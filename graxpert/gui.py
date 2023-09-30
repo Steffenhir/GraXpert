@@ -156,7 +156,13 @@ class Application(tk.Frame):
         self.master.bind("<Control-z>", self.undo)                     # undo
         self.master.bind("<Control-y>", self.redo)                     # redo
         self.master.bind("<Command-z>", self.undo)                     # undo on macs
-        self.master.bind("<Command-y>", self.redo)                     # redo on macs
+        self.master.bind("<Command-y>", self.redo)                    # redo on macs
+        self.master.bind("<Control-l>", self.menu_open_clicked)
+        self.master.bind("<Control-c>", self.calculate)
+        self.master.bind("<Control-s>", self.save_image)
+        self.master.bind("<Command-l>", self.menu_open_clicked)
+        self.master.bind("<Command-c>", self.calculate)
+        self.master.bind("<Command-s>", self.save_image)
         
         
         #Side menu
@@ -503,7 +509,7 @@ class Application(tk.Frame):
         self.redraw_image()
 
    
-    def save_image(self):
+    def save_image(self, event=None):
        
        
        if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
@@ -625,7 +631,7 @@ class Application(tk.Frame):
             self.cmd.execute()
             self.redraw_image()
     
-    def calculate(self):
+    def calculate(self, event=None):
 
         if self.images["Original"] is None:
             messagebox.showerror("Error", _("Please load your picture first."))

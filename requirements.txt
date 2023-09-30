@@ -8,5 +8,6 @@ scipy
 screeninfo
 xisf
 requests
-tensorflow
+tensorflow == 2.13.1
 ml_dtypes
+numpy

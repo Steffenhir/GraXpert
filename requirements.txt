@@ -9,3 +9,4 @@ screeninfo
 xisf
 requests
 tensorflow
+ml_dtypes

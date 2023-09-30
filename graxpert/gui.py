@@ -654,35 +654,40 @@ class Application(tk.Frame):
         
         if(self.interpol_type.get() == "Kriging" or self.interpol_type.get() == "RBF"):
             downscale_factor = 4
-
-        self.images["Background"] = AstroImage(self.stretch_option_current, self.saturation)
-        self.images["Background"].set_from_array(background_extraction.extract_background(
-            imarray,np.array(background_points),
-            self.interpol_type.get(),self.smoothing.get(),
-            downscale_factor, self.sample_size.get(),
-            self.RBF_kernel.get(),self.spline_order.get(),
-            self.corr_type.get()
-            ))
-
-        self.images["Processed"] = AstroImage(self.stretch_option_current, self.saturation)
-        self.images["Processed"].set_from_array(imarray)
         
-        # Update fits header and metadata
-        background_mean = np.mean(self.images["Background"].img_array)
-        self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
-        self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
         
-        self.images["Processed"].copy_metadata(self.images["Original"])
-        self.images["Background"].copy_metadata(self.images["Original"])
-
-        all_images = [self.images["Original"].img_array, self.images["Processed"].img_array, self.images["Background"].img_array]
-        stretches = stretch_all(all_images, self.images["Original"].get_stretch())
-        self.images["Original"].update_display_from_array(stretches[0])
-        self.images["Processed"].update_display_from_array(stretches[1])
-        self.images["Background"].update_display_from_array(stretches[2])
-        
-        self.display_type.set("Processed")
-        self.redraw_image()
+        try:
+            self.images["Background"] = AstroImage(self.stretch_option_current, self.saturation)
+            self.images["Background"].set_from_array(background_extraction.extract_background(
+                imarray,np.array(background_points),
+                self.interpol_type.get(),self.smoothing.get(),
+                downscale_factor, self.sample_size.get(),
+                self.RBF_kernel.get(),self.spline_order.get(),
+                self.corr_type.get()
+                ))
+    
+            self.images["Processed"] = AstroImage(self.stretch_option_current, self.saturation)
+            self.images["Processed"].set_from_array(imarray)
+            
+            # Update fits header and metadata
+            background_mean = np.mean(self.images["Background"].img_array)
+            self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
+            self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
+            
+            self.images["Processed"].copy_metadata(self.images["Original"])
+            self.images["Background"].copy_metadata(self.images["Original"])
+    
+            all_images = [self.images["Original"].img_array, self.images["Processed"].img_array, self.images["Background"].img_array]
+            stretches = stretch_all(all_images, self.images["Original"].get_stretch())
+            self.images["Original"].update_display_from_array(stretches[0])
+            self.images["Processed"].update_display_from_array(stretches[1])
+            self.images["Background"].update_display_from_array(stretches[2])
+            
+            self.display_type.set("Processed")
+            self.redraw_image()
+        except Exception as e:
+            print(e)
+            messagebox.showerror("Error", e)
         
         self.loading_frame.end()
 

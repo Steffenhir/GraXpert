@@ -122,7 +122,7 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["corr_type"] = json["corr_type"]
     if "scaling" in json:
         prefs["scaling"] = json["scaling"]
-    if "AI_dir" in json:
+    if "AI_directory" in json:
         prefs["AI_directory"] = json["AI_directory"]
     return prefs
 

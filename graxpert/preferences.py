@@ -43,7 +43,7 @@ DEFAULT_PREFS: Prefs = {
     "saturation": 1.0,
     "bg_tol_option": 1.0,
     "interpol_type_option": "RBF",
-    "smoothing_option": 1.0,
+    "smoothing_option": 0.0,
     "saveas_option": "32 bit Tiff",
     "sample_size": 25,
     "sample_color": 55,

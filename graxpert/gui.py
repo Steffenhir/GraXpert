@@ -1169,52 +1169,52 @@ def scale_img(path, scaling, shape):
     img = img.astype(dtype=np.uint8)
     io.imsave(resource_path(resource_path(path.replace('.png', '-scaled.png'))), img, check_contrast=False)
 
-if __name__ == "__main__":
 
-    logging_thread = initialize_logging()
 
-    root = hdpitk.HdpiTk()
-    scaling = get_scaling_factor()
-    
-    scale_img("./forest-dark/vert-hover.png", scaling*0.9, (20,10))
-    scale_img("./forest-dark/vert-basic.png", scaling*0.9, (20,10))
-    
-    scale_img("./forest-dark/thumb-hor-accent.png", scaling*0.9, (20,8))
-    scale_img("./forest-dark/thumb-hor-hover.png", scaling*0.9, (20,8))
-    scale_img("./forest-dark/thumb-hor-basic.png", scaling*0.9, (20,8))
-    scale_img("./forest-dark/scale-hor.png", scaling, (20,20))
-    
-    scale_img("./forest-dark/check-accent.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-basic.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-hover.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-unsel-accent.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-unsel-basic.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-unsel-hover.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-unsel-pressed.png", scaling*0.8, (20,20))
-    
-    scale_img("./img/gfx_number_1.png", scaling*0.7, (25,25))
-    scale_img("./img/gfx_number_2.png", scaling*0.7, (25,25))
-    scale_img("./img/gfx_number_3.png", scaling*0.7, (25,25))
-    scale_img("./img/gfx_number_4.png", scaling*0.7, (25,25))
-    scale_img("./img/gfx_number_5.png", scaling*0.7, (25,25))
-    scale_img("./img/hourglass.png", scaling, (25,25))
-    
-    root.tk.call("source", resource_path("forest-dark.tcl"))   
-    style = ttk.Style(root)
-    style.theme_use("forest-dark")
-    style.configure("TButton", padding=(8*scaling, 12*scaling, 8*scaling, 12*scaling))
-    style.configure("TMenubutton", padding=(8*scaling, 4*scaling, 4*scaling, 4*scaling))
-    root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
-    root.tk.call('tk', 'scaling', scaling)
-    root.option_add("*TkFDialog*foreground", "black")
-    app = Application(master=root)
-    root.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(logging_thread))
-    root.createcommand("::tk::mac::Quit", lambda: app.on_closing(logging_thread))
+logging_thread = initialize_logging()
 
-    if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
-        import pyi_splash
-        pyi_splash.close()        
-        
-    check_for_new_version()
-    app.mainloop()
+root = hdpitk.HdpiTk()
+scaling = get_scaling_factor()
+
+scale_img("./forest-dark/vert-hover.png", scaling*0.9, (20,10))
+scale_img("./forest-dark/vert-basic.png", scaling*0.9, (20,10))
+
+scale_img("./forest-dark/thumb-hor-accent.png", scaling*0.9, (20,8))
+scale_img("./forest-dark/thumb-hor-hover.png", scaling*0.9, (20,8))
+scale_img("./forest-dark/thumb-hor-basic.png", scaling*0.9, (20,8))
+scale_img("./forest-dark/scale-hor.png", scaling, (20,20))
+
+scale_img("./forest-dark/check-accent.png", scaling*0.8, (20,20))
+scale_img("./forest-dark/check-basic.png", scaling*0.8, (20,20))
+scale_img("./forest-dark/check-hover.png", scaling*0.8, (20,20))
+scale_img("./forest-dark/check-unsel-accent.png", scaling*0.8, (20,20))
+scale_img("./forest-dark/check-unsel-basic.png", scaling*0.8, (20,20))
+scale_img("./forest-dark/check-unsel-hover.png", scaling*0.8, (20,20))
+scale_img("./forest-dark/check-unsel-pressed.png", scaling*0.8, (20,20))
+
+scale_img("./img/gfx_number_1.png", scaling*0.7, (25,25))
+scale_img("./img/gfx_number_2.png", scaling*0.7, (25,25))
+scale_img("./img/gfx_number_3.png", scaling*0.7, (25,25))
+scale_img("./img/gfx_number_4.png", scaling*0.7, (25,25))
+scale_img("./img/gfx_number_5.png", scaling*0.7, (25,25))
+scale_img("./img/hourglass.png", scaling, (25,25))
+
+root.tk.call("source", resource_path("forest-dark.tcl"))   
+style = ttk.Style(root)
+style.theme_use("forest-dark")
+style.configure("TButton", padding=(8*scaling, 12*scaling, 8*scaling, 12*scaling))
+style.configure("TMenubutton", padding=(8*scaling, 4*scaling, 4*scaling, 4*scaling))
+root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
+root.tk.call('tk', 'scaling', scaling)
+root.option_add("*TkFDialog*foreground", "black")
+app = Application(master=root)
+root.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(logging_thread))
+root.createcommand("::tk::mac::Quit", lambda: app.on_closing(logging_thread))
+
+if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
+    import pyi_splash
+    pyi_splash.close()        
+    
+check_for_new_version()
+app.mainloop()
     

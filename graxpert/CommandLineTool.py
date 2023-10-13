@@ -23,7 +23,7 @@ class CommandLineTool:
             "AI",0.0,
             1, 50,
             "RBF",0,
-            "Subtraction", AIDir
+            self.args.correction, AIDir
             ))
         
         

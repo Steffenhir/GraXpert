@@ -9,9 +9,9 @@ class CommandLineTool:
         self.args = args
     
     def execute(self):
-        astroImage = AstroImage(update_display = False)
+        astroImage = AstroImage(do_update_display = False)
         astroImage.set_from_file(self.args.filename)
-        processedAstroImage = AstroImage(update_display = False)
+        processedAstroImage = AstroImage(do_update_display = False)
         
         prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
         prefs = load_preferences(prefs_filename)

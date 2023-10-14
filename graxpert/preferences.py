@@ -30,7 +30,7 @@ class Prefs(TypedDict):
     lang: AnyStr
     corr_type: AnyStr
     scaling: float
-    AI_directory: AnyStr
+    ai_version: AnyStr
 
 DEFAULT_PREFS: Prefs = {
     "working_dir": os.getcwd(),
@@ -52,7 +52,7 @@ DEFAULT_PREFS: Prefs = {
     "lang": None,
     "corr_type": "Subtraction",
     "scaling": 1.0,
-    "AI_directory": os.path.join(os.path.dirname(sys.executable), 'bg_model')
+    "ai_version": None
 }
 
 
@@ -74,6 +74,7 @@ def app_state_2_prefs(prefs: Prefs, app_state: AppState, app) -> Prefs:
         prefs["corr_type"] = app.corr_type.get()
         prefs["bg_flood_selection_option"] = app.flood_select_pts.get()
         prefs["scaling"] = app.scaling.get()
+        prefs["ai_version"] = app.ai_version.get()
     return prefs
 
 
@@ -122,8 +123,8 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["corr_type"] = json["corr_type"]
     if "scaling" in json:
         prefs["scaling"] = json["scaling"]
-    if "AI_directory" in json:
-        prefs["AI_directory"] = json["AI_directory"]
+    if "ai_version" in json:
+        prefs["ai_version"] = json["ai_version"]
     return prefs
 
 
@@ -185,4 +186,3 @@ def fitsheader_2_app_state(app, app_state, fits_header):
             app.spline_order.set(fits_header["SPLINE-ORDER"])
     
     return app_state
-    

@@ -1,13 +1,14 @@
 appdirs
 astropy
 hdpitkinter
+minio
+ml_dtypes
+numpy
 Pillow
 pykrige
+requests
 scikit-image == 0.21.0
 scipy
 screeninfo
-xisf
-requests
 tensorflow == 2.13.1
-ml_dtypes
-numpy
+xisf

@@ -1,8 +1,4 @@
-import multiprocessing
-
-multiprocessing.freeze_support()
-
-from graxpert.mp_logging import configure_logging, initialize_logging, shutdown_logging
+from graxpert.mp_logging import configure_logging, initialize_logging, shutdown_logging, logfile_name
 
 configure_logging()
 
@@ -41,6 +37,8 @@ from graxpert.preferences import (app_state_2_prefs, load_preferences,
 from graxpert.stretch import stretch_all
 from graxpert.ui_scaling import get_scaling_factor
 from graxpert.version import release, version, check_for_new_version
+from graxpert.ai_model_handling import (validate_local_version, download_version,
+                                        ai_model_path_from_version)
 
 
 def resource_path(relative_path):
@@ -302,7 +300,7 @@ class Application(tk.Frame):
         self.intp_type_text.config(width=500)
         self.intp_type_text.grid(column=0, row=13, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
-        self.interpol_options = ["RBF", "Splines", "Kriging","AI"]
+        self.interpol_options = ["RBF", "Splines", "Kriging", "AI"]
         self.interpol_type = tk.StringVar()
         self.interpol_type.set(self.interpol_options[0])
         if "interpol_type_option" in self.prefs:
@@ -652,6 +650,10 @@ class Application(tk.Frame):
             messagebox.showerror("Error", _("Please select at least 16 background points with left click for the Splines method."))
             return
         
+        if(self.interpol_type.get() == 'AI'):
+            if not self.validate_ai_installation():
+                return
+        
         self.loading_frame.start()
         
         imarray = np.copy(self.images["Original"].img_array)
@@ -669,7 +671,7 @@ class Application(tk.Frame):
                 self.interpol_type.get(),self.smoothing.get(),
                 downscale_factor, self.sample_size.get(),
                 self.RBF_kernel.get(),self.spline_order.get(),
-                self.corr_type.get(), self.prefs["AI_directory"]
+                self.corr_type.get(), ai_model_path_from_version(self.ai_version.get())
                 ))
     
             self.images["Processed"] = AstroImage(self.stretch_option_current, self.saturation)
@@ -692,8 +694,8 @@ class Application(tk.Frame):
             self.display_type.set("Processed")
             self.redraw_image()
         except Exception as e:
-            print(e)
-            messagebox.showerror("Error", e)
+            logging.exception(e)
+            messagebox.showerror("Error", _("An error occured during background calculation. Please see the log at {}.".format(logfile_name)))
         
         self.loading_frame.end()
 
@@ -1148,6 +1150,31 @@ class Application(tk.Frame):
         self.redraw_image()
         self.loading_frame.end()
     
+    def validate_ai_installation(self):
+        if self.ai_version is None or self.ai_version.get() == "None":
+            messagebox.showerror("Error", _("No AI-Model selected. Please select one from the Advanced panel on the right."))
+            return False
+        
+        if not validate_local_version(self.ai_version.get()):
+            if not messagebox.askyesno(_("Install AI-Model?"), _("Selected AI-Model is not installed. Should I download it now?")):
+                return False
+            else:
+                frame = ttk.Frame(width=400, height=200)
+                frame.place(in_=self.master, anchor="c", relx=.5, rely=.5)
+                label = tk.Message(frame, text=_("Progress:"), width=280, font="Verdana 11 bold", anchor="center")
+                label.pack()
+                pb = ttk.Progressbar(frame, orient='horizontal', mode='determinate', length=280)
+                pb.pack()
+                frame.update()
+                def callback(p):
+                    pb["value"] = p * 100
+                    pb.update()
+                download_version(self.ai_version.get(), progress=callback)
+                pb.pack_forget()
+                frame.update()
+                frame.destroy()
+        return True
+    
     def on_closing(self, logging_thread):
         
 
@@ -1217,4 +1244,3 @@ if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
     
 check_for_new_version()
 app.mainloop()
-    

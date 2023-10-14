@@ -93,27 +93,39 @@ def cleanup_orphaned_local_versions(orphaned_local_versions):
 
 
 def download_version(remote_version, progress=None):
-    remote_versions = list_remote_versions()
-    for r in remote_versions:
-        if remote_version == r["version"]:
-            remote_version = r
-            break
+    try:
+        remote_versions = list_remote_versions()
+        for r in remote_versions:
+            if remote_version == r["version"]:
+                remote_version = r
+                break
 
-    ai_model_dir = os.path.join(ai_models_dir, "{}".format(remote_version["version"]))
-    os.makedirs(ai_model_dir, exist_ok=True)
+        ai_model_dir = os.path.join(
+            ai_models_dir, "{}".format(remote_version["version"])
+        )
+        os.makedirs(ai_model_dir, exist_ok=True)
 
-    ai_model_file = os.path.join(
-        ai_model_dir, "{}.zip".format(remote_version["version"])
-    )
-    client.fget_object(
-        remote_version["bucket"],
-        remote_version["object"],
-        ai_model_file,
-        progress=Progress(callback=progress),
-    )
+        ai_model_file = os.path.join(
+            ai_model_dir, "{}.zip".format(remote_version["version"])
+        )
+        client.fget_object(
+            remote_version["bucket"],
+            remote_version["object"],
+            ai_model_file,
+            progress=Progress(callback=progress),
+        )
 
-    with zipfile.ZipFile(ai_model_file, "r") as zip_ref:
-        zip_ref.extractall(ai_model_dir)
+        with zipfile.ZipFile(ai_model_file, "r") as zip_ref:
+            zip_ref.extractall(ai_model_dir)
+
+        os.remove(ai_model_file)
+    except Exception as e:
+        # try to delete (rollback) ai_model_dir in case of errors
+        logging.exception(e)
+        try:
+            shutil.rmtree(ai_model_dir)
+        except Exception as e2:
+            logging.exception(e2)
 
 
 def validate_local_version(local_version):

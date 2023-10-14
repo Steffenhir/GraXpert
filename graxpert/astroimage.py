@@ -11,7 +11,7 @@ from graxpert.stretch import stretch
 from graxpert.preferences import app_state_2_fitsheader
 
 class AstroImage:
-    def __init__(self, stretch_option, saturation):
+    def __init__(self, stretch_option = None, saturation = None, update_display = True):
         self.img_array = None
         self.img_display = None
         self.img_display_saturated = None
@@ -21,6 +21,7 @@ class AstroImage:
         self.image_metadata = {"FITSKeywords": {}}
         self.stretch_option = stretch_option
         self.saturation = saturation
+        self.update_display = update_display
         self.width = 0
         self.height = 0
         self.roworder = "BOTTOM-UP"
@@ -71,7 +72,10 @@ class AstroImage:
         self.img_array = img_array
         self.width = self.img_array.shape[1]
         self.height = self.img_array.shape[0]
-        self.update_display()
+        
+        if self.update_display:
+            self.update_display()
+        
         return
     
     def set_from_array(self, array):

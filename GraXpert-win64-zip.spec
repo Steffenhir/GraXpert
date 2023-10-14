@@ -4,7 +4,7 @@
 block_cipher = None
 
 
-a = Analysis(['./graxpert/gui.py'],
+a = Analysis(['./graxpert/main.py'],
     pathex=[],
     binaries=[],
     datas=[('./img/*', './img/'), ('./forest-dark.tcl', './'), ('./forest-dark/*', './forest-dark/')],

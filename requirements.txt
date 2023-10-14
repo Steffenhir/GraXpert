@@ -3,7 +3,7 @@ astropy
 hdpitkinter
 Pillow
 pykrige
-scikit-image
+scikit-image == 0.21.0
 scipy
 screeninfo
 xisf

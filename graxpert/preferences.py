@@ -29,6 +29,7 @@ class Prefs(TypedDict):
     lang: AnyStr
     corr_type: AnyStr
     scaling: float
+    ai_version: AnyStr
 
 DEFAULT_PREFS: Prefs = {
     "working_dir": os.getcwd(),
@@ -49,7 +50,8 @@ DEFAULT_PREFS: Prefs = {
     "spline_order": 3,
     "lang": None,
     "corr_type": "Subtraction",
-    "scaling": 1.0
+    "scaling": 1.0,
+    "ai_version": None
 }
 
 
@@ -71,6 +73,7 @@ def app_state_2_prefs(prefs: Prefs, app_state: AppState, app) -> Prefs:
         prefs["corr_type"] = app.corr_type.get()
         prefs["bg_flood_selection_option"] = app.flood_select_pts.get()
         prefs["scaling"] = app.scaling.get()
+        prefs["ai_version"] = app.scaling.get()
     return prefs
 
 
@@ -119,6 +122,8 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["corr_type"] = json["corr_type"]
     if "scaling" in json:
         prefs["scaling"] = json["scaling"]
+    if "ai_version" in json:
+        prefs["ai_version"] = json["ai_version"]
     return prefs
 
 

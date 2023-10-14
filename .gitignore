@@ -1,5 +1,6 @@
 *-scaled.png
 __pycache__
+graxpert/s3_secrets.py
 python-venv
 build
 dist

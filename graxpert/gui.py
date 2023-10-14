@@ -41,6 +41,7 @@ from graxpert.preferences import (app_state_2_prefs, load_preferences,
 from graxpert.stretch import stretch_all
 from graxpert.ui_scaling import get_scaling_factor
 from graxpert.version import release, version, check_for_new_version
+from graxpert.ai_model_handling import validate_local_version, download_version
 
 
 def resource_path(relative_path):
@@ -296,7 +297,7 @@ class Application(tk.Frame):
         self.intp_type_text.config(width=500)
         self.intp_type_text.grid(column=0, row=13, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
-        self.interpol_options = ["RBF", "Splines", "Kriging"]
+        self.interpol_options = ["RBF", "Splines", "Kriging", "AI"]
         self.interpol_type = tk.StringVar()
         self.interpol_type.set(self.interpol_options[0])
         if "interpol_type_option" in self.prefs:
@@ -634,7 +635,7 @@ class Application(tk.Frame):
         background_points = self.cmd.app_state["background_points"]
         
         #Error messages if not enough points
-        if(len(background_points) == 0):
+        if(len(background_points) == 0 and self.interpol_type.get() != 'AI'):
             messagebox.showerror("Error", _("Please select background points with left click."))
             return
         
@@ -645,6 +646,10 @@ class Application(tk.Frame):
         if(len(background_points) < 16 and self.interpol_type.get() == "Splines"):
             messagebox.showerror("Error", _("Please select at least 16 background points with left click for the Splines method."))
             return
+        
+        if(self.interpol_type.get() == 'AI'):
+            if not self.validate_ai_installation():
+                return
         
         self.loading_frame.start()
         
@@ -1136,6 +1141,31 @@ class Application(tk.Frame):
         self.loading_frame.start()
         self.redraw_image()
         self.loading_frame.end()
+    
+    def validate_ai_installation(self):
+        print(self.ai_version.get())
+        if self.ai_version is None or self.ai_version.get() == "None":
+            messagebox.showerror("Error", _("No AI-Model selected. Please select one from the Advanced panel on the right."))
+            return False
+        
+        if not validate_local_version(self.ai_version.get()):
+            if not messagebox.askyesno(_("Install AI-Model?"), _("Selected AI-Model is not installed. Should I download it now?")):
+                return False
+            else:
+                frame = ttk.Frame(width=400, height=200)
+                frame.place(in_=self.master, anchor="c", relx=.5, rely=.5)
+                label = tk.Message(frame, text=_("Progress:"), width=280, font="Verdana 11 bold", anchor="center")
+                label.pack()
+                pb = ttk.Progressbar(frame, orient='horizontal', mode='determinate', length=280)
+                pb.pack()
+                frame.update()
+                def callback(p):
+                    pb["value"] = p * 100
+                    pb.update()
+                download_version(self.ai_version.get(), progress=callback)
+                pb.pack_forget()
+                frame.update()
+                frame.destroy()
     
     def on_closing(self, logging_thread):
         

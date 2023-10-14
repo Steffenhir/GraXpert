@@ -2,16 +2,17 @@ import sys
 import tkinter as tk
 from cProfile import label
 from os import path
-from tkinter import CENTER, ttk
-from tkinter import messagebox
+from tkinter import CENTER, messagebox, ttk
 
 from numpy import pad
+from packaging import version
 from PIL import Image, ImageTk
 
+from graxpert.ai_model_handling import (list_local_versions,
+                                        list_remote_versions)
 from graxpert.localization import _, lang
-from graxpert.ui_scaling import get_scaling_factor
 from graxpert.slider import Slider
-
+from graxpert.ui_scaling import get_scaling_factor
 
 
 def resource_path(relative_path):
@@ -318,8 +319,29 @@ class Help_Panel():
         
         self.scaling_slider = Slider(self.advanced_panel_window, self.app.scaling, "Scaling", 0.5, 2, 1, scaling, scaling_change)
         self.scaling_slider.grid(column=0, row=16, pady=(10*scaling,10*scaling), padx=(40,30), sticky="ew")
-        
-        
+
+        # -- begin ai-model selection --
+        text = tk.Message(self.advanced_panel_window, text=_("AI-Model"), width=240 * scaling, font=heading_font2, anchor="center")
+        text.grid(column=0, row=17, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
+
+        remote_versions = list_remote_versions()
+        local_versions = list_local_versions()
+        ai_options = set([])
+        ai_options.update([rv["version"] for rv in remote_versions])
+        ai_options.update(set([lv["version"] for lv in local_versions]))
+        ai_options = sorted(ai_options, key=lambda k: version.parse(k))
+
+        self.app.ai_version = tk.StringVar(master)
+        self.app.ai_version.set("None") # default value
+        if "ai_version" in self.app.prefs:
+            self.app.ai_version.set(self.app.prefs["ai_version"])
+        else:
+            ai_options.insert(0, "None")
+
+        self.app.ai_version_options = ttk.OptionMenu(self.advanced_panel_window, self.app.ai_version, ai_options[0], *ai_options)
+        self.app.ai_version_options.grid(column=0, row=18, pady=(10*scaling,10*scaling), padx=(40,30), sticky="ew")
+        # -- end ai-model selection --
+
         
         self.advanced_canvas.create_window((0,0), window=self.advanced_panel_window)
         self.advanced_canvas.configure(yscrollcommand=self.advanced_scrollbar.set)

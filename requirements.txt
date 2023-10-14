@@ -1,10 +1,11 @@
 appdirs
 astropy
 hdpitkinter
+minio
 Pillow
 pykrige
-scikit-image == 0.19.0
-scipy == 1.8.1
+scikit-image == 0.21.0
+scipy
 screeninfo
 xisf
 requests

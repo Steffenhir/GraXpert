@@ -53,6 +53,10 @@ def configure_logging():
     root.handlers = []
     root.addHandler(h)
 
+    h2 = logging.StreamHandler()
+    h2.setFormatter(f)
+    root.addHandler(h2)
+
     # stdout_logger = logging.getLogger("STDOUT")
     sl = StreamToLogger(root, logging.INFO)
     sys.stdout = sl

@@ -15,12 +15,17 @@ class CommandLineTool:
         
         prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
         prefs = load_preferences(prefs_filename)
-        AIDir = prefs["AI_directory"] 
+        
+        AIDir = None
+        if self.args.ai_directory:
+            AIDir = self.args.ai_directory
+        else:
+            AIDir = prefs["AI_directory"] 
         
         processedAstroImage.set_from_array(
             extract_background(
             astroImage.img_array,[],
-            "AI",0.0,
+            "AI",self.args.smoothing,
             1, 50,
             "RBF",0,
             self.args.correction, AIDir

@@ -1,6 +1,19 @@
-import argparse
+import os
 import sys
+
+# ensure sys.stdout and sys.stderr are not None in PyInstaller environments
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w")
+
+from graxpert.mp_logging import configure_logging
+configure_logging()
+
+import argparse
 import multiprocessing
+import sys
+
 
 def main():
     if (len(sys.argv) > 1):
@@ -15,8 +28,6 @@ def main():
         from graxpert.CommandLineTool import CommandLineTool
         clt = CommandLineTool(args)
         clt.execute()
-        
-        
     else:
         import graxpert.gui
 

@@ -1,6 +1,4 @@
-from graxpert.mp_logging import configure_logging, initialize_logging, shutdown_logging, logfile_name
-
-configure_logging()
+from graxpert.mp_logging import initialize_logging, shutdown_logging, logfile_name
 
 import importlib
 import logging
@@ -43,10 +41,8 @@ from graxpert.ai_model_handling import (validate_local_version, download_version
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
-    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
-
+    base_path = getattr(sys, '_MEIPASS', os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
     return os.path.join(base_path, relative_path)
-
 
 
 class Application(tk.Frame):
@@ -1184,6 +1180,7 @@ class Application(tk.Frame):
             logging.exception("error shutting down ProcessPoolExecutor")
         shutdown_logging(logging_thread)
         root.destroy()
+        sys.exit(0)
 
 def scale_img(path, scaling, shape):
     img = io.imread(resource_path(path))
@@ -1199,28 +1196,28 @@ logging_thread = initialize_logging()
 root = hdpitk.HdpiTk()
 scaling = get_scaling_factor()
 
-scale_img("./forest-dark/vert-hover.png", scaling*0.9, (20,10))
-scale_img("./forest-dark/vert-basic.png", scaling*0.9, (20,10))
+scale_img(resource_path("forest-dark/vert-hover.png"), scaling*0.9, (20,10))
+scale_img(resource_path("forest-dark/vert-basic.png"), scaling*0.9, (20,10))
 
-scale_img("./forest-dark/thumb-hor-accent.png", scaling*0.9, (20,8))
-scale_img("./forest-dark/thumb-hor-hover.png", scaling*0.9, (20,8))
-scale_img("./forest-dark/thumb-hor-basic.png", scaling*0.9, (20,8))
-scale_img("./forest-dark/scale-hor.png", scaling, (20,20))
+scale_img(resource_path("forest-dark/thumb-hor-accent.png"), scaling*0.9, (20,8))
+scale_img(resource_path("forest-dark/thumb-hor-hover.png"), scaling*0.9, (20,8))
+scale_img(resource_path("forest-dark/thumb-hor-basic.png"), scaling*0.9, (20,8))
+scale_img(resource_path("forest-dark/scale-hor.png"), scaling, (20,20))
 
-scale_img("./forest-dark/check-accent.png", scaling*0.8, (20,20))
-scale_img("./forest-dark/check-basic.png", scaling*0.8, (20,20))
-scale_img("./forest-dark/check-hover.png", scaling*0.8, (20,20))
-scale_img("./forest-dark/check-unsel-accent.png", scaling*0.8, (20,20))
-scale_img("./forest-dark/check-unsel-basic.png", scaling*0.8, (20,20))
-scale_img("./forest-dark/check-unsel-hover.png", scaling*0.8, (20,20))
-scale_img("./forest-dark/check-unsel-pressed.png", scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-accent.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-basic.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-hover.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-unsel-accent.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-unsel-basic.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-unsel-hover.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-unsel-pressed.png"), scaling*0.8, (20,20))
 
-scale_img("./img/gfx_number_1.png", scaling*0.7, (25,25))
-scale_img("./img/gfx_number_2.png", scaling*0.7, (25,25))
-scale_img("./img/gfx_number_3.png", scaling*0.7, (25,25))
-scale_img("./img/gfx_number_4.png", scaling*0.7, (25,25))
-scale_img("./img/gfx_number_5.png", scaling*0.7, (25,25))
-scale_img("./img/hourglass.png", scaling, (25,25))
+scale_img(resource_path("img/gfx_number_1.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/gfx_number_2.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/gfx_number_3.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/gfx_number_4.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/gfx_number_5.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/hourglass.png"), scaling, (25,25))
 
 root.tk.call("source", resource_path("forest-dark.tcl"))   
 style = ttk.Style(root)

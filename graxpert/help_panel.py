@@ -328,7 +328,7 @@ class Help_Panel():
         ai_options = set([])
         ai_options.update([rv["version"] for rv in remote_versions])
         ai_options.update(set([lv["version"] for lv in local_versions]))
-        ai_options = sorted(ai_options, key=lambda k: version.parse(k))
+        ai_options = sorted(ai_options, key=lambda k: version.parse(k), reverse=True)
 
         self.app.ai_version = tk.StringVar(master)
         self.app.ai_version.set("None") # default value

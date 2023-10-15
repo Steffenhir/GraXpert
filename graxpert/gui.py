@@ -205,6 +205,7 @@ class Application(tk.Frame):
         self.load_image_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Load Image"),
                          command=self.menu_open_clicked,
+                         style="Accent.TButton"
         )
         tt_load = tooltip.Tooltip(self.load_image_button, text=tooltip.load_text)
         self.load_image_button.grid(column=0, row=1, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
@@ -312,7 +313,8 @@ class Application(tk.Frame):
         
         self.calculate_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Calculate Background"),
-                         command=self.calculate)
+                         command=self.calculate,
+                         style="Accent.TButton")
         self.calculate_button.grid(column=0, row=16, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
@@ -331,18 +333,18 @@ class Application(tk.Frame):
         self.saveas_menu.grid(column=0, row=18, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
         
+        self.save_button = ttk.Button(self.bgextr_menu.sub_frame, 
+                         text=_("Save Processed"),
+                         command=self.save_image,
+                         style="Accent.TButton")
+        self.save_button.grid(column=0, row=19, pady=5*scal, padx=15*scal, sticky="news")
+        tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
+        
         self.save_background_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Save Background"),
                          command=self.save_background_image)
-        self.save_background_button.grid(column=0, row=19, pady=5*scal, padx=15*scal, sticky="news")
+        self.save_background_button.grid(column=0, row=20, pady=5*scal, padx=15*scal, sticky="news")
         tt_save_bg = tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
-              
-        
-        self.save_button = ttk.Button(self.bgextr_menu.sub_frame, 
-                         text=_("Save Processed"),
-                         command=self.save_image)
-        self.save_button.grid(column=0, row=20, pady=5*scal, padx=15*scal, sticky="news")
-        tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
 
         self.save_stretched_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Save Stretched & Processed"),
@@ -1223,6 +1225,7 @@ root.tk.call("source", resource_path("forest-dark.tcl"))
 style = ttk.Style(root)
 style.theme_use("forest-dark")
 style.configure("TButton", padding=(8*scaling, 12*scaling, 8*scaling, 12*scaling))
+style.configure("Accent.TButton", padding=(8*scaling, 12*scaling, 8*scaling, 12*scaling))
 style.configure("TMenubutton", padding=(8*scaling, 4*scaling, 4*scaling, 4*scaling))
 root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
 root.tk.call('tk', 'scaling', scaling)

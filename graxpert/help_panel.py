@@ -337,7 +337,12 @@ class Help_Panel():
         else:
             ai_options.insert(0, "None")
 
-        self.app.ai_version_options = ttk.OptionMenu(self.advanced_panel_window, self.app.ai_version, ai_options[0], *ai_options)
+        try:
+            default_idx = ai_options.index(self.app.ai_version.get())
+        except ValueError:
+            default_idx = 0
+        
+        self.app.ai_version_options = ttk.OptionMenu(self.advanced_panel_window, self.app.ai_version, ai_options[default_idx], *ai_options)
         self.app.ai_version_options.grid(column=0, row=18, pady=(10*scaling,10*scaling), padx=(40,30), sticky="ew")
         # -- end ai-model selection --
 

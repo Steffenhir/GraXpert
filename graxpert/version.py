@@ -9,10 +9,10 @@ version = "SNAPSHOT"
 
 def check_for_new_version():
     try:
-        response = requests.get("https://api.github.com/repos/Steffenhir/GraXpert/releases/latest")
+        response = requests.get("https://api.github.com/repos/Steffenhir/GraXpert/releases/latest", timeout=2.5)
         latest_release_date = datetime.strptime(response.json()["created_at"], "%Y-%m-%dT%H:%M:%SZ")
         
-        response_current = requests.get("https://api.github.com/repos/Steffenhir/GraXpert/releases/tags/" + version)
+        response_current = requests.get("https://api.github.com/repos/Steffenhir/GraXpert/releases/tags/" + version, timeout=2.5)
         current_release_date = datetime.strptime(response_current.json()["created_at"], "%Y-%m-%dT%H:%M:%SZ")
         current_is_beta = response_current.json()["prerelease"]
         

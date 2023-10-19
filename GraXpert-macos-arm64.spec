@@ -32,7 +32,7 @@ exe = EXE(pyz,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch='x86_64',
+    target_arch='arm64',
     codesign_identity=None,
     entitlements_file=None , icon='./img/Icon.ico')
 
@@ -52,7 +52,7 @@ app = BUNDLE(coll,
             icon='./img/Icon.ico',
             bundle_identifier=None,
             info_plist={
-                'CFBundleShortVersionString': 'RELEASE (SNAPSHOT)',
+                'CFBundleShortVersionString': 'Beta-Release (v1.0.6cAI)',
                 'NSHighResolutionCapable': 'True'
             }
             )

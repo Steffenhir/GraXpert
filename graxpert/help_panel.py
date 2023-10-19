@@ -272,7 +272,6 @@ class Help_Panel():
         self.spline_order_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.spline_order, self.app.spline_order.get(), *self.app.spline_orders)
         self.spline_order_menu.grid(column=0, row=10, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
-        
         text = tk.Message(self.advanced_panel_window, text=_("Correction"), width=240 * scaling, font=heading_font2, anchor="center")
         text.grid(column=0, row=11, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
         
@@ -329,7 +328,7 @@ class Help_Panel():
         ai_options = set([])
         ai_options.update([rv["version"] for rv in remote_versions])
         ai_options.update(set([lv["version"] for lv in local_versions]))
-        ai_options = sorted(ai_options, key=lambda k: version.parse(k))
+        ai_options = sorted(ai_options, key=lambda k: version.parse(k), reverse=True)
 
         self.app.ai_version = tk.StringVar(master)
         self.app.ai_version.set("None") # default value
@@ -338,7 +337,12 @@ class Help_Panel():
         else:
             ai_options.insert(0, "None")
 
-        self.app.ai_version_options = ttk.OptionMenu(self.advanced_panel_window, self.app.ai_version, ai_options[0], *ai_options)
+        try:
+            default_idx = ai_options.index(self.app.ai_version.get())
+        except ValueError:
+            default_idx = 0
+        
+        self.app.ai_version_options = ttk.OptionMenu(self.advanced_panel_window, self.app.ai_version, ai_options[default_idx], *ai_options)
         self.app.ai_version_options.grid(column=0, row=18, pady=(10*scaling,10*scaling), padx=(40,30), sticky="ew")
         # -- end ai-model selection --
 
@@ -401,6 +405,3 @@ class Help_Panel():
         self.master.update()
         # force update of label to prevent white background on mac
         self.advanced_label.configure(background="#254f69")
-        
-
-

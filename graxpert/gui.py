@@ -1,10 +1,4 @@
-import multiprocessing
-
-multiprocessing.freeze_support()
-
-from graxpert.mp_logging import configure_logging, initialize_logging, shutdown_logging
-
-configure_logging()
+from graxpert.mp_logging import initialize_logging, shutdown_logging, logfile_name
 
 import importlib
 import logging
@@ -41,19 +35,14 @@ from graxpert.preferences import (app_state_2_prefs, load_preferences,
 from graxpert.stretch import stretch_all
 from graxpert.ui_scaling import get_scaling_factor
 from graxpert.version import release, version, check_for_new_version
-from graxpert.ai_model_handling import validate_local_version, download_version
+from graxpert.ai_model_handling import (validate_local_version, download_version,
+                                        ai_model_path_from_version)
 
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
-    
-    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        base_path = os.path.abspath(os.path.dirname(__file__))
-    else:
-        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
-
+    base_path = getattr(sys, '_MEIPASS', os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
     return os.path.join(base_path, relative_path)
-
 
 
 class Application(tk.Frame):
@@ -157,7 +146,13 @@ class Application(tk.Frame):
         self.master.bind("<Control-z>", self.undo)                     # undo
         self.master.bind("<Control-y>", self.redo)                     # redo
         self.master.bind("<Command-z>", self.undo)                     # undo on macs
-        self.master.bind("<Command-y>", self.redo)                     # redo on macs
+        self.master.bind("<Command-y>", self.redo)                    # redo on macs
+        self.master.bind("<Control-l>", self.menu_open_clicked)
+        self.master.bind("<Control-c>", self.calculate)
+        self.master.bind("<Control-s>", self.save_image)
+        self.master.bind("<Command-l>", self.menu_open_clicked)
+        self.master.bind("<Command-c>", self.calculate)
+        self.master.bind("<Command-s>", self.save_image)
         
         
         #Side menu
@@ -210,6 +205,7 @@ class Application(tk.Frame):
         self.load_image_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Load Image"),
                          command=self.menu_open_clicked,
+                         style="Accent.TButton"
         )
         tt_load = tooltip.Tooltip(self.load_image_button, text=tooltip.load_text)
         self.load_image_button.grid(column=0, row=1, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
@@ -317,7 +313,8 @@ class Application(tk.Frame):
         
         self.calculate_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Calculate Background"),
-                         command=self.calculate)
+                         command=self.calculate,
+                         style="Accent.TButton")
         self.calculate_button.grid(column=0, row=16, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
@@ -336,18 +333,18 @@ class Application(tk.Frame):
         self.saveas_menu.grid(column=0, row=18, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
         
+        self.save_button = ttk.Button(self.bgextr_menu.sub_frame, 
+                         text=_("Save Processed"),
+                         command=self.save_image,
+                         style="Accent.TButton")
+        self.save_button.grid(column=0, row=19, pady=5*scal, padx=15*scal, sticky="news")
+        tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
+        
         self.save_background_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Save Background"),
                          command=self.save_background_image)
-        self.save_background_button.grid(column=0, row=19, pady=5*scal, padx=15*scal, sticky="news")
+        self.save_background_button.grid(column=0, row=20, pady=5*scal, padx=15*scal, sticky="news")
         tt_save_bg = tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
-              
-        
-        self.save_button = ttk.Button(self.bgextr_menu.sub_frame, 
-                         text=_("Save Processed"),
-                         command=self.save_image)
-        self.save_button.grid(column=0, row=20, pady=5*scal, padx=15*scal, sticky="news")
-        tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
 
         self.save_stretched_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Save Stretched & Processed"),
@@ -504,7 +501,7 @@ class Application(tk.Frame):
         self.redraw_image()
 
    
-    def save_image(self):
+    def save_image(self, event=None):
        
        
        if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
@@ -626,7 +623,7 @@ class Application(tk.Frame):
             self.cmd.execute()
             self.redraw_image()
     
-    def calculate(self):
+    def calculate(self, event=None):
 
         if self.images["Original"] is None:
             messagebox.showerror("Error", _("Please load your picture first."))
@@ -659,35 +656,40 @@ class Application(tk.Frame):
         
         if(self.interpol_type.get() == "Kriging" or self.interpol_type.get() == "RBF"):
             downscale_factor = 4
-
-        self.images["Background"] = AstroImage(self.stretch_option_current, self.saturation)
-        self.images["Background"].set_from_array(background_extraction.extract_background(
-            imarray,np.array(background_points),
-            self.interpol_type.get(),self.smoothing.get(),
-            downscale_factor, self.sample_size.get(),
-            self.RBF_kernel.get(),self.spline_order.get(),
-            self.corr_type.get()
-            ))
-
-        self.images["Processed"] = AstroImage(self.stretch_option_current, self.saturation)
-        self.images["Processed"].set_from_array(imarray)
         
-        # Update fits header and metadata
-        background_mean = np.mean(self.images["Background"].img_array)
-        self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
-        self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
         
-        self.images["Processed"].copy_metadata(self.images["Original"])
-        self.images["Background"].copy_metadata(self.images["Original"])
-
-        all_images = [self.images["Original"].img_array, self.images["Processed"].img_array, self.images["Background"].img_array]
-        stretches = stretch_all(all_images, self.images["Original"].get_stretch())
-        self.images["Original"].update_display_from_array(stretches[0])
-        self.images["Processed"].update_display_from_array(stretches[1])
-        self.images["Background"].update_display_from_array(stretches[2])
-        
-        self.display_type.set("Processed")
-        self.redraw_image()
+        try:
+            self.images["Background"] = AstroImage(self.stretch_option_current, self.saturation)
+            self.images["Background"].set_from_array(background_extraction.extract_background(
+                imarray,np.array(background_points),
+                self.interpol_type.get(),self.smoothing.get(),
+                downscale_factor, self.sample_size.get(),
+                self.RBF_kernel.get(),self.spline_order.get(),
+                self.corr_type.get(), ai_model_path_from_version(self.ai_version.get())
+                ))
+    
+            self.images["Processed"] = AstroImage(self.stretch_option_current, self.saturation)
+            self.images["Processed"].set_from_array(imarray)
+            
+            # Update fits header and metadata
+            background_mean = np.mean(self.images["Background"].img_array)
+            self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
+            self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
+            
+            self.images["Processed"].copy_metadata(self.images["Original"])
+            self.images["Background"].copy_metadata(self.images["Original"])
+    
+            all_images = [self.images["Original"].img_array, self.images["Processed"].img_array, self.images["Background"].img_array]
+            stretches = stretch_all(all_images, self.images["Original"].get_stretch())
+            self.images["Original"].update_display_from_array(stretches[0])
+            self.images["Processed"].update_display_from_array(stretches[1])
+            self.images["Background"].update_display_from_array(stretches[2])
+            
+            self.display_type.set("Processed")
+            self.redraw_image()
+        except Exception as e:
+            logging.exception(e)
+            messagebox.showerror("Error", _("An error occured during background calculation. Please see the log at {}.".format(logfile_name)))
         
         self.loading_frame.end()
 
@@ -1143,7 +1145,6 @@ class Application(tk.Frame):
         self.loading_frame.end()
     
     def validate_ai_installation(self):
-        print(self.ai_version.get())
         if self.ai_version is None or self.ai_version.get() == "None":
             messagebox.showerror("Error", _("No AI-Model selected. Please select one from the Advanced panel on the right."))
             return False
@@ -1166,6 +1167,7 @@ class Application(tk.Frame):
                 pb.pack_forget()
                 frame.update()
                 frame.destroy()
+        return True
     
     def on_closing(self, logging_thread):
         
@@ -1180,6 +1182,7 @@ class Application(tk.Frame):
             logging.exception("error shutting down ProcessPoolExecutor")
         shutdown_logging(logging_thread)
         root.destroy()
+        sys.exit(0)
 
 def scale_img(path, scaling, shape):
     img = io.imread(resource_path(path))
@@ -1188,52 +1191,52 @@ def scale_img(path, scaling, shape):
     img = img.astype(dtype=np.uint8)
     io.imsave(resource_path(resource_path(path.replace('.png', '-scaled.png'))), img, check_contrast=False)
 
-if __name__ == "__main__":
 
-    logging_thread = initialize_logging()
 
-    root = hdpitk.HdpiTk()
-    scaling = get_scaling_factor()
-    
-    scale_img("./forest-dark/vert-hover.png", scaling*0.9, (20,10))
-    scale_img("./forest-dark/vert-basic.png", scaling*0.9, (20,10))
-    
-    scale_img("./forest-dark/thumb-hor-accent.png", scaling*0.9, (20,8))
-    scale_img("./forest-dark/thumb-hor-hover.png", scaling*0.9, (20,8))
-    scale_img("./forest-dark/thumb-hor-basic.png", scaling*0.9, (20,8))
-    scale_img("./forest-dark/scale-hor.png", scaling, (20,20))
-    
-    scale_img("./forest-dark/check-accent.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-basic.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-hover.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-unsel-accent.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-unsel-basic.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-unsel-hover.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-unsel-pressed.png", scaling*0.8, (20,20))
-    
-    scale_img("./img/gfx_number_1.png", scaling*0.7, (25,25))
-    scale_img("./img/gfx_number_2.png", scaling*0.7, (25,25))
-    scale_img("./img/gfx_number_3.png", scaling*0.7, (25,25))
-    scale_img("./img/gfx_number_4.png", scaling*0.7, (25,25))
-    scale_img("./img/gfx_number_5.png", scaling*0.7, (25,25))
-    scale_img("./img/hourglass.png", scaling, (25,25))
-    
-    root.tk.call("source", resource_path("forest-dark.tcl"))   
-    style = ttk.Style(root)
-    style.theme_use("forest-dark")
-    style.configure("TButton", padding=(8*scaling, 12*scaling, 8*scaling, 12*scaling))
-    style.configure("TMenubutton", padding=(8*scaling, 4*scaling, 4*scaling, 4*scaling))
-    root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
-    root.tk.call('tk', 'scaling', scaling)
-    root.option_add("*TkFDialog*foreground", "black")
-    app = Application(master=root)
-    root.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(logging_thread))
-    root.createcommand("::tk::mac::Quit", lambda: app.on_closing(logging_thread))
+logging_thread = initialize_logging()
 
-    if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
-        import pyi_splash
-        pyi_splash.close()        
-        
-    check_for_new_version()
-    app.mainloop()
+root = hdpitk.HdpiTk()
+scaling = get_scaling_factor()
+
+scale_img(resource_path("forest-dark/vert-hover.png"), scaling*0.9, (20,10))
+scale_img(resource_path("forest-dark/vert-basic.png"), scaling*0.9, (20,10))
+
+scale_img(resource_path("forest-dark/thumb-hor-accent.png"), scaling*0.9, (20,8))
+scale_img(resource_path("forest-dark/thumb-hor-hover.png"), scaling*0.9, (20,8))
+scale_img(resource_path("forest-dark/thumb-hor-basic.png"), scaling*0.9, (20,8))
+scale_img(resource_path("forest-dark/scale-hor.png"), scaling, (20,20))
+
+scale_img(resource_path("forest-dark/check-accent.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-basic.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-hover.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-unsel-accent.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-unsel-basic.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-unsel-hover.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-unsel-pressed.png"), scaling*0.8, (20,20))
+
+scale_img(resource_path("img/gfx_number_1.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/gfx_number_2.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/gfx_number_3.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/gfx_number_4.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/gfx_number_5.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/hourglass.png"), scaling, (25,25))
+
+root.tk.call("source", resource_path("forest-dark.tcl"))   
+style = ttk.Style(root)
+style.theme_use("forest-dark")
+style.configure("TButton", padding=(8*scaling, 12*scaling, 8*scaling, 12*scaling))
+style.configure("Accent.TButton", padding=(8*scaling, 12*scaling, 8*scaling, 12*scaling))
+style.configure("TMenubutton", padding=(8*scaling, 4*scaling, 4*scaling, 4*scaling))
+root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
+root.tk.call('tk', 'scaling', scaling)
+root.option_add("*TkFDialog*foreground", "black")
+app = Application(master=root)
+root.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(logging_thread))
+root.createcommand("::tk::mac::Quit", lambda: app.on_closing(logging_thread))
+
+if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
+    import pyi_splash
+    pyi_splash.close()        
     
+check_for_new_version()
+app.mainloop()

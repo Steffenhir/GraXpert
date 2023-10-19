@@ -10,7 +10,13 @@ import numpy as np
 from astropy.stats import sigma_clipped_stats
 from pykrige.ok import OrdinaryKriging
 from scipy import interpolate, linalg
+
 from skimage.transform import resize
+from skimage.filters import  gaussian
+
+import tensorflow as tf
+import os
+import sys
 
 from graxpert.mp_logging import get_logging_queue, worker_configurer
 from graxpert.parallel_processing import executor
@@ -18,24 +24,65 @@ from graxpert.radialbasisinterpolation import RadialBasisInterpolation
 
 
 def extract_background(in_imarray, background_points, interpolation_type, smoothing, 
-                       downscale_factor, sample_size, RBF_kernel, spline_order, corr_type):
-
+                       downscale_factor, sample_size, RBF_kernel, spline_order, corr_type, AI_dir):
+    
     shm_imarray = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
     shm_background = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
     imarray = np.ndarray(in_imarray.shape, dtype=np.float32, buffer=shm_imarray.buf)
     background = np.ndarray(in_imarray.shape, dtype=np.float32, buffer=shm_background.buf)
     np.copyto(imarray, in_imarray)
     
-    num_colors = imarray.shape[2]
+    num_colors = imarray.shape[-1]
+    
+    if interpolation_type == 'AI':
+        # Shrink and pad to avoid artifacts on borders
+        padding = 8
+        imarray_shrink = tf.image.resize(imarray,size=(256 - 2*padding,256 - 2*padding))
+        imarray_shrink = np.pad(imarray_shrink, ((padding,padding),(padding,padding),(0,0)), mode='edge')
 
-    x_sub = np.array(background_points[:,0],dtype=int)
-    y_sub = np.array(background_points[:,1],dtype=int)
+        median = []
+        mad = []
         
-    futures = []
-    logging_queue = get_logging_queue()
-    for c in range(num_colors):
-        futures.insert(c, executor.submit(interpol, shm_imarray.name, shm_background.name, c, x_sub, y_sub, in_imarray.shape, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, imarray.dtype, logging_queue, worker_configurer))
-    wait(futures)
+        for c in range(num_colors):
+            median.append(np.median(imarray_shrink[:,:,c]))
+            mad.append(np.median(np.abs(imarray_shrink[:,:,c] - median[c])))
+        
+        imarray_shrink = (imarray_shrink - median) / mad * 0.04
+        imarray_shrink = np.clip(imarray_shrink, -1.0, 1.0)
+        
+        if num_colors == 1:
+            imarray_shrink = np.array([imarray_shrink[:,:,0],imarray_shrink[:,:,0],imarray_shrink[:,:,0]])
+            imarray_shrink = np.moveaxis(imarray_shrink, 0, -1)
+            
+        model = tf.keras.models.load_model(AI_dir)
+
+        background = np.array(model(np.expand_dims(imarray_shrink, axis=0))[0])
+        background = background / 0.04 * mad + median
+        
+        if smoothing != 0:
+            sigma = smoothing * 20
+            background = gaussian(background,sigma)
+        
+        if num_colors == 1:
+            background = np.array([background[:,:,0]])
+            background = np.moveaxis(background, 0, -1)
+        
+        # Slice to unpadded size of shrinked image, then resize to original size
+        if padding != 0:
+            background = background[padding:-padding,padding:-padding,:]
+        
+        background = tf.image.resize(background,size=(in_imarray.shape[0],in_imarray.shape[1]),method='gaussian')
+              
+    
+    else:    
+        x_sub = np.array(background_points[:,0],dtype=int)
+        y_sub = np.array(background_points[:,1],dtype=int)
+            
+        futures = []
+        logging_queue = get_logging_queue()
+        for c in range(num_colors):
+            futures.insert(c, executor.submit(interpol, shm_imarray.name, shm_background.name, c, x_sub, y_sub, in_imarray.shape, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, imarray.dtype, logging_queue, worker_configurer))
+        wait(futures)
     
     #Correction
     if(corr_type == "Subtraction"):

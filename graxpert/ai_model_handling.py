@@ -54,6 +54,10 @@ def list_local_versions():
         return None
 
 
+def ai_model_path_from_version(local_version):
+    return os.path.join(ai_models_dir, local_version, "bg_model")
+
+
 def compute_orphaned_local_versions():
     remote_versions = list_remote_versions()
 

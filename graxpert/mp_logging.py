@@ -29,6 +29,7 @@ class StreamToLogger(object):
 # cf. https://docs.python.org/3/howto/logging-cookbook.html#using-concurrent-futures-processpoolexecutor
 
 logging_queue = None
+logfile_name = os.path.join(user_log_dir(appname="GraXpert"), "graxpert.log")
 
 
 def get_logging_queue():
@@ -39,7 +40,6 @@ def get_logging_queue():
 
 
 def configure_logging():
-    logfile_name = os.path.join(user_log_dir(appname="GraXpert"), "graxpert.log")
     os.makedirs(os.path.dirname(logfile_name), exist_ok=True)
     root = logging.getLogger()
     root.setLevel(logging.INFO)

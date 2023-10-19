@@ -11,7 +11,7 @@ from graxpert.stretch import stretch
 from graxpert.preferences import app_state_2_fitsheader
 
 class AstroImage:
-    def __init__(self, stretch_option, saturation):
+    def __init__(self, stretch_option = None, saturation = None, do_update_display = True):
         self.img_array = None
         self.img_display = None
         self.img_display_saturated = None
@@ -21,6 +21,7 @@ class AstroImage:
         self.image_metadata = {"FITSKeywords": {}}
         self.stretch_option = stretch_option
         self.saturation = saturation
+        self.do_update_display = do_update_display
         self.width = 0
         self.height = 0
         self.roworder = "BOTTOM-UP"
@@ -71,7 +72,10 @@ class AstroImage:
         self.img_array = img_array
         self.width = self.img_array.shape[1]
         self.height = self.img_array.shape[0]
-        self.update_display()
+        
+        if self.do_update_display:
+            self.update_display()
+        
         return
     
     def set_from_array(self, array):
@@ -298,6 +302,8 @@ class AstroImage:
 
             
     def xisf_imagedata_2_fitsheader(self):
+        commentary_keys = ['HISTORY','COMMENT','']
+        
         bg_pts = []
         for key in self.image_metadata["FITSKeywords"].keys():
             if key.startswith("BG-PTS"):
@@ -306,7 +312,12 @@ class AstroImage:
             for i in range(len(self.image_metadata["FITSKeywords"][key])):
                 value = self.image_metadata["FITSKeywords"][key][i]["value"]
                 comment = self.image_metadata["FITSKeywords"][key][i]["comment"]
-            
+                
+                # Commentary cards have to comments in Fits standard
+                if key in commentary_keys:
+                    if value == "":
+                        value = comment
+                        
                 self.fits_header[key] = (value, comment)
         
         if len(bg_pts) > 0:

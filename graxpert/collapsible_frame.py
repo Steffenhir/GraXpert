@@ -9,10 +9,10 @@ class CollapsibleFrame(tk.Frame):
         self.show = tk.IntVar()
         self.show.set(0)
 
-        self.title_frame = ttk.Frame(self)
+        self.title_frame = ttk.Frame(self, borderwidth=0)
         self.title_frame.pack(fill="x", expand=1)
 
-        ttk.Label(self.title_frame, text=text, font="Verdana 10 bold").pack(side="left", fill="x", expand=1)
+        ttk.Label(self.title_frame, text=text, font="Verdana 11 bold").pack(side="left", fill="x", expand=1)
 
         self.toggle_button = ttk.Checkbutton(self.title_frame, width=2, text='+', command=self.toggle,
                                             variable=self.show, style='Toolbutton')

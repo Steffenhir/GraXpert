@@ -1,5 +1,11 @@
 name: build-release
 
+env:
+  ai_s3_endpoint: ${{ secrets.AI_S3_ENDPOINT }}
+  ai_s3_access_key: ${{ secrets.AI_S3_ACCESS_KEY }}
+  ai_s3_secret_key: ${{ secrets.AI_S3_SECRET_KEY }}
+  ai_s3_bucket_name: ${{ secrets.AI_S3_BUCKET_NAME }}
+
 on:
   push:
     tags:
@@ -8,14 +14,20 @@ on:
 jobs:
   
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: checkout repository
         uses: actions/checkout@v3
+      - name: configure ai s3 secrets
+        run: |
+          echo "endpoint = \"$ai_s3_endpoint\"" >> ./graxpert/s3_secrets.py && \
+          echo "ro_access_key = \"$ai_s3_access_key\"" >> ./graxpert/s3_secrets.py && \
+          echo "ro_secret_key = \"$ai_s3_secret_key\"" >> ./graxpert/s3_secrets.py && \
+          echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py
       - name: install dependencies
         run: |
           pip install setuptools wheel pyinstaller && \
@@ -24,8 +36,6 @@ jobs:
         run: |
           chmod u+x ./releng/patch_version.sh && \
           ./releng/patch_version.sh
-      - name: test version
-        run: cat ./src/version.py
       - name: create GraXpert-linux bundle
         run: |
           pyinstaller \
@@ -38,14 +48,20 @@ jobs:
           retention-days: 5
 
   build-linux-zip:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: checkout repository
         uses: actions/checkout@v3
+      - name: configure ai s3 secrets
+        run: |
+          echo "endpoint = \"$ai_s3_endpoint\"" >> ./graxpert/s3_secrets.py && \
+          echo "ro_access_key = \"$ai_s3_access_key\"" >> ./graxpert/s3_secrets.py && \
+          echo "ro_secret_key = \"$ai_s3_secret_key\"" >> ./graxpert/s3_secrets.py && \
+          echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py
       - name: install dependencies
         run: |
           pip install setuptools wheel pyinstaller && \
@@ -55,7 +71,7 @@ jobs:
           chmod u+x ./releng/patch_version.sh && \
           ./releng/patch_version.sh
       - name: test version
-        run: cat ./src/version.py
+        run: cat ./graxpert/version.py
       - name: create GraXpert-linux bundle
         run: |
           pyinstaller \
@@ -77,33 +93,22 @@ jobs:
       - name: setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: checkout repository
         uses: actions/checkout@v3
-      - name: checkout pyinstaller
-        uses: actions/checkout@v3
-        with:
-          repository: pyinstaller/pyinstaller
-          path: ./pyinstaller
-          ref: v5.0
+      - name: configure ai s3 secrets
+        run: |
+          $PSDefaultParameterValues['Out-File:Encoding']='UTF8' ; `
+          "endpoint = `"$env:ai_s3_endpoint`"" | Out-File -Append .\graxpert\s3_secrets.py ; `
+          "ro_access_key = `"$env:ai_s3_access_key`"" | Out-File -Append .\graxpert\s3_secrets.py ; `
+          "ro_secret_key = `"$env:ai_s3_secret_key`"" | Out-File -Append .\graxpert\s3_secrets.py ; `
+          "bucket_name = `"$env:ai_s3_bucket_name`"" | Out-File -Append .\graxpert\s3_secrets.py
       - name: install dependencies
         run: |
-          pip install setuptools wheel && `
-          cd .\pyinstaller\bootloader && `
-          (Get-Content .\wscript) -Replace "'run'", "'graxpert'" | Set-Content .\wscript && `
-          (Get-Content .\src\main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\main.c && `
-          (Get-Content .\src\pyi_main.h) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.h && `
-          (Get-Content .\src\pyi_main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.c && `
-          python ./waf all && `
-          cd .. && `
-          (Get-Content .\setup.py) -Replace 'run.exe', 'graxpert.exe' | Set-Content .\setup.py && `
-          python setup.py install && `
-          cd .. && `
+          pip install setuptools wheel pyinstaller && `
           pip install -r requirements.txt
       - name: patch version
         run: ./releng/patch_version.ps1
-      - name: test version
-        run: type ./src/version.py
       - name: create GraXpert-win64 bundle
         run: |
           pyinstaller `
@@ -121,33 +126,22 @@ jobs:
       - name: setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: checkout repository
         uses: actions/checkout@v3
-      - name: checkout pyinstaller
-        uses: actions/checkout@v3
-        with:
-          repository: pyinstaller/pyinstaller
-          path: ./pyinstaller
-          ref: v5.0
+      - name: configure ai s3 secrets
+        run: |
+          $PSDefaultParameterValues['Out-File:Encoding']='UTF8' ; `
+          "endpoint = `"$env:ai_s3_endpoint`"" | Out-File -Append .\graxpert\s3_secrets.py ; `
+          "ro_access_key = `"$env:ai_s3_access_key`"" | Out-File -Append .\graxpert\s3_secrets.py ; `
+          "ro_secret_key = `"$env:ai_s3_secret_key`"" | Out-File -Append .\graxpert\s3_secrets.py ; `
+          "bucket_name = `"$env:ai_s3_bucket_name`"" | Out-File -Append .\graxpert\s3_secrets.py
       - name: install dependencies
         run: |
-          pip install setuptools wheel && `
-          cd .\pyinstaller\bootloader && `
-          (Get-Content .\wscript) -Replace "'run'", "'graxpert'" | Set-Content .\wscript && `
-          (Get-Content .\src\main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\main.c && `
-          (Get-Content .\src\pyi_main.h) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.h && `
-          (Get-Content .\src\pyi_main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.c && `
-          python ./waf all && `
-          cd .. && `
-          (Get-Content .\setup.py) -Replace 'run.exe', 'graxpert.exe' | Set-Content .\setup.py && `
-          python setup.py install && `
-          cd .. && `
+          pip install setuptools wheel pyinstaller && `
           pip install -r requirements.txt
       - name: patch version
         run: ./releng/patch_version.ps1
-      - name: test version
-        run: type ./src/version.py
       - name: create GraXpert-win64 bundle
         run: |
           pyinstaller `
@@ -162,12 +156,18 @@ jobs:
           retention-days: 5
 
   build-macos-x86_64:
-    runs-on: macos-10.15
+    runs-on: macos-11
     steps:
       - name: setup python
-        run: brew install python-tk@3.9
+        run: brew install python-tk@3.11
       - name: checkout repository
         uses: actions/checkout@v3
+      - name: configure ai s3 secrets
+        run: |
+          echo "endpoint = \"$ai_s3_endpoint\"" >> ./graxpert/s3_secrets.py && \
+          echo "ro_access_key = \"$ai_s3_access_key\"" >> ./graxpert/s3_secrets.py && \
+          echo "ro_secret_key = \"$ai_s3_secret_key\"" >> ./graxpert/s3_secrets.py && \
+          echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py
       - name: install dependencies
         run: |
           pip3 install setuptools wheel pyinstaller && \
@@ -176,8 +176,6 @@ jobs:
         run: |
           chmod u+x ./releng/patch_version.sh && \
           ./releng/patch_version.sh
-      - name: test version
-        run: cat ./src/version.py
       - name: create GraXpert-macos-x86_64 bundle
         run: |
           pyinstaller \

@@ -2,24 +2,22 @@ import sys
 import tkinter as tk
 from cProfile import label
 from os import path
-from tkinter import CENTER, ttk
-from tkinter import messagebox
+from tkinter import CENTER, messagebox, ttk
 
 from numpy import pad
+from packaging import version
 from PIL import Image, ImageTk
 
-from localization import _, lang
-from ui_scaling import get_scaling_factor
-# from version import release, version
+from graxpert.ai_model_handling import (list_local_versions,
+                                        list_remote_versions)
+from graxpert.localization import _, lang
+from graxpert.slider import Slider
+from graxpert.ui_scaling import get_scaling_factor
 
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
-    
-    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        base_path = path.abspath(path.dirname(__file__))
-    else:
-        base_path = path.abspath(path.join(path.dirname(__file__), "../"))
+    base_path = path.abspath(path.join(path.dirname(__file__), "../"))
 
     return path.join(base_path, relative_path)
 
@@ -107,7 +105,7 @@ class Help_Panel():
         
         # ------------Help Panel-----------------
         heading_font = "Verdana 18 bold"
-        heading_font2 = "Verdana 10 bold"
+        heading_font2 = "Verdana 11 bold"
         
         
         self.help_panel = tk.Frame(self.canvas)
@@ -123,7 +121,9 @@ class Help_Panel():
             int(logo.width/6 * scaling),
             int(logo.height/6 * scaling)
         ))
-
+        
+        self.help_panel_window.columnconfigure(0, weight=1)
+        
         logo = ImageTk.PhotoImage(logo)
         self.label = tk.Label(self.help_panel_window, image=logo)
         self.label.image= logo
@@ -218,6 +218,8 @@ class Help_Panel():
         
         self.advanced_panel_window = tk.Frame(self.advanced_canvas, borderwidth=0)
         
+        self.advanced_panel_window.columnconfigure(0, weight=1)
+        
         text = tk.Message(self.advanced_panel_window, text=_("Advanced Settings"), width=240 * scaling, font=heading_font, anchor="center")
         text.grid(column=0, row=0, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
         
@@ -229,24 +231,8 @@ class Help_Panel():
         if "sample_size" in self.app.prefs:
             self.app.sample_size.set(self.app.prefs["sample_size"])
         
-        self.sample_size_text = tk.Message(self.advanced_panel_window, text=_("Sample size: {}").format(self.app.sample_size.get()))
-        self.sample_size_text.config(width=240 * scaling)
-        self.sample_size_text.grid(column=0, row=2, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
-        def on_sample_size_slider(sample_size):
-            self.app.sample_size.set(float("{:.2f}".format(float(sample_size))))
-            self.sample_size_text.configure(text=_("Sample size: {}").format(self.app.sample_size.get()))
-            self.app.redraw_points()
-        
-        self.sample_size_slider = ttk.Scale(
-            self.advanced_panel_window,
-            orient=tk.HORIZONTAL,
-            from_=5,
-            to=50,
-            var=self.app.sample_size,
-            command=on_sample_size_slider,
-            length=240 * scaling,
-            )
+        self.sample_size_slider = Slider(self.advanced_panel_window, self.app.sample_size, "Sample size", 5, 50, 0, scaling, self.app.redraw_points)
         self.sample_size_slider.grid(column=0, row=3, pady=(0,10*scaling), padx=(40,30), sticky="ew")
         
         
@@ -255,24 +241,7 @@ class Help_Panel():
         if "sample_color" in self.app.prefs:
             self.app.sample_color.set(self.app.prefs["sample_color"])
         
-        self.sample_color_text = tk.Message(self.advanced_panel_window, text=_("Sample color: {}").format(self.app.sample_color.get()))
-        self.sample_color_text.config(width=500 * scaling)
-        self.sample_color_text.grid(column=0, row=4, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
-        
-        def on_sample_color_slider(sample_color):
-            self.app.sample_color.set(float("{:.2f}".format(float(sample_color))))
-            self.sample_color_text.configure(text=_("Sample color: {}").format(self.app.sample_color.get()))
-            self.app.redraw_points()
-        
-        self.sample_color_slider = ttk.Scale(
-            self.advanced_panel_window,
-            orient=tk.HORIZONTAL,
-            from_=0,
-            to=360,
-            var=self.app.sample_color,
-            command=on_sample_color_slider,
-            length=150
-            )
+        self.sample_color_slider = Slider(self.advanced_panel_window, self.app.sample_color, "Sample color", 0, 360, 0, scaling, self.app.redraw_points)
         self.sample_color_slider.grid(column=0, row=5, pady=(0,10*scaling), padx=(40,30), sticky="ew")
         
         text = tk.Message(self.advanced_panel_window, text=_("Interpolation"), width=240 * scaling, font=heading_font2, anchor="center")
@@ -303,9 +272,25 @@ class Help_Panel():
         self.spline_order_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.spline_order, self.app.spline_order.get(), *self.app.spline_orders)
         self.spline_order_menu.grid(column=0, row=10, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
+        text = tk.Message(self.advanced_panel_window, text=_("Correction"), width=240 * scaling, font=heading_font2, anchor="center")
+        text.grid(column=0, row=11, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
         
-        text = tk.Message(self.advanced_panel_window, text=_("Language"), width=240 * scaling, font=heading_font2, anchor="center")
-        text.grid(column=0, row=11, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
+        
+        self.app.corr_types = ["Subtraction", "Division"]
+        self.app.corr_type = tk.StringVar()
+        self.app.corr_type.set(self.app.corr_types[0])
+        if "corr_type" in self.app.prefs:
+            self.app.corr_type.set(self.app.prefs["corr_type"])
+
+        self.corr_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.corr_type, self.app.corr_type.get(), *self.app.corr_types)
+        self.corr_menu.grid(column=0, row=12, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
+        
+        
+        text = tk.Message(self.advanced_panel_window, text=_("Interface"), width=240 * scaling, font=heading_font2, anchor="center")
+        text.grid(column=0, row=13, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
+        
+        text = tk.Message(self.advanced_panel_window, text=_("Language"), width=240*scaling, anchor="center")
+        text.grid(column=0, row=14, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
     
         def lang_change(lang):
             messagebox.showerror("", _("Please restart the program to change the language."))
@@ -319,22 +304,48 @@ class Help_Panel():
             self.app.lang.set("English")
 
         self.lang_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.lang, self.app.lang.get(), *self.app.langs, command=lang_change)
-        self.lang_menu.grid(column=0, row=12, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
+        self.lang_menu.grid(column=0, row=15, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
         
         
-        text = tk.Message(self.advanced_panel_window, text=_("Correction"), width=240 * scaling, font=heading_font2, anchor="center")
-        text.grid(column=0, row=13, padx=(10*scaling,10*scaling), pady=(20*scaling,10*scaling), sticky="ew")
+        def scaling_change():
+            messagebox.showerror("", _("Please restart the program to apply the changes to UI scaling."))
+        
+        self.app.scaling = tk.DoubleVar()
+        self.app.scaling.set(1.0)
+        if "scaling" in self.app.prefs:
+            self.app.scaling.set(self.app.prefs["scaling"])
         
         
-        self.app.corr_types = ["Subtraction", "Division"]
-        self.app.corr_type = tk.StringVar()
-        self.app.corr_type.set(self.app.corr_types[0])
-        if "corr_type" in self.app.prefs:
-            self.app.corr_type.set(self.app.prefs["corr_type"])
+        self.scaling_slider = Slider(self.advanced_panel_window, self.app.scaling, "Scaling", 0.5, 2, 1, scaling, scaling_change)
+        self.scaling_slider.grid(column=0, row=16, pady=(10*scaling,10*scaling), padx=(40,30), sticky="ew")
 
-        self.corr_menu = ttk.OptionMenu(self.advanced_panel_window, self.app.corr_type, self.app.corr_type.get(), *self.app.corr_types)
-        self.corr_menu.grid(column=0, row=14, pady=(5*scaling,5*scaling), padx=(40,30), sticky="ews")
+        # -- begin ai-model selection --
+        text = tk.Message(self.advanced_panel_window, text=_("AI-Model"), width=240 * scaling, font=heading_font2, anchor="center")
+        text.grid(column=0, row=17, padx=(40,30), pady=(20*scaling,10*scaling), sticky="ew")
+
+        remote_versions = list_remote_versions()
+        local_versions = list_local_versions()
+        ai_options = set([])
+        ai_options.update([rv["version"] for rv in remote_versions])
+        ai_options.update(set([lv["version"] for lv in local_versions]))
+        ai_options = sorted(ai_options, key=lambda k: version.parse(k), reverse=True)
+
+        self.app.ai_version = tk.StringVar(master)
+        self.app.ai_version.set("None") # default value
+        if "ai_version" in self.app.prefs:
+            self.app.ai_version.set(self.app.prefs["ai_version"])
+        else:
+            ai_options.insert(0, "None")
+
+        try:
+            default_idx = ai_options.index(self.app.ai_version.get())
+        except ValueError:
+            default_idx = 0
         
+        self.app.ai_version_options = ttk.OptionMenu(self.advanced_panel_window, self.app.ai_version, ai_options[default_idx], *ai_options)
+        self.app.ai_version_options.grid(column=0, row=18, pady=(10*scaling,10*scaling), padx=(40,30), sticky="ew")
+        # -- end ai-model selection --
+
         
         self.advanced_canvas.create_window((0,0), window=self.advanced_panel_window)
         self.advanced_canvas.configure(yscrollcommand=self.advanced_scrollbar.set)
@@ -394,6 +405,3 @@ class Help_Panel():
         self.master.update()
         # force update of label to prevent white background on mac
         self.advanced_label.configure(background="#254f69")
-        
-
-

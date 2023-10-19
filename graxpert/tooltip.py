@@ -1,7 +1,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from ui_scaling import get_scaling_factor
-from localization import _
+from graxpert.ui_scaling import get_scaling_factor
+from graxpert.localization import _
 
 
 class Tooltip:
@@ -189,6 +189,7 @@ saveas_text = _("Choose the bitdepth of the saved pictures and the file format. 
                "be preserved.")
 save_bg_text = _("Save the background model")
 save_pic_text = _("Save the processed picture")
+save_stretched_pic_text = _("Save the stretched and processed picture. The color saturation is not changed.")
 
 display_text = _("Switch display between \n"
                 "\n"

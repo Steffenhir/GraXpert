@@ -71,6 +71,10 @@ msgstr ""
 msgid "Save Processed"
 msgstr ""
 
+#: src/gui.py:422
+msgid "Save Stretched & Processed"
+msgstr ""
+
 #: src/gui.py:345
 msgid "An error occurred while loading your picture."
 msgstr ""
@@ -210,5 +214,8 @@ msgid ""
 "Original: Your original picture \n"
 "Processed: Picture with subtracted background model \n"
 "Background: The background model"
+msgstr ""
+
+msgid "A newer version of GraXpert is available at"
 msgstr ""
 

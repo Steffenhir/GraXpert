@@ -1,13 +1,14 @@
 import json
 import logging
 import os
+import sys
 import shutil
 from datetime import datetime
 from typing import AnyStr, List, TypedDict
 
 import numpy as np
 
-from app_state import AppState
+from graxpert.app_state import AppState
 
 
 class Prefs(TypedDict):
@@ -28,6 +29,8 @@ class Prefs(TypedDict):
     RBF_kernel: AnyStr
     lang: AnyStr
     corr_type: AnyStr
+    scaling: float
+    ai_version: AnyStr
 
 DEFAULT_PREFS: Prefs = {
     "working_dir": os.getcwd(),
@@ -40,20 +43,38 @@ DEFAULT_PREFS: Prefs = {
     "saturation": 1.0,
     "bg_tol_option": 1.0,
     "interpol_type_option": "RBF",
-    "smoothing_option": 1.0,
+    "smoothing_option": 0.0,
     "saveas_option": "32 bit Tiff",
     "sample_size": 25,
     "sample_color": 55,
     "RBF_kernel": "thin_plate",
     "spline_order": 3,
     "lang": None,
-    "corr_type": "Subtraction"
+    "corr_type": "Subtraction",
+    "scaling": 1.0,
+    "ai_version": None
 }
 
 
-def app_state_2_prefs(prefs: Prefs, app_state: AppState) -> Prefs:
+def app_state_2_prefs(prefs: Prefs, app_state: AppState, app) -> Prefs:
     if "background_points" in app_state:
         prefs["background_points"] = [p.tolist() for p in app_state["background_points"]]
+        prefs["bg_pts_option"] = app.bg_pts.get()
+        prefs["stretch_option"] = app.stretch_option_current.get()
+        prefs["saturation"] = app.saturation.get()
+        prefs["bg_tol_option"] = app.bg_tol.get()
+        prefs["interpol_type_option"] = app.interpol_type.get()
+        prefs["smoothing_option"] = app.smoothing.get()
+        prefs["saveas_option"] = app.saveas_type.get()
+        prefs["sample_size"] = app.sample_size.get()
+        prefs["sample_color"] = app.sample_color.get()
+        prefs["RBF_kernel"] = app.RBF_kernel.get()
+        prefs["spline_order"] = app.spline_order.get()
+        prefs["lang"] = app.lang.get()
+        prefs["corr_type"] = app.corr_type.get()
+        prefs["bg_flood_selection_option"] = app.flood_select_pts.get()
+        prefs["scaling"] = app.scaling.get()
+        prefs["ai_version"] = app.ai_version.get()
     return prefs
 
 
@@ -100,6 +121,10 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["lang"] = json["lang"]
     if "corr_type" in json:
         prefs["corr_type"] = json["corr_type"]
+    if "scaling" in json:
+        prefs["scaling"] = json["scaling"]
+    if "ai_version" in json:
+        prefs["ai_version"] = json["ai_version"]
     return prefs
 
 
@@ -128,3 +153,36 @@ def save_preferences(prefs_filename, prefs):
             json.dump(prefs, f)
     except OSError as err:
         logging.exception("error serializing preferences")
+
+
+def app_state_2_fitsheader(app, app_state, fits_header):
+    prefs = Prefs()
+    prefs = app_state_2_prefs(prefs, app_state, app)
+    fits_header["INTP-OPT"] = prefs["interpol_type_option"]
+    fits_header["SMOOTHING"] = prefs["smoothing_option"]
+    fits_header["CORR-TYPE"] = prefs["corr_type"]
+    
+    if prefs["interpol_type_option"] != "AI": 
+        fits_header["SAMPLE-SIZE"] = prefs["sample_size"]
+        fits_header["RBF-KERNEL"] = prefs["RBF_kernel"]
+        fits_header["SPLINE-ORDER"] = prefs["spline_order"]
+        fits_header["BG-PTS"] = str(prefs["background_points"])
+    
+    return fits_header
+
+
+def fitsheader_2_app_state(app, app_state, fits_header):
+    if "BG-PTS" in fits_header.keys():
+        app_state["background_points"] = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
+    
+    if "INTP-OPT" in fits_header.keys():
+        app.interpol_type.set(fits_header["INTP-OPT"])
+        app.smoothing_slider.set(fits_header["SMOOTHING"])
+        app.corr_type.set(fits_header["CORR-TYPE"])
+        
+        if fits_header["INTP-OPT"] != "AI":
+            app.help_panel.sample_size_slider.set(fits_header["SAMPLE-SIZE"])
+            app.RBF_kernel.set(fits_header["RBF-KERNEL"])
+            app.spline_order.set(fits_header["SPLINE-ORDER"])
+    
+    return app_state

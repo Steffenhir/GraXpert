@@ -4,11 +4,11 @@
 block_cipher = None
 
 
-a = Analysis(['./src/gui.py'],
+a = Analysis(['./graxpert/main.py'],
     pathex=[],
     binaries=[],
     datas=[('./img/*', './img/'), ('./forest-dark.tcl', './'), ('./forest-dark/*', './forest-dark/')],
-    hiddenimports=['PIL._tkinter_finder'],
+    hiddenimports=['PIL._tkinter_finder', 'tkinter'],
     hookspath=['./releng'],
     hooksconfig={},
     runtime_hooks=[],

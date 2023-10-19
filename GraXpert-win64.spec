@@ -20,7 +20,7 @@ a = Analysis(['./graxpert/main.py'],
 pyz = PYZ(a.pure, a.zipped_data,
     cipher=block_cipher)
 splash = Splash(
-    'img/graXpert_Startbadge_Dione.png',
+    'img/graXpert_Startbadge_Ariel.png',
     binaries=a.binaries,
     datas=a.datas,
     text_pos=None,

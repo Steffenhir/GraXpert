@@ -25,7 +25,7 @@ available_local_versions = []
 available_remote_versions = []
 
 
-def version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
+def collect_available_version():
     global available_local_versions
     global available_remote_versions
 
@@ -48,6 +48,11 @@ def version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
         available_remote_versions = ""
         logging.exception(e)
 
+
+def version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
+    global available_local_versions
+    global available_remote_versions
+
     if not pat.match(arg_value):
         raise argparse.ArgumentTypeError("invalid version, expected format: n.n.n")
     if (
@@ -69,6 +74,8 @@ def main():
     if len(sys.argv) > 1:
         global available_local_versions
         global available_remote_versions
+
+        collect_available_version()
 
         parser = argparse.ArgumentParser(
             description="GraXpert,the astronomical background extraction tool"

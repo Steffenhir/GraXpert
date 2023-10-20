@@ -14,9 +14,10 @@ from scipy import interpolate, linalg
 from skimage.transform import resize
 from skimage.filters import  gaussian
 
-import tensorflow as tf
-import os
 import sys
+import os
+import tensorflow as tf
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1' # Run tensorflow on CPU
 
 from graxpert.mp_logging import get_logging_queue, worker_configurer
 from graxpert.parallel_processing import executor

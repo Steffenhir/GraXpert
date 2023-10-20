@@ -317,6 +317,11 @@ class AstroImage:
                 if key in commentary_keys:
                     if value == "":
                         value = comment
+                
+                if value.isdigit():
+                    value = int(value)
+                elif value.isdecimal():
+                    value = float(value)
                         
                 self.fits_header[key] = (value, comment)
         

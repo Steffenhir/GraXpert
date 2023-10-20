@@ -340,3 +340,21 @@ msgstr "Bitte das Programm neu starten, um die Änderungen an der Nutzeroberflä
 
 msgid "Select AI directory"
 msgstr "AI Verzeichnis auswählen"
+
+msgid "Extracting Background"
+msgstr "Berechne Hintergrund"
+
+msgid "No AI-Model selected. Please select one from the Advanced panel on the right."
+msgstr "Kein KI-Modell ausgewählt. Bitte wählen Sie eine Version in den erweiterten Einstellungen am rechten Rand."
+
+msgid "Install AI-Model?"
+msgstr "KI-Modell installieren?"
+
+msgid "Selected AI-Model is not installed. Should I download it now?"
+msgstr "Das ausgewählte KI-Modell ist nicht installiert. Soll es jetzt heruntergeladen und installiert werden?"
+
+msgid "Downloading AI-Model"
+msgstr "KI-Modell wird heruntergeladen"
+
+msgid "An error occured during background calculation. Please see the log at {}."
+msgstr "Während der Berechnung ist ein Fehler aufgetreten. Bitte schauen Sie sich die Logdatei bei dem Verzeichnis {} an."

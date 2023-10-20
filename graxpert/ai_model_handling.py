@@ -9,6 +9,7 @@ from threading import Thread
 from appdirs import user_data_dir
 from minio import Minio
 
+from graxpert.loadingframe import DynamicProgressThread
 from graxpert.s3_secrets import (bucket_name, endpoint, ro_access_key,
                                  ro_secret_key)
 
@@ -116,7 +117,7 @@ def download_version(remote_version, progress=None):
             remote_version["bucket"],
             remote_version["object"],
             ai_model_file,
-            progress=Progress(callback=progress),
+            progress=DynamicProgressThread(callback=progress),
         )
 
         with zipfile.ZipFile(ai_model_file, "r") as zip_ref:
@@ -134,63 +135,3 @@ def download_version(remote_version, progress=None):
 
 def validate_local_version(local_version):
     return os.path.isdir(os.path.join(ai_models_dir, local_version, "bg_model"))
-
-
-class Progress(Thread):
-    def __init__(self, interval=1, callback=None):
-        Thread.__init__(self)
-        self.daemon = True
-        self.interval = interval
-        self.callback = callback
-        self.total_length = 0
-        self.current_size = 0
-        self.update_queue = Queue()
-        self.start()
-
-    def set_meta(self, total_length, object_name):
-        """
-        Metadata settings for the object. This method is called before downloading the object
-        :param total_length: Total length of object.
-        """
-        self.total_length = total_length
-
-    def run(self):
-        while True:
-            try:
-                # display every interval secs
-                task = self.update_queue.get(timeout=self.interval)
-            except Empty:
-                continue
-
-            current_size, total_length = task
-            self.update_queue.task_done()
-            if current_size == total_length:
-                # once we have done uploading everything return
-                self.done_progress()
-                return
-
-    def update(self, size):
-        """
-        Update object size to be shown. This method is called while downloading
-        :param size: Object size.
-        """
-        if not isinstance(size, int):
-            raise ValueError(
-                "{} type can not be displayed. "
-                "Please change it to Int.".format(type(size))
-            )
-
-        self.current_size += size
-        self.update_queue.put((self.current_size, self.total_length))
-
-        if self.callback is not None:
-            self.callback(self.progress())
-
-    def done_progress(self):
-        self.total_length = 0
-        self.current_size = 0
-
-    def progress(self):
-        if self.total_length == 0:
-            return 0
-        return float(self.current_size) / float(self.total_length)

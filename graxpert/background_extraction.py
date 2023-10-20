@@ -25,7 +25,7 @@ from graxpert.radialbasisinterpolation import RadialBasisInterpolation
 
 
 def extract_background(in_imarray, background_points, interpolation_type, smoothing, 
-                       downscale_factor, sample_size, RBF_kernel, spline_order, corr_type, AI_dir):
+                       downscale_factor, sample_size, RBF_kernel, spline_order, corr_type, AI_dir, progress=None):
     
     shm_imarray = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
     shm_background = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
@@ -43,47 +43,80 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
 
         median = []
         mad = []
+
+        if progress is not None:
+            progress.update(8)
         
         for c in range(num_colors):
             median.append(np.median(imarray_shrink[:,:,c]))
             mad.append(np.median(np.abs(imarray_shrink[:,:,c] - median[c])))
+
+        if progress is not None:
+            progress.update(8)
         
         imarray_shrink = (imarray_shrink - median) / mad * 0.04
         imarray_shrink = np.clip(imarray_shrink, -1.0, 1.0)
         
+        if progress is not None:
+            progress.update(8)
+        
         if num_colors == 1:
             imarray_shrink = np.array([imarray_shrink[:,:,0],imarray_shrink[:,:,0],imarray_shrink[:,:,0]])
             imarray_shrink = np.moveaxis(imarray_shrink, 0, -1)
+        
+        if progress is not None:
+            progress.update(8)
             
         model = tf.keras.models.load_model(AI_dir)
 
         background = np.array(model(np.expand_dims(imarray_shrink, axis=0))[0])
         background = background / 0.04 * mad + median
         
+        if progress is not None:
+            progress.update(8)
+        
         if smoothing != 0:
             sigma = smoothing * 20
             background = gaussian(background,sigma)
+        
+        if progress is not None:
+            progress.update(8)
         
         if num_colors == 1:
             background = np.array([background[:,:,0]])
             background = np.moveaxis(background, 0, -1)
         
+        if progress is not None:
+            progress.update(8)
+        
         # Slice to unpadded size of shrinked image, then resize to original size
         if padding != 0:
             background = background[padding:-padding,padding:-padding,:]
         
+        if progress is not None:
+            progress.update(8)
+        
         background = tf.image.resize(background,size=(in_imarray.shape[0],in_imarray.shape[1]),method='gaussian')
+        
+        if progress is not None:
+            progress.update(8)
               
     
     else:    
         x_sub = np.array(background_points[:,0],dtype=int)
         y_sub = np.array(background_points[:,1],dtype=int)
+        
+        if progress is not None:
+            progress.update(24)
             
         futures = []
         logging_queue = get_logging_queue()
         for c in range(num_colors):
             futures.insert(c, executor.submit(interpol, shm_imarray.name, shm_background.name, c, x_sub, y_sub, in_imarray.shape, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, imarray.dtype, logging_queue, worker_configurer))
         wait(futures)
+        
+        if progress is not None:
+            progress.update(48)
     
     #Correction
     if(corr_type == "Subtraction"):
@@ -93,12 +126,19 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         for c in range(num_colors):
             mean = np.mean(imarray[:,:,c])
             imarray[:,:,c] = imarray[:,:,c] / background[:,:,c] * mean
+    
+    if progress is not None:
+        progress.update(8)
 
     #clip image
     imarray[:,:,:] = imarray.clip(min=0.0,max=1.0)
 
     in_imarray[:] = imarray[:]
     background = np.copy(background)
+    
+    if progress is not None:
+        progress.update(8)
+    
     shm_imarray.close()
     shm_background.close()
     shm_imarray.unlink()

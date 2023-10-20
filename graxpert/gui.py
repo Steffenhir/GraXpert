@@ -26,7 +26,7 @@ from graxpert.commands import (ADD_POINT_HANDLER, ADD_POINTS_HANDLER, INIT_HANDL
                       RM_POINT_HANDLER, SEL_POINTS_HANDLER, Command,
                       InitHandler)
 from graxpert.help_panel import Help_Panel
-from graxpert.loadingframe import LoadingFrame
+from graxpert.loadingframe import LoadingFrame, DynamicProgressFrame, DynamicProgressThread
 from graxpert.localization import _
 from graxpert.parallel_processing import executor
 from graxpert.preferences import (app_state_2_prefs, load_preferences,
@@ -648,7 +648,10 @@ class Application(tk.Frame):
             if not self.validate_ai_installation():
                 return
         
-        self.loading_frame.start()
+        loading_frame = DynamicProgressFrame(self.master, label_lext=_("Extracting Background"))
+        def callback(p):
+            loading_frame.update_progress(p)
+        progress = DynamicProgressThread(callback=callback)
         
         imarray = np.copy(self.images["Original"].img_array)
         
@@ -665,7 +668,8 @@ class Application(tk.Frame):
                 self.interpol_type.get(),self.smoothing.get(),
                 downscale_factor, self.sample_size.get(),
                 self.RBF_kernel.get(),self.spline_order.get(),
-                self.corr_type.get(), ai_model_path_from_version(self.ai_version.get())
+                self.corr_type.get(), ai_model_path_from_version(self.ai_version.get()),
+                progress
                 ))
     
             self.images["Processed"] = AstroImage(self.stretch_option_current, self.saturation)
@@ -690,8 +694,9 @@ class Application(tk.Frame):
         except Exception as e:
             logging.exception(e)
             messagebox.showerror("Error", _("An error occured during background calculation. Please see the log at {}.".format(logfile_name)))
-        
-        self.loading_frame.end()
+        finally:
+            progress.done_progress()
+            loading_frame.close()
 
         return
     
@@ -1153,20 +1158,11 @@ class Application(tk.Frame):
             if not messagebox.askyesno(_("Install AI-Model?"), _("Selected AI-Model is not installed. Should I download it now?")):
                 return False
             else:
-                frame = ttk.Frame(width=400, height=200)
-                frame.place(in_=self.master, anchor="c", relx=.5, rely=.5)
-                label = tk.Message(frame, text=_("Progress:"), width=280, font="Verdana 11 bold", anchor="center")
-                label.pack()
-                pb = ttk.Progressbar(frame, orient='horizontal', mode='determinate', length=280)
-                pb.pack()
-                frame.update()
+                progress_frame = DynamicProgressFrame(self.master, label_lext=_("Downloading AI-Model"))
                 def callback(p):
-                    pb["value"] = p * 100
-                    pb.update()
+                    progress_frame.update_progress(p)
                 download_version(self.ai_version.get(), progress=callback)
-                pb.pack_forget()
-                frame.update()
-                frame.destroy()
+                progress_frame.close()
         return True
     
     def on_closing(self, logging_thread):

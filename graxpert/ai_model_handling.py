@@ -8,6 +8,7 @@ from threading import Thread
 
 from appdirs import user_data_dir
 from minio import Minio
+from packaging import version
 
 from graxpert.loadingframe import DynamicProgressThread
 from graxpert.s3_secrets import (bucket_name, endpoint, ro_access_key,
@@ -53,6 +54,24 @@ def list_local_versions():
     except Exception as e:
         logging.exception(e)
         return None
+
+
+def latest_version():
+    try:
+        remote_versions = list_remote_versions()
+    except Exception as e:
+        remote_versions = []
+        logging.exception(e)
+    try:
+        local_versions = list_local_versions()
+    except Exception as e:
+        local_versions = []
+        logging.exception(e)
+    ai_options = set([])
+    ai_options.update([rv["version"] for rv in remote_versions])
+    ai_options.update(set([lv["version"] for lv in local_versions]))
+    ai_options = sorted(ai_options, key=lambda k: version.parse(k), reverse=True)
+    return ai_options[0]
 
 
 def ai_model_path_from_version(local_version):

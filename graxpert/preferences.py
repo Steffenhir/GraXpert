@@ -161,6 +161,7 @@ def app_state_2_fitsheader(app, app_state, fits_header):
     fits_header["INTP-OPT"] = prefs["interpol_type_option"]
     fits_header["SMOOTHING"] = prefs["smoothing_option"]
     fits_header["CORR-TYPE"] = prefs["corr_type"]
+    fits_header["AI-VER"] = prefs["ai_version"]
     
     if prefs["interpol_type_option"] != "AI": 
         fits_header["SAMPLE-SIZE"] = prefs["sample_size"]

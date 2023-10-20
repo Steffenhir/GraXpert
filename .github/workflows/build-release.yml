@@ -47,46 +47,6 @@ jobs:
           path: ./dist/GraXpert-linux
           retention-days: 5
 
-  build-linux-zip:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.10'
-      - name: checkout repository
-        uses: actions/checkout@v3
-      - name: configure ai s3 secrets
-        run: |
-          echo "endpoint = \"$ai_s3_endpoint\"" >> ./graxpert/s3_secrets.py && \
-          echo "ro_access_key = \"$ai_s3_access_key\"" >> ./graxpert/s3_secrets.py && \
-          echo "ro_secret_key = \"$ai_s3_secret_key\"" >> ./graxpert/s3_secrets.py && \
-          echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py
-      - name: install dependencies
-        run: |
-          pip install setuptools wheel pyinstaller && \
-          pip install -r requirements.txt
-      - name: patch version
-        run: |
-          chmod u+x ./releng/patch_version.sh && \
-          ./releng/patch_version.sh
-      - name: test version
-        run: cat ./graxpert/version.py
-      - name: create GraXpert-linux bundle
-        run: |
-          pyinstaller \
-          ./GraXpert-linux-zip.spec \
-      - name: zip GraXpert-linux bundle
-        run: |
-          cd ./dist && \
-          zip -r ./GraXpert-linux.zip ./GraXpert-linux
-      - name: store artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: GraXpert-linux.zip
-          path: ./dist/GraXpert-linux.zip
-          retention-days: 5
-
   build-windows:
     runs-on: windows-latest
     steps:
@@ -118,41 +78,6 @@ jobs:
         with:
           name: GraXpert-win64.exe
           path: ./dist/GraXpert-win64.exe
-          retention-days: 5
-
-  build-windows-zip:
-    runs-on: windows-latest
-    steps:
-      - name: setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.10'
-      - name: checkout repository
-        uses: actions/checkout@v3
-      - name: configure ai s3 secrets
-        run: |
-          $PSDefaultParameterValues['Out-File:Encoding']='UTF8' ; `
-          "endpoint = `"$env:ai_s3_endpoint`"" | Out-File -Append .\graxpert\s3_secrets.py ; `
-          "ro_access_key = `"$env:ai_s3_access_key`"" | Out-File -Append .\graxpert\s3_secrets.py ; `
-          "ro_secret_key = `"$env:ai_s3_secret_key`"" | Out-File -Append .\graxpert\s3_secrets.py ; `
-          "bucket_name = `"$env:ai_s3_bucket_name`"" | Out-File -Append .\graxpert\s3_secrets.py
-      - name: install dependencies
-        run: |
-          pip install setuptools wheel pyinstaller && `
-          pip install -r requirements.txt
-      - name: patch version
-        run: ./releng/patch_version.ps1
-      - name: create GraXpert-win64 bundle
-        run: |
-          pyinstaller `
-          ./GraXpert-win64-zip.spec `
-      - name: zip GraXpert-win64 bundle
-        run: Compress-Archive -Path .\dist\GraXpert-win64 -DestinationPath .\dist\GraXpert-win64.zip
-      - name: store artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: GraXpert-win64.zip
-          path: ./dist/GraXpert-win64.zip
           retention-days: 5
 
   build-macos-x86_64:
@@ -229,6 +154,4 @@ jobs:
           files: |
             GraXpert-linux
             GraXpert-win64.exe
-            GraXpert-linux.zip
-            GraXpert-win64.zip
             GraXpert-macos-x86_64.dmg

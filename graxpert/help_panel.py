@@ -56,7 +56,7 @@ class Help_Panel():
             self.help_button,
             text=_("H\nE\nL\nP"),
             style="Help.TLabel",
-            font=("Verdana","12","bold"),
+            font=("Menlo","12","bold"),
             width=2
         )
         self.help_label.bind("<Button-1>", self.help)
@@ -87,7 +87,7 @@ class Help_Panel():
             self.advanced_button,
             text=_("A\nD\nV\nA\nN\nC\nE\nD"),
             style="Advanced.TLabel",
-            font=("Verdana","12","bold"),
+            font=("Menlo","12","bold"),
             width=2
         )
         self.advanced_label.bind("<Button-1>", self.advanced)

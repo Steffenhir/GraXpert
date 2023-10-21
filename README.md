@@ -7,8 +7,8 @@ gradients in the background of your astrophotos.
 
 Original                     |  Gradients removed
 :-------------------------:|:-------------------------:
-![Before](https://www.graxpert.com/wp-content/uploads/2022/04/M65before-2048x1100.jpg)   |  ![After](https://www.graxpert.com/wp-content/uploads/2022/04/M65after-2048x1097.jpg)
-![Before](https://www.graxpert.com/wp-content/uploads/2022/04/M42before-2048x1101.jpg)   |  ![After](https://www.graxpert.com/wp-content/uploads/2022/04/M42after-2048x1100.jpg)
+![Original](https://github.com/Steffenhir/GraXpert/blob/main/img/LDN1235_original.jpg)   |  ![Gradients removed](https://github.com/Steffenhir/GraXpert/blob/main/img/LDN1235_processed.jpg)
+![Original](https://github.com/Steffenhir/GraXpert/blob/main/img/NGC7000_original.jpg)   |  ![Gradients removed](https://github.com/Steffenhir/GraXpert/blob/main/img/NGC7000_processed.jpg)
 
 **Homepage:** [https://www.graxpert.com](https://www.graxpert.com)  
 **Manual:** [https://www.graxpert.com/daten/graXpert_manual_EN.pdf](https://www.graxpert.com/daten/graXpert_manual_EN.pdf)  

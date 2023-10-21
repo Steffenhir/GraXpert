@@ -115,6 +115,7 @@ jobs:
           --window-size 1920 1080 \
           --icon-size 100 \
           --icon "GraXpert.app" 200 190 \
+          --app-drop-link 400 190 \
           "dist/GraXpert-macos-x86_64.dmg" \
           "dist/GraXpert.app/"
       - name: store artifacts

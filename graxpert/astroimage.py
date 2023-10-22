@@ -133,7 +133,7 @@ class AstroImage:
                 bg, sigma = (0.3,2)
             
         
-        return stretch(self.img_array, bg, sigma)
+        return np.clip(stretch(self.img_array, bg, sigma), 0.0, 1.0)
     
     def get_stretch(self):
         if(self.stretch_option.get() == "No Stretch"):

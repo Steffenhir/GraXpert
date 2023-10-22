@@ -83,8 +83,6 @@ jobs:
   build-macos-x86_64:
     runs-on: macos-11
     steps:
-      - name: setup python
-        run: brew install python-tk@3.11
       - name: checkout repository
         uses: actions/checkout@v3
       - name: configure ai s3 secrets
@@ -93,8 +91,15 @@ jobs:
           echo "ro_access_key = \"$ai_s3_access_key\"" >> ./graxpert/s3_secrets.py && \
           echo "ro_secret_key = \"$ai_s3_secret_key\"" >> ./graxpert/s3_secrets.py && \
           echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py
+      # github actions overwrites brew's python. Force it to reassert itself, by running in a separate step.
+      - name: unbreak python in github actions
+        run: |
+         find /usr/local/bin -lname '*/Library/Frameworks/Python.framework/*' -delete
+         sudo rm -rf /Library/Frameworks/Python.framework/
+         brew install --force python3 && brew unlink python3 && brew unlink python3 && brew link --overwrite python3
       - name: install dependencies
         run: |
+          brew install python-tk && \
           pip3 install setuptools wheel pyinstaller && \
           pip3 install -r requirements.txt
       - name: patch version

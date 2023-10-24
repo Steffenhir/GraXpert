@@ -32,7 +32,7 @@ class AstroImage:
         img_array = None
         if(self.img_format == ".fits" or self.img_format == ".fit" or self.img_format == ".fts"):
             hdul = fits.open(directory)
-            img_array = hdul[0].data
+            img_array = np.copy(hdul[0].data)
             self.fits_header = hdul[0].header
             hdul.close()
             
@@ -48,13 +48,13 @@ class AstroImage:
             self.image_metadata = xisf.get_images_metadata()[0]
             self.fits_header = fits.Header()
             self.xisf_imagedata_2_fitsheader()
-            img_array = xisf.read_image(0)
+            img_array = np.copy(xisf.read_image(0))
             
             entry = {'id': 'BackgroundExtraction', 'type': 'String', 'value': 'GraXpert'}
             self.image_metadata['XISFProperties'] = {"ProcessingHistory": entry}
             
         else:
-            img_array = io.imread(directory)
+            img_array = np.copy(io.imread(directory))
             self.fits_header = fits.Header()
         
         # Reshape greyscale picture to shape (y,x,1)

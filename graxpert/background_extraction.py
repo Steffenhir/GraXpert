@@ -77,7 +77,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         
         if smoothing != 0:
             sigma = smoothing * 20
-            background = gaussian(background,sigma)
+            background = gaussian(image=background, sigma=sigma, channel_axis=-1)
         
         if progress is not None:
             progress.update(8)

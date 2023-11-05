@@ -16,6 +16,7 @@ from skimage import io
 from skimage.transform import resize
 
 import graxpert.background_extraction as background_extraction
+import graxpert.denoising as denoising
 import graxpert.tooltip as tooltip
 from graxpert.app_state import INITIAL_STATE
 from graxpert.astroimage import AstroImage
@@ -190,7 +191,7 @@ class Application(tk.Frame):
         
         #Background extraction menu
         self.bgextr_menu = CollapsibleFrame(self.side_menu, text=_("Background Extraction") + " ")
-        self.bgextr_menu.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
+        self.bgextr_menu.grid(column=0, row=1, pady=(5*scal,5*scal), padx=15*scal, sticky="news")
         self.bgextr_menu.sub_frame.grid_columnconfigure(0, weight=1)
         
         for i in range(21):
@@ -352,7 +353,24 @@ class Application(tk.Frame):
         self.save_stretched_button.grid(column=0, row=21, pady=(5*scal,10*scal), padx=15*scal, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_stretched_button, text=tooltip.save_stretched_pic_text)
         
+        
+        # Denoising Menu
 
+        self.denoising_menu = CollapsibleFrame(self.side_menu, text=_("Denoising") + " ")
+        self.denoising_menu.grid(column=0, row=2, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
+        self.denoising_menu.sub_frame.grid_columnconfigure(0, weight=1)
+        
+        for i in range(1):
+            self.denoising_menu.sub_frame.grid_rowconfigure(i, weight=1)
+            
+        self.denoising_button = ttk.Button(self.denoising_menu.sub_frame, 
+                          text=_("Denoise"),
+                          command=self.denoising_callback,
+        )
+        self.denoising_button.grid(column=0, row=0, pady=(20*scal,5*scal), padx=15*scal, sticky="news")
+
+        
+        # Configure Scrollbar
         self.side_canvas.create_window((0,0), window=self.side_menu)
         self.side_canvas.configure(yscrollcommand=self.scrollbar.set)
         self.side_canvas.bind('<Configure>', lambda e: self.side_canvas.configure(scrollregion=self.side_canvas.bbox("all")))
@@ -704,6 +722,20 @@ class Application(tk.Frame):
         
         self.calculate()
         
+    def denoising_callback(self, event=None):
+        denoised_image = denoising.denoise(self.images["Original"].img_array, 256, 128, "C:/Users/steff/Desktop/background/Background_extraction/GraXpert/denoise_model", strength=1.0)
+        
+        self.images["Processed"] = AstroImage(self.stretch_option_current, self.saturation)
+        self.images["Processed"].set_from_array(denoised_image)
+        self.images["Processed"].copy_metadata(self.images["Original"])
+        
+        all_images = [self.images["Original"].img_array, self.images["Processed"].img_array]
+        stretches = stretch_all(all_images, self.images["Original"].get_stretch())
+        self.images["Original"].update_display_from_array(stretches[0])
+        self.images["Processed"].update_display_from_array(stretches[1])
+        
+        self.display_type.set("Processed")
+        self.redraw_image()
     
     def mouse_down_left(self,event):
         

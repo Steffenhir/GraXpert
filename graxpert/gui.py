@@ -1,3 +1,6 @@
+import sys,os
+sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+
 from graxpert.mp_logging import initialize_logging, shutdown_logging, logfile_name
 
 import importlib

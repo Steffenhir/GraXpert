@@ -14,6 +14,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 
+msgid "Crop"
+msgstr "Zuschneiden"
+
+msgid "Crop mode on/off"
+msgstr "Zuschnittsmodus an/aus"
+
+msgid "Apply crop"
+msgstr "Zuschnitt anwenden"
+
+msgid "Background Extraction"
+msgstr "Hintergrundentfernung"
 
 #: src/gui.py:147
 msgid " Loading"
@@ -21,11 +32,14 @@ msgstr " Laden"
 
 #: src/gui.py:152
 msgid "Load Image"
-msgstr "Lade Bild"
+msgstr "Bild laden"
 
 #: src/gui.py:160
 msgid " Stretch Options"
 msgstr " Stretchoptionen"
+
+msgid "Saturation"
+msgstr "Farbsättigung"
 
 #: src/gui.py:176
 msgid " Sample Selection"
@@ -33,19 +47,23 @@ msgstr " Punktauswahl"
 
 #: src/gui.py:176
 msgid "Display points"
-msgstr "Zeige Punkte"
+msgstr "Punkte anzeigen"
+
+#: src/gui.py:176
+msgid "Flooded generation"
+msgstr "Geflutete Generierung"
 
 #: src/gui.py:185 src/gui.py:191
-msgid "Points per row: {}"
-msgstr "Punkte pro Reihe: {}"
+msgid "Points per row"
+msgstr "Punkte pro Reihe"
 
 #: src/gui.py:210 src/gui.py:216
-msgid "Grid Tolerance: {}"
-msgstr "Gittertoleranz: {}"
+msgid "Grid Tolerance"
+msgstr "Gittertoleranz"
 
 #: src/gui.py:231
 msgid "Create Grid"
-msgstr "Erstelle Gitter"
+msgstr "Gitter erstellen"
 
 #: src/gui.py:237
 msgid "Reset Sample Points"
@@ -61,7 +79,7 @@ msgstr "Interpolationsmethode"
 
 #: src/gui.py:287
 msgid "Calculate Background"
-msgstr "Berechne Hintergrund"
+msgstr "Hintergrund berechnen"
 
 #: src/gui.py:294
 msgid " Saving"
@@ -69,11 +87,15 @@ msgstr " Speichern"
 
 #: src/gui.py:308
 msgid "Save Background"
-msgstr "Speichere Hintergrund"
+msgstr "Hintergrund speichern"
 
 #: src/gui.py:315
 msgid "Save Processed"
-msgstr "Speichere Bild"
+msgstr "Bild speichern"
+
+#: src/gui.py:422
+msgid "Save Stretched & Processed"
+msgstr "Gestretchtes Bild speichern"
 
 #: src/gui.py:345
 msgid "An error occurred while loading your picture."
@@ -87,9 +109,6 @@ msgstr "Bitte zuerst ein Bild laden."
 msgid "Error occured when saving the image."
 msgstr "Ein Fehler ist beim Speichern des Bildes aufgetreten."
 
-#:src/gui.py:505
-msgid "Please load your picture first."
-msgstr "Bitte zuerst ein Bild laden."
 
 #: src/gui.py:471
 msgid "Please select background points with left click."
@@ -193,16 +212,22 @@ msgid "Sample Points"
 msgstr "Samplepunkte"
 
 #: src/help_panel.py
-msgid "Sample size: {}"
-msgstr "Samplegröße: {}"
+msgid "Sample size"
+msgstr "Samplegröße"
 
 #: src/help_panel.py
-msgid "Sample color: {}"
-msgstr "Samplefarbe: {}"
+msgid "Sample color"
+msgstr "Samplefarbe"
 
 #: src/help_panel.py
 msgid "Spline order"
 msgstr "Grad der Splines"
+
+msgid "Language"
+msgstr "Sprache"
+
+msgid "Correction"
+msgstr "Korrektur"
 
 #: src/loadingframe.py:18
 msgid "Calculating..."
@@ -240,6 +265,9 @@ msgstr "Die Toleranz bestimmt einen Schwellwert für das Ignorieren von Punkten 
 msgid "Adjust the number of points per row for the grid created by automatic background selection."
 msgstr "Bestimmt die Anzahl an Punkten pro Reihe, die mit der Gitterauswahl erstellt werden"
 
+msgid "If enabled, additional grid points are automatically created based on 1) the luminance of the sample just added and 2) the grid tolerance slider below."
+msgstr "Wenn aktiviert, werden automatisch zusätzliche Gitterpunkte erstellt, die 1) auf der Luminanz des soeben hinzugefügten Punkts und 2) auf dem Toleranz-Schieberegler (s.u.) basieren."
+
 #: src/tooltip.py:173
 msgid "Choose between different interpolation methods."
 msgstr "Wähle zwischen verschiedenen Interpolationsmethoden"
@@ -260,11 +288,14 @@ msgstr "Bestimme die Bittiefe des gespeicherten Bildes sowie das Format. Falls d
 
 #: src/tooltip.py:186
 msgid "Save the background model"
-msgstr "Speichere das Hintergrundmodell."
+msgstr "Speichere das Hintergrundmodell"
 
 #: src/tooltip.py:187
 msgid "Save the processed picture"
-msgstr "Speichere das bearbeitete Bild."
+msgstr "Speichere das bearbeitete Bild"
+
+msgid "Save the stretched and processed picture. The color saturation is not changed."
+msgstr "Speichere das gestretchte und bearbeitete Bild. Die Farbsättigung wird dabei nicht verändert."
 
 #: src/tooltip.py:189
 msgid ""
@@ -279,3 +310,51 @@ msgstr ""
 "Original: originales Bild \n"
 "Processed: bearbeitetes Bild \n"
 "Background: Hintergrundmodell"
+
+msgid "This is a Beta release!"
+msgstr "Dies ist eine Beta Version!"
+
+msgid "New official release available!"
+msgstr "Neue offizielle Version verfügbar!"
+
+msgid "New version available!"
+msgstr "Neue Version verfügbar!"
+
+msgid "A newer version of GraXpert is available at"
+msgstr "Eine neuere Version von GraXpert ist verfügbar unter"
+
+msgid "This Beta version is deprecated. A newer official release of GraXpert is available at"
+msgstr "Diese Beta Version is veraltet. Eine neue offizielle Version ist ist verfügbar unter"
+
+msgid "Please note that this is a Beta release of GraXpert. You will be notified when a newer official version is available."
+msgstr "Bitte beachten Sie, dass dies eine Beta Version von GraXpert ist. Sie werden benachrichtigt, sobald eine neuere offizielle Version verfügbar ist."
+
+msgid "Interface"
+msgstr "Nutzeroberfläche"
+
+msgid "Scaling"
+msgstr "Skalierung"
+
+msgid "Please restart the program to apply the changes to UI scaling."
+msgstr "Bitte das Programm neu starten, um die Änderungen an der Nutzeroberflächenskalierung anzuwenden."
+
+msgid "Select AI directory"
+msgstr "AI Verzeichnis auswählen"
+
+msgid "Extracting Background"
+msgstr "Berechne Hintergrund"
+
+msgid "No AI-Model selected. Please select one from the Advanced panel on the right."
+msgstr "Kein KI-Modell ausgewählt. Bitte wählen Sie eine Version in den erweiterten Einstellungen am rechten Rand."
+
+msgid "Install AI-Model?"
+msgstr "KI-Modell installieren?"
+
+msgid "Selected AI-Model is not installed. Should I download it now?"
+msgstr "Das ausgewählte KI-Modell ist nicht installiert. Soll es jetzt heruntergeladen und installiert werden?"
+
+msgid "Downloading AI-Model"
+msgstr "KI-Modell wird heruntergeladen"
+
+msgid "An error occured during background calculation. Please see the log at {}."
+msgstr "Während der Berechnung ist ein Fehler aufgetreten. Bitte schauen Sie sich die Logdatei bei dem Verzeichnis {} an."

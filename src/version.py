@@ -1,2 +1,0 @@
-release = "RELEASE"
-version = "SNAPSHOT"

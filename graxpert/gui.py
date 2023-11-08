@@ -1,17 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Feb 13 10:05:08 2022
-@author: steff
-"""
+from graxpert.mp_logging import initialize_logging, shutdown_logging, logfile_name
 
-import multiprocessing
-
-multiprocessing.freeze_support()
-
-from mp_logging import configure_logging, initialize_logging, shutdown_logging
-
-configure_logging()
-
+import importlib
 import logging
 import os
 import sys
@@ -26,34 +15,34 @@ from PIL import Image, ImageTk
 from skimage import io
 from skimage.transform import resize
 
-import background_extraction
-import tooltip
-from app_state import INITIAL_STATE
-from astroimage import AstroImage
-from commands import (ADD_POINT_HANDLER, INIT_HANDLER, MOVE_POINT_HANDLER,
-                      RESET_POINTS_HANDLER, RM_POINT_HANDLER,
-                      SEL_POINTS_HANDLER, Command, InitHandler)
-from help_panel import Help_Panel
-from loadingframe import LoadingFrame
-from localization import _
-from parallel_processing import executor
-from preferences import (app_state_2_prefs, load_preferences,
-                         prefs_2_app_state, save_preferences)
-from stretch import stretch_all
-from ui_scaling import get_scaling_factor
-from version import release, version
+import graxpert.background_extraction as background_extraction
+import graxpert.tooltip as tooltip
+from graxpert.app_state import INITIAL_STATE
+from graxpert.astroimage import AstroImage
+from graxpert.collapsible_frame import CollapsibleFrame
+from graxpert.slider import Slider
+from graxpert.commands import (ADD_POINT_HANDLER, ADD_POINTS_HANDLER, INIT_HANDLER,
+                      MOVE_POINT_HANDLER, RESET_POINTS_HANDLER,
+                      RM_POINT_HANDLER, SEL_POINTS_HANDLER, Command,
+                      InitHandler)
+from graxpert.help_panel import Help_Panel
+from graxpert.loadingframe import LoadingFrame, DynamicProgressFrame, DynamicProgressThread
+from graxpert.localization import _
+from graxpert.parallel_processing import executor
+from graxpert.preferences import (app_state_2_prefs, load_preferences,
+                         prefs_2_app_state, save_preferences,
+                         app_state_2_fitsheader, fitsheader_2_app_state)
+from graxpert.stretch import stretch_all
+from graxpert.ui_scaling import get_scaling_factor
+from graxpert.version import release, version, check_for_new_version
+from graxpert.ai_model_handling import (validate_local_version, download_version,
+                                        ai_model_path_from_version)
 
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
-    
-    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        base_path = os.path.abspath(os.path.dirname(__file__))
-    else:
-        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
-
+    base_path = getattr(sys, '_MEIPASS', os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
     return os.path.join(base_path, relative_path)
-
 
 
 class Application(tk.Frame):
@@ -89,8 +78,14 @@ class Application(tk.Frame):
         self.cmd.execute()
 
         self.create_widget()
+        self.bgextr_menu.show.set(1)
+        self.bgextr_menu.toggle()
 
         self.reset_transform()
+        
+        if len(sys.argv) > 1 and sys.argv[1].endswith((".bmp", ".png", ".jpg", ".tif", ".tiff", ".fit", ".fits", ".fts", ".xisf")):
+            filename = sys.argv[1]
+            self.menu_open_clicked(None, filename)
         
 
     def create_widget(self):
@@ -130,57 +125,94 @@ class Application(tk.Frame):
         self.clicked_inside_pt_idx = 0
         self.clicked_inside_pt_coord = None
         
+        self.crop_mode = False
+        
+        self.master.bind_all("<Button-1>", lambda event: event.widget.focus_set())
         self.master.bind("<Button-1>", self.mouse_down_left)  
-        self.master.bind("<ButtonRelease-1>", self.mouse_release_left)         # Left Mouse Button
-        self.master.bind("<Button-2>", self.mouse_down_right)                  # Middle Mouse Button (Right Mouse Button on macs)
-        self.master.bind("<Button-3>", self.mouse_down_right)                  # Right Mouse Button (Middle Mouse Button on macs)
-        self.master.bind("<B1-Motion>", self.mouse_move_left)                  # Left Mouse Button Drag
-        self.master.bind("<Motion>", self.mouse_move)                          # Mouse move
-        self.master.bind("<Double-Button-1>", self.mouse_double_click_left)    # Left Button Double Click
-        self.master.bind("<MouseWheel>", self.mouse_wheel)                     # Mouse Wheel
-        self.master.bind("<Button-4>", self.mouse_wheel)                       # Mouse Wheel Linux
-        self.master.bind("<Button-5>", self.mouse_wheel)                       # Mouse Wheel Linux
-        self.master.bind("<Return>", self.enter_key)                           # Enter Key
-        self.master.bind("<Control-z>", self.undo)                             # undo
-        self.master.bind("<Control-y>", self.redo)                             # redo
-        self.master.bind("<Command-z>", self.undo)                             # undo on macs
-        self.master.bind("<Command-y>", self.redo)                             # redo on macs
+        self.master.bind("<ButtonRelease-1>", self.mouse_release_left) # Left Mouse Button
+        self.master.bind("<Button-2>", self.mouse_down_right)          # Middle Mouse Button (Right Mouse Button on macs)
+        self.master.bind("<Button-3>", self.mouse_down_right)          # Right Mouse Button (Middle Mouse Button on macs)
+        self.master.bind("<B1-Motion>", self.mouse_move_left)          # Left Mouse Button Drag
+        self.master.bind("<Motion>", self.mouse_move)                  # Mouse move
+        self.master.bind("<BackSpace>", self.reset_zoom)               # backspace -> reset zoom
+        self.master.bind("<Control-Key-0>", self.reset_zoom)           # ctrl + 0 -> reset zoom (Windows)
+        self.master.bind("<Command-Key-0>", self.reset_zoom)           # cmd  + 0 -> reset zoom (Mac)
+        self.master.bind("<Control-Key-KP_0>", self.reset_zoom)        # ctrl + numpad 0 -> reset zoom (Windows)
+        self.master.bind("<Command-Key-KP_0>", self.reset_zoom)        # cmd  + numpad 0 -> reset zoom (Mac)
+        self.master.bind("<MouseWheel>", self.mouse_wheel)             # Mouse Wheel
+        self.master.bind("<Button-4>", self.mouse_wheel)               # Mouse Wheel Linux
+        self.master.bind("<Button-5>", self.mouse_wheel)               # Mouse Wheel Linux
+        #self.master.bind("<Return>", self.enter_key)                   # Enter Key
+        self.master.bind("<Control-z>", self.undo)                     # undo
+        self.master.bind("<Control-y>", self.redo)                     # redo
+        self.master.bind("<Command-z>", self.undo)                     # undo on macs
+        self.master.bind("<Command-y>", self.redo)                    # redo on macs
+        self.master.bind("<Control-l>", self.menu_open_clicked)
+        self.master.bind("<Control-c>", self.calculate)
+        self.master.bind("<Control-s>", self.save_image)
+        self.master.bind("<Command-l>", self.menu_open_clicked)
+        self.master.bind("<Command-c>", self.calculate)
+        self.master.bind("<Command-s>", self.save_image)
         
         
         #Side menu
+        heading_font = "Verdana 11 bold"
+        
         self.side_canvas = tk.Canvas(self.master, borderwidth=0,  bd=0, highlightthickness=0, name="left_panel")
         self.side_canvas.pack(side=tk.TOP, fill=tk.Y, expand=True)
         
         self.scrollbar = ttk.Scrollbar(self.canvas, orient=tk.VERTICAL, command=self.side_canvas.yview)
         self.scrollbar.pack(side=tk.LEFT, fill=tk.Y)
         
- 
         scal = get_scaling_factor()*0.75
         self.side_menu = tk.Frame(self.side_canvas, borderwidth=0)
+        
+        #Crop menu
+        self.crop_menu = CollapsibleFrame(self.side_menu, text=_("Crop") + " ")
+        self.crop_menu.grid(column=0, row=0, pady=(20*scal,5*scal), padx=15*scal, sticky="news")
+        self.crop_menu.sub_frame.grid_columnconfigure(0, weight=1)
+        
+        for i in range(2):
+            self.crop_menu.sub_frame.grid_rowconfigure(i, weight=1)
+            
+        self.cropmode_button = ttk.Button(self.crop_menu.sub_frame, 
+                          text=_("Crop mode on/off"),
+                          command=self.toggle_crop_mode,
+        )
+        self.cropmode_button.grid(column=0, row=0, pady=(20*scal,5*scal), padx=15*scal, sticky="news")
+        
+        self.cropapply_button = ttk.Button(self.crop_menu.sub_frame, 
+                          text=_("Apply crop"),
+                          command=self.crop_apply,
+        )
+        self.cropapply_button.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
 
         
-        self.side_menu.grid_columnconfigure(0)
+        #Background extraction menu
+        self.bgextr_menu = CollapsibleFrame(self.side_menu, text=_("Background Extraction") + " ")
+        self.bgextr_menu.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
+        self.bgextr_menu.sub_frame.grid_columnconfigure(0, weight=1)
         
         for i in range(21):
-            self.side_menu.grid_rowconfigure(i, weight=1)
+            self.bgextr_menu.sub_frame.grid_rowconfigure(i, weight=1)
         
-        heading_font = "Verdana 10 bold"
         #---Open Image---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_1-scaled.png"))
-        text = tk.Label(self.side_menu, text=_(" Loading"), image=num_pic, font=heading_font, compound="left")
+        text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Loading"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=0, pady=(20*scal,5*scal), padx=0, sticky="w")
         
-        self.load_image_button = ttk.Button(self.side_menu, 
+        self.load_image_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Load Image"),
                          command=self.menu_open_clicked,
+                         style="Accent.TButton"
         )
         tt_load = tooltip.Tooltip(self.load_image_button, text=tooltip.load_text)
         self.load_image_button.grid(column=0, row=1, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
         
         #--Stretch Options--
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_2-scaled.png"))
-        text = tk.Label(self.side_menu, text=_(" Stretch Options"), image=num_pic, font=heading_font, compound="left")
+        text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Stretch Options"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=2, pady=5*scal, padx=0, sticky="w")
         
@@ -189,46 +221,45 @@ class Application(tk.Frame):
         self.stretch_option_current.set(self.stretch_options[0])
         if "stretch_option" in self.prefs:
             self.stretch_option_current.set(self.prefs["stretch_option"])
-        self.stretch_menu = ttk.OptionMenu(self.side_menu, self.stretch_option_current, self.stretch_option_current.get(), *self.stretch_options, command=self.change_stretch)
-        self.stretch_menu.grid(column=0, row=3, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
+        self.stretch_menu = ttk.OptionMenu(self.bgextr_menu.sub_frame, self.stretch_option_current, self.stretch_option_current.get(), *self.stretch_options, command=self.change_stretch)
+        self.stretch_menu.grid(column=0, row=3, pady=(5*scal,5*scal), padx=15*scal, sticky="news")
         tt_stretch= tooltip.Tooltip(self.stretch_menu, text=tooltip.stretch_text)
         
+        self.saturation = tk.DoubleVar()
+        self.saturation.set(1.0)
+        if "saturation" in self.prefs:
+            self.saturation.set(self.prefs["saturation"])
+        
+        self.saturation_slider = Slider(self.bgextr_menu.sub_frame, self.saturation, "Saturation", 0, 3, 1, scal, self.update_saturation)
+        self.saturation_slider.grid(column=0, row=4, pady=(5*scal,30*scal), padx=15*scal, sticky="ew")     
+
       
         #---Sample Selection---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_3-scaled.png"))
-        text = tk.Label(self.side_menu, text=_(" Sample Selection"), image=num_pic, font=heading_font, compound="left")
+        text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Sample Selection"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
-        text.grid(column=0, row=4, pady=5*scal, padx=0, sticky="w")
+        text.grid(column=0, row=5, pady=5*scal, padx=0, sticky="w")
         
         self.display_pts = tk.BooleanVar()
         self.display_pts.set(True)
-        self.display_pts_switch = ttk.Checkbutton(self.side_menu, text="  "+_("Display points"), compound=tk.LEFT, var=self.display_pts, command=self.redraw_points)
-        self.display_pts_switch.grid(column=0, row=5, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
+        self.display_pts_switch = ttk.Checkbutton(self.bgextr_menu.sub_frame, text="  "+_("Display points"), compound=tk.LEFT, var=self.display_pts, command=self.redraw_points)
+        self.display_pts_switch.grid(column=0, row=6, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
+        
+        self.flood_select_pts = tk.BooleanVar()
+        self.flood_select_pts.set(False)
+        if "bg_flood_selection_option" in self.prefs:
+            self.flood_select_pts.set(self.prefs["bg_flood_selection_option"])
+        self.flood_select_pts_switch = ttk.Checkbutton(self.bgextr_menu.sub_frame, text="  "+_("Flooded generation"), compound=tk.LEFT, var=self.flood_select_pts)
+        tt_load = tooltip.Tooltip(self.flood_select_pts_switch, text=tooltip.bg_flood_text)
+        self.flood_select_pts_switch.grid(column=0, row=7, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
         self.bg_pts = tk.IntVar()
         self.bg_pts.set(10)
         if "bg_pts_option" in self.prefs:
             self.bg_pts.set(self.prefs["bg_pts_option"])
         
-        self.bg_selection_text = tk.Message(self.side_menu, text=_("Points per row: {}").format(self.bg_pts.get()))
-        self.bg_selection_text.config(width=500 * scal)
-        self.bg_selection_text.grid(column=0, row=6, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
-        
-        def on_bg_pts_slider(bgs_points):
-            self.bg_pts.set(int(float(bgs_points)))
-            self.bg_selection_text.configure(text=_("Points per row: {}").format(self.bg_pts.get()))
-
-        self.bg_pts_slider = ttk.Scale(
-            self.side_menu,
-            orient=tk.HORIZONTAL,
-            from_=4,
-            to=25,
-            var=self.bg_pts,
-            command=on_bg_pts_slider,
-            length=150
-            )
-        
-        self.bg_pts_slider.grid(column=0, row=7, pady=(0,0), padx=15*scal, sticky="ew")
+        self.bg_pts_slider = Slider(self.bgextr_menu.sub_frame, self.bg_pts, "Points per row", 4, 25, 0, scal)        
+        self.bg_pts_slider.grid(column=0, row=8, pady=(5*scal,5*scal), padx=15*scal, sticky="ew")
         tt_bg_points= tooltip.Tooltip(self.bg_pts_slider, text=tooltip.num_points_text)
         
         self.bg_tol = tk.DoubleVar()
@@ -236,33 +267,17 @@ class Application(tk.Frame):
         if "bg_tol_option" in self.prefs:
             self.bg_tol.set(self.prefs["bg_tol_option"])
         
-        self.bg_selection_tol = tk.Message(self.side_menu, text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
-        self.bg_selection_tol.config(width=500)
-        self.bg_selection_tol.grid(column=0, row=8, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
-        
-        def on_bg_tol_slider(bg_tol):
-            self.bg_tol.set(float("{:.1f}".format(float(bg_tol))))
-            self.bg_selection_tol.configure(text=_("Grid Tolerance: {}").format(self.bg_tol.get()))
-        
-        self.bg_tol_slider = ttk.Scale(
-            self.side_menu,
-            orient=tk.HORIZONTAL,
-            from_=-2,
-            to=10,
-            var=self.bg_tol,
-            command=on_bg_tol_slider,
-            length=150
-            )
-        self.bg_tol_slider.grid(column=0, row=9, pady=(0,10*scal), padx=15*scal, sticky="ew")
+        self.bg_tol_slider = Slider(self.bgextr_menu.sub_frame, self.bg_tol, "Grid Tolerance", -2, 10, 1, scal)
+        self.bg_tol_slider.grid(column=0, row=9, pady=(5*scal,10*scal), padx=15*scal, sticky="ew")
         tt_tol_points= tooltip.Tooltip(self.bg_tol_slider, text=tooltip.bg_tol_text)
         
-        self.bg_selection_button = ttk.Button(self.side_menu, 
+        self.bg_selection_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Create Grid"),
                          command=self.select_background)
         self.bg_selection_button.grid(column=0, row=10, pady=5*scal, padx=15*scal, sticky="news")
         tt_bg_select = tooltip.Tooltip(self.bg_selection_button, text= tooltip.bg_select_text)
         
-        self.reset_button = ttk.Button(self.side_menu, 
+        self.reset_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Reset Sample Points"),
                          command=self.reset_backgroundpts)
         self.reset_button.grid(column=0, row=11, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
@@ -270,20 +285,20 @@ class Application(tk.Frame):
         
         #---Calculation---
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_4-scaled.png"))
-        text = tk.Label(self.side_menu, text=_(" Calculation"), image=num_pic, font=heading_font, compound="left")
+        text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Calculation"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=12, pady=5*scal, padx=0, sticky="w")
         
-        self.intp_type_text = tk.Message(self.side_menu, text=_("Interpolation Method:"))
+        self.intp_type_text = tk.Message(self.bgextr_menu.sub_frame, text=_("Interpolation Method:"))
         self.intp_type_text.config(width=500)
         self.intp_type_text.grid(column=0, row=13, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
         
-        self.interpol_options = ["RBF", "Splines", "Kriging"]
+        self.interpol_options = ["RBF", "Splines", "Kriging", "AI"]
         self.interpol_type = tk.StringVar()
         self.interpol_type.set(self.interpol_options[0])
         if "interpol_type_option" in self.prefs:
             self.interpol_type.set(self.prefs["interpol_type_option"])
-        self.interpol_menu = ttk.OptionMenu(self.side_menu, self.interpol_type, self.interpol_type.get(), *self.interpol_options)
+        self.interpol_menu = ttk.OptionMenu(self.bgextr_menu.sub_frame, self.interpol_type, self.interpol_type.get(), *self.interpol_options)
         self.interpol_menu.grid(column=0, row=14, pady=(0,5*scal), padx=15*scal, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.interpol_menu, text=tooltip.interpol_type_text)
         
@@ -292,61 +307,52 @@ class Application(tk.Frame):
         if "smoothing_option" in self.prefs:
             self.smoothing.set(self.prefs["smoothing_option"])
         
-        self.smooth_text = tk.Message(self.side_menu, text="Smoothing: {}".format(self.smoothing.get()))
-        self.smooth_text.config(width=500)
-        self.smooth_text.grid(column=0, row=15, pady=(5*scal,5*scal), padx=15*scal, sticky="ews")
-        
-        def on_smoothing_slider(smoothing):
-            self.smoothing.set(float("{:.2f}".format(float(smoothing))))
-            self.smooth_text.configure(text="Smoothing: {}".format(self.smoothing.get()))
-        
-        self.smoothing_slider = ttk.Scale(
-            self.side_menu,
-            orient=tk.HORIZONTAL,
-            from_=0,
-            to=1,
-            var=self.smoothing,
-            command=on_smoothing_slider,
-            length=150
-            )
-        self.smoothing_slider.grid(column=0, row=16, pady=(0,10*scal), padx=15*scal, sticky="ew")
+        self.smoothing_slider = Slider(self.bgextr_menu.sub_frame, self.smoothing, "Smoothing", 0, 1, 2, scal)
+        self.smoothing_slider.grid(column=0, row=15, pady=(0,10*scal), padx=15*scal, sticky="ew")
         tt_smoothing= tooltip.Tooltip(self.smoothing_slider, text=tooltip.smoothing_text)
         
-        self.calculate_button = ttk.Button(self.side_menu, 
+        self.calculate_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Calculate Background"),
-                         command=self.calculate)
-        self.calculate_button.grid(column=0, row=17, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
+                         command=self.calculate,
+                         style="Accent.TButton")
+        self.calculate_button.grid(column=0, row=16, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
         #---Saving---  
         num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_5-scaled.png"))
-        self.saveas_text = tk.Label(self.side_menu, text=_(" Saving"), image=num_pic, font=heading_font, compound="left")
+        self.saveas_text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Saving"), image=num_pic, font=heading_font, compound="left")
         self.saveas_text.image = num_pic
-        self.saveas_text.grid(column=0, row=18, pady=5*scal, padx=0, sticky="w")
+        self.saveas_text.grid(column=0, row=17, pady=5*scal, padx=0, sticky="w")
         
-        self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits"]
+        self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits", "16 bit XISF", "32 bit XISF"]
         self.saveas_type = tk.StringVar()
         self.saveas_type.set(self.saveas_options[0])
         if "saveas_option" in self.prefs:
             self.saveas_type.set(self.prefs["saveas_option"])
-        self.saveas_menu = ttk.OptionMenu(self.side_menu, self.saveas_type, self.saveas_type.get(), *self.saveas_options)
-        self.saveas_menu.grid(column=0, row=19, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
+        self.saveas_menu = ttk.OptionMenu(self.bgextr_menu.sub_frame, self.saveas_type, self.saveas_type.get(), *self.saveas_options)
+        self.saveas_menu.grid(column=0, row=18, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
         tt_interpol_type= tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
         
-        self.save_background_button = ttk.Button(self.side_menu, 
+        self.save_button = ttk.Button(self.bgextr_menu.sub_frame, 
+                         text=_("Save Processed"),
+                         command=self.save_image,
+                         style="Accent.TButton")
+        self.save_button.grid(column=0, row=19, pady=5*scal, padx=15*scal, sticky="news")
+        tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
+        
+        self.save_background_button = ttk.Button(self.bgextr_menu.sub_frame, 
                          text=_("Save Background"),
                          command=self.save_background_image)
         self.save_background_button.grid(column=0, row=20, pady=5*scal, padx=15*scal, sticky="news")
         tt_save_bg = tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
-              
+
+        self.save_stretched_button = ttk.Button(self.bgextr_menu.sub_frame, 
+                         text=_("Save Stretched & Processed"),
+                         command=self.save_stretched_image)
+        self.save_stretched_button.grid(column=0, row=21, pady=(5*scal,10*scal), padx=15*scal, sticky="news")
+        tt_save_pic= tooltip.Tooltip(self.save_stretched_button, text=tooltip.save_stretched_pic_text)
         
-        self.save_button = ttk.Button(self.side_menu, 
-                         text=_("Save Processed"),
-                         command=self.save_image)
-        self.save_button.grid(column=0, row=21, pady=(5*scal,10*scal), padx=15*scal, sticky="news")
-        tt_save_pic= tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
-        
-        
+
         self.side_canvas.create_window((0,0), window=self.side_menu)
         self.side_canvas.configure(yscrollcommand=self.scrollbar.set)
         self.side_canvas.bind('<Configure>', lambda e: self.side_canvas.configure(scrollregion=self.side_canvas.bbox("all")))
@@ -354,18 +360,21 @@ class Application(tk.Frame):
         width = self.side_menu.winfo_width()
         self.side_canvas.configure(width=width)
         self.side_canvas.yview_moveto("0.0")
+
     
-    def menu_open_clicked(self, event=None):
+    def menu_open_clicked(self, event=None, filename=None):
 
         if self.prefs["working_dir"] != "" and os.path.exists(self.prefs["working_dir"]):
             initialdir = self.prefs["working_dir"]
         else:
             initialdir = os.getcwd()
         
-        filename = tk.filedialog.askopenfilename(
-            filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits .fts"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits .fts")],
-            initialdir = initialdir
-            )
+        if filename is None:
+            filename = tk.filedialog.askopenfilename(
+                filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits .fts .xisf"),
+                            ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits .fts"), ("XISF", ".xisf")],
+                initialdir = initialdir
+                )
         
         if filename == "":
             return
@@ -374,7 +383,7 @@ class Application(tk.Frame):
         self.data_type = os.path.splitext(filename)[1]
         
         try:
-            image = AstroImage(self.stretch_option_current)
+            image = AstroImage(self.stretch_option_current, self.saturation)
             image.set_from_file(filename)
             self.images["Original"] = image
             self.prefs["working_dir"] = os.path.dirname(filename)
@@ -405,11 +414,51 @@ class Application(tk.Frame):
         self.prefs["width"] = width
         self.prefs["height"] = height
         
+        tmp_state = fitsheader_2_app_state(self, self.cmd.app_state, self.images["Original"].fits_header)
+        self.cmd: Command = Command(INIT_HANDLER, background_points=tmp_state["background_points"])
+        self.cmd.execute()
+        
         self.zoom_fit(width, height)
         self.redraw_image()
         self.loading_frame.end()
         return
     
+    def toggle_crop_mode(self):
+        
+        if self.images["Original"] is None:
+            messagebox.showerror("Error", _("Please load your picture first."))
+            return
+        
+        self.startx = 0
+        self.starty = 0
+        self.endx = self.images["Original"].width
+        self.endy = self.images["Original"].height
+
+        if(self.crop_mode):
+            self.crop_mode = False
+        else:
+            self.crop_mode = True
+        
+        self.redraw_points()
+        
+    def crop_apply(self):
+        
+        if (not self.crop_mode):
+            return
+        
+        for astroimg in self.images.values():
+            if(astroimg is not None):
+                astroimg.crop(self.startx, self.endx, self.starty, self.endy)
+
+        self.reset_backgroundpts()
+        self.crop_mode = False
+        self.zoom_fit(self.images[self.display_type.get()].width, self.images[self.display_type.get()].height)
+        self.redraw_image()
+        self.redraw_points()
+        return
+        
+        
+        
     def select_background(self,event=None):
         
         if self.images["Original"] is None:
@@ -443,9 +492,16 @@ class Application(tk.Frame):
         self.redraw_image()
         return
 
-    
+
+    def update_saturation(self, event=None):
+        for img in self.images.values():
+            if img is not None:
+                img.update_saturation()
+        
+        self.redraw_image()
+
    
-    def save_image(self):
+    def save_image(self, event=None):
        
        
        if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
@@ -454,7 +510,14 @@ class Application(tk.Frame):
                filetypes = [("Tiff", ".tiff")],
                defaultextension = ".tiff",
                initialdir = self.prefs["working_dir"]
-               )           
+               )         
+       elif(self.saveas_type.get() == "16 bit XISF" or self.saveas_type.get() == "32 bit XISF"):       
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile = self.filename + "_GraXpert.xisf",
+                filetypes = [("XISF", ".xisf")],
+                defaultextension = ".xisf",
+                initialdir = self.prefs["working_dir"]
+                )           
        else:
            dir = tk.filedialog.asksaveasfilename(
                initialfile = self.filename + "_GraXpert.fits",
@@ -462,7 +525,7 @@ class Application(tk.Frame):
                defaultextension = ".fits",
                initialdir = self.prefs["working_dir"]
                )
-       
+                           
        if(dir == ""):
            return
         
@@ -470,6 +533,46 @@ class Application(tk.Frame):
        
        try:
            self.images["Processed"].save(dir, self.saveas_type.get())
+       except:
+           messagebox.showerror("Error", _("Error occured when saving the image."))
+           
+       self.loading_frame.end()
+
+    def save_stretched_image(self):
+       
+       
+       if(self.saveas_type.get() == "16 bit Tiff" or self.saveas_type.get() == "32 bit Tiff"):
+           dir = tk.filedialog.asksaveasfilename(
+               initialfile = self.filename + "_stretched_GraXpert.tiff",
+               filetypes = [("Tiff", ".tiff")],
+               defaultextension = ".tiff",
+               initialdir = self.prefs["working_dir"]
+               )         
+       elif(self.saveas_type.get() == "16 bit XISF" or self.saveas_type.get() == "32 bit XISF"):       
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile = self.filename + "_stretched_GraXpert.xisf",
+                filetypes = [("XISF", ".xisf")],
+                defaultextension = ".xisf",
+                initialdir = self.prefs["working_dir"]
+                )           
+       else:
+           dir = tk.filedialog.asksaveasfilename(
+               initialfile = self.filename + "_stretched_GraXpert.fits",
+               filetypes = [("Fits", ".fits")],
+               defaultextension = ".fits",
+               initialdir = self.prefs["working_dir"]
+               )
+                           
+       if(dir == ""):
+           return
+        
+       self.loading_frame.start()
+       
+       try:
+           if self.images["Processed"] is None:
+               self.images["Original"].save_stretched(dir, self.saveas_type.get())
+           else:
+               self.images["Processed"].save_stretched(dir, self.saveas_type.get())
        except:
            messagebox.showerror("Error", _("Error occured when saving the image."))
            
@@ -484,7 +587,14 @@ class Application(tk.Frame):
                 filetypes = [("Tiff", ".tiff")],
                 defaultextension = ".tiff",
                 initialdir = self.prefs["working_dir"]
-                )           
+                )
+        elif(self.saveas_type.get() == "16 bit XISF" or self.saveas_type.get() == "32 bit XISF"):
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile = self.filename + "_background.xisf",
+                filetypes = [("XISF", ".xisf")],
+                defaultextension = ".xisf",
+                initialdir = self.prefs["working_dir"]
+                ) 
         else:
             dir = tk.filedialog.asksaveasfilename(
                 initialfile = self.filename + "_background.fits",
@@ -513,7 +623,7 @@ class Application(tk.Frame):
             self.cmd.execute()
             self.redraw_image()
     
-    def calculate(self):
+    def calculate(self, event=None):
 
         if self.images["Original"] is None:
             messagebox.showerror("Error", _("Please load your picture first."))
@@ -522,7 +632,7 @@ class Application(tk.Frame):
         background_points = self.cmd.app_state["background_points"]
         
         #Error messages if not enough points
-        if(len(background_points) == 0):
+        if(len(background_points) == 0 and self.interpol_type.get() != 'AI'):
             messagebox.showerror("Error", _("Please select background points with left click."))
             return
         
@@ -534,7 +644,14 @@ class Application(tk.Frame):
             messagebox.showerror("Error", _("Please select at least 16 background points with left click for the Splines method."))
             return
         
-        self.loading_frame.start()
+        if(self.interpol_type.get() == 'AI'):
+            if not self.validate_ai_installation():
+                return
+        
+        loading_frame = DynamicProgressFrame(self.master, label_lext=_("Extracting Background"))
+        def callback(p):
+            loading_frame.update_progress(p)
+        progress = DynamicProgressThread(callback=callback)
         
         imarray = np.copy(self.images["Original"].img_array)
         
@@ -542,33 +659,44 @@ class Application(tk.Frame):
         
         if(self.interpol_type.get() == "Kriging" or self.interpol_type.get() == "RBF"):
             downscale_factor = 4
-
-        self.images["Background"] = AstroImage(self.stretch_option_current)
-        self.images["Background"].set_from_array(background_extraction.extract_background(
-            imarray,np.array(background_points),
-            self.interpol_type.get(),self.smoothing.get(),
-            downscale_factor, self.sample_size.get(),
-            self.RBF_kernel.get(),self.spline_order.get()
-            ))
-
-        self.images["Processed"] = AstroImage(self.stretch_option_current)
-        self.images["Processed"].set_from_array(imarray)
         
-        # Update fits header
-        background_mean = np.mean(self.images["Background"].img_array)
-        self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean)
-        self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean)
-
-        all_images = [self.images["Original"].img_array, self.images["Processed"].img_array, self.images["Background"].img_array]
-        stretches = stretch_all(all_images, self.images["Original"].get_stretch())
-        self.images["Original"].update_display_from_array(stretches[0])
-        self.images["Processed"].update_display_from_array(stretches[1])
-        self.images["Background"].update_display_from_array(stretches[2])
         
-        self.display_type.set("Processed")
-        self.redraw_image()
-        
-        self.loading_frame.end()
+        try:
+            self.images["Background"] = AstroImage(self.stretch_option_current, self.saturation)
+            self.images["Background"].set_from_array(background_extraction.extract_background(
+                imarray,np.array(background_points),
+                self.interpol_type.get(),self.smoothing.get(),
+                downscale_factor, self.sample_size.get(),
+                self.RBF_kernel.get(),self.spline_order.get(),
+                self.corr_type.get(), ai_model_path_from_version(self.ai_version.get()),
+                progress
+                ))
+    
+            self.images["Processed"] = AstroImage(self.stretch_option_current, self.saturation)
+            self.images["Processed"].set_from_array(imarray)
+            
+            # Update fits header and metadata
+            background_mean = np.mean(self.images["Background"].img_array)
+            self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
+            self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
+            
+            self.images["Processed"].copy_metadata(self.images["Original"])
+            self.images["Background"].copy_metadata(self.images["Original"])
+    
+            all_images = [self.images["Original"].img_array, self.images["Processed"].img_array, self.images["Background"].img_array]
+            stretches = stretch_all(all_images, self.images["Original"].get_stretch())
+            self.images["Original"].update_display_from_array(stretches[0])
+            self.images["Processed"].update_display_from_array(stretches[1])
+            self.images["Background"].update_display_from_array(stretches[2])
+            
+            self.display_type.set("Processed")
+            self.redraw_image()
+        except Exception as e:
+            logging.exception(e)
+            messagebox.showerror("Error", _("An error occured during background calculation. Please see the log at {}.".format(logfile_name)))
+        finally:
+            progress.done_progress()
+            loading_frame.close()
 
         return
     
@@ -611,6 +739,13 @@ class Application(tk.Frame):
                 self.clicked_inside_pt = True
                 self.clicked_inside_pt_idx = min_idx
                 self.clicked_inside_pt_coord = self.cmd.app_state["background_points"][min_idx]
+        
+        if(self.crop_mode):
+            #Check if inside circles to move crop corners
+            corner1 = self.to_canvas_point(self.startx, self.starty)
+            corner2 = self.to_canvas_point(self.endx, self.endy)
+            if((event.x - corner1[0])**2 + (event.y - corner1[1])**2 < 15**2 or (event.x - corner2[0])**2 + (event.y - corner2[1])**2 < 15**2):
+                self.clicked_inside_pt = True
                 
         self.__old_event = event
 
@@ -621,7 +756,7 @@ class Application(tk.Frame):
             return
         
 
-        if self.clicked_inside_pt:            
+        if self.clicked_inside_pt and not self.crop_mode:            
             new_point = self.to_image_point(event.x,event.y)
             self.cmd.app_state["background_points"][self.clicked_inside_pt_idx] = self.clicked_inside_pt_coord
             self.cmd = Command(MOVE_POINT_HANDLER, prev=self.cmd, new_point=new_point, idx=self.clicked_inside_pt_idx)
@@ -631,7 +766,19 @@ class Application(tk.Frame):
         elif(len(self.to_image_point(event.x,event.y)) != 0 and (event.time - self.left_drag_timer < 100 or self.left_drag_timer == -1)):
 
             point = self.to_image_point(event.x,event.y)
-            self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
+            
+            if not self.flood_select_pts.get():
+                self.cmd = Command(ADD_POINT_HANDLER, prev=self.cmd, point=point)
+            else:
+                self.cmd = Command(
+                    ADD_POINTS_HANDLER,
+                    prev=self.cmd,
+                    point=point,
+                    tol=self.bg_tol.get(),
+                    bg_pts=self.bg_pts.get(),
+                    sample_size=self.sample_size.get(),
+                    image=self.images["Original"]
+                )
             self.cmd.execute()
             
 
@@ -650,13 +797,29 @@ class Application(tk.Frame):
         if(self.left_drag_timer == -1):
             self.left_drag_timer = event.time
         
-        if self.clicked_inside_pt and self.display_pts.get():         
+        if(self.clicked_inside_pt and self.display_pts.get() and not self.crop_mode):         
             new_point = self.to_image_point(event.x, event.y)
             if len(new_point) != 0:
                 self.cmd.app_state["background_points"][self.clicked_inside_pt_idx] = new_point
                 
             self.redraw_points()
             
+        elif(self.clicked_inside_pt and self.crop_mode):
+            new_point = self.to_image_point_pinned(event.x, event.y)
+            corner1_canvas = self.to_canvas_point(self.startx, self.starty)
+            corner2_canvas = self.to_canvas_point(self.endx, self.endy)
+            
+            dist1 = (event.x - corner1_canvas[0])**2 + (event.y - corner1_canvas[1])**2
+            dist2 = (event.x - corner2_canvas[0])**2 + (event.y - corner2_canvas[1])**2
+            if(dist1 < dist2):
+                self.startx = int(new_point[0])
+                self.starty = int(new_point[1])
+            else:
+                self.endx = int(new_point[0])
+                self.endy = int(new_point[1])
+                
+            self.redraw_points()
+                
         else:
             if(event.time - self.left_drag_timer >= 100):            
                 self.translate(event.x - self.__old_event.x, event.y - self.__old_event.y)
@@ -738,10 +901,7 @@ class Application(tk.Frame):
             self.label_image_pixel["text"] = ("(--, --)")
 
 
-    def mouse_double_click_left(self, event):
-        
-        if(str(event.widget).split(".")[-1] != "picture"):
-            return
+    def reset_zoom(self, event):
         
         if self.images[self.display_type.get()] is None:
             return
@@ -868,6 +1028,28 @@ class Application(tk.Frame):
 
         return image_point
 
+    def to_image_point_pinned(self, x, y):
+        
+        if self.images[self.display_type.get()] is None:
+            return []
+
+        mat_inv = np.linalg.inv(self.mat_affine)
+        image_point = np.dot(mat_inv, (x, y, 1.))
+        
+        width = self.images[self.display_type.get()].width
+        height = self.images[self.display_type.get()].height
+        
+        if image_point[0] < 0:
+            image_point[0] = 0
+        if image_point[1] < 0:
+            image_point[1] = 0
+        if image_point[0] > width:
+            image_point[0] = width
+        if image_point[1] > height:
+            image_point[1] = height
+
+        return image_point
+    
     def to_canvas_point(self, x, y):
         
         return np.dot(self.mat_affine,(x,y,1.))
@@ -920,23 +1102,30 @@ class Application(tk.Frame):
         color = (int(color[0]*255), int(color[1]*255), int(color[2]*255))
         color = '#%02x%02x%02x' % color
         
-        self.canvas.delete("rectangle")      
+        self.canvas.delete("sample")
+        self.canvas.delete("crop")  
         rectsize = self.sample_size.get()
         background_points = self.cmd.app_state["background_points"]
         
-        if self.display_pts.get():
+        if self.display_pts.get() and not self.crop_mode:
             for point in background_points:        
                 corner1 = self.to_canvas_point(point[0]-rectsize,point[1]-rectsize)
                 corner2 = self.to_canvas_point(point[0]+rectsize,point[1]+rectsize)
-                self.canvas.create_rectangle(corner1[0],corner1[1], corner2[0],corner2[1],outline=color, width=2, tags="rectangle")
-            
+                self.canvas.create_rectangle(corner1[0],corner1[1], corner2[0],corner2[1],outline=color, width=2, tags="sample")
+        
+        if self.crop_mode:
+            corner1 = self.to_canvas_point(self.startx, self.starty)
+            corner2 = self.to_canvas_point(self.endx, self.endy)
+            self.canvas.create_rectangle(corner1[0],corner1[1], corner2[0],corner2[1], outline=color, width=2, tags="crop")
+            self.canvas.create_oval(corner1[0]-15,corner1[1]-15, corner1[0]+15,corner1[1]+15, outline=color, width=2, tags="crop")
+            self.canvas.create_oval(corner2[0]-15,corner2[1]-15, corner2[0]+15,corner2[1]+15, outline=color, width=2, tags="crop")
         return
 
     def redraw_image(self):
 
         if self.images[self.display_type.get()] is None:
             return
-        self.draw_image(self.images[self.display_type.get()].img_display)
+        self.draw_image(self.images[self.display_type.get()].img_display_saturated)
 
     def undo(self, event):
         if not type(self.cmd.handler) is InitHandler:
@@ -960,20 +1149,27 @@ class Application(tk.Frame):
         self.redraw_image()
         self.loading_frame.end()
     
+    def validate_ai_installation(self):
+        if self.ai_version is None or self.ai_version.get() == "None":
+            messagebox.showerror("Error", _("No AI-Model selected. Please select one from the Advanced panel on the right."))
+            return False
+        
+        if not validate_local_version(self.ai_version.get()):
+            if not messagebox.askyesno(_("Install AI-Model?"), _("Selected AI-Model is not installed. Should I download it now?")):
+                return False
+            else:
+                progress_frame = DynamicProgressFrame(self.master, label_lext=_("Downloading AI-Model"))
+                def callback(p):
+                    progress_frame.update_progress(p)
+                download_version(self.ai_version.get(), progress=callback)
+                progress_frame.close()
+        return True
+    
     def on_closing(self, logging_thread):
         
-        self.prefs = app_state_2_prefs(self.prefs, self.cmd.app_state)
-        self.prefs["bg_pts_option"] = self.bg_pts.get()
-        self.prefs["stretch_option"] = self.stretch_option_current.get()
-        self.prefs["bg_tol_option"] = self.bg_tol.get()
-        self.prefs["interpol_type_option"] = self.interpol_type.get()
-        self.prefs["smoothing_option"] = self.smoothing.get()
-        self.prefs["saveas_option"] = self.saveas_type.get()
-        self.prefs["sample_size"] = self.sample_size.get()
-        self.prefs["sample_color"] = self.sample_color.get()
-        self.prefs["RBF_kernel"] = self.RBF_kernel.get()
-        self.prefs["spline_order"] = self.spline_order.get()
-        self.prefs["lang"] = self.lang.get()
+
+        self.prefs = app_state_2_prefs(self.prefs, self.cmd.app_state, self)
+
         prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
         save_preferences(prefs_filename, self.prefs)
         try:
@@ -982,6 +1178,7 @@ class Application(tk.Frame):
             logging.exception("error shutting down ProcessPoolExecutor")
         shutdown_logging(logging_thread)
         root.destroy()
+        sys.exit(0)
 
 def scale_img(path, scaling, shape):
     img = io.imread(resource_path(path))
@@ -990,45 +1187,52 @@ def scale_img(path, scaling, shape):
     img = img.astype(dtype=np.uint8)
     io.imsave(resource_path(resource_path(path.replace('.png', '-scaled.png'))), img, check_contrast=False)
 
-if __name__ == "__main__":
 
-    logging_thread = initialize_logging()
 
-    root = hdpitk.HdpiTk()
-    scaling = get_scaling_factor()
-    
-    scale_img("./forest-dark/vert-hover.png", scaling*0.9, (20,10))
-    scale_img("./forest-dark/vert-basic.png", scaling*0.9, (20,10))
-    
-    scale_img("./forest-dark/thumb-hor-accent.png", scaling*0.9, (20,8))
-    scale_img("./forest-dark/thumb-hor-hover.png", scaling*0.9, (20,8))
-    scale_img("./forest-dark/thumb-hor-basic.png", scaling*0.9, (20,8))
-    scale_img("./forest-dark/scale-hor.png", scaling, (20,20))
-    
-    scale_img("./forest-dark/check-accent.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-basic.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-hover.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-unsel-accent.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-unsel-basic.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-unsel-hover.png", scaling*0.8, (20,20))
-    scale_img("./forest-dark/check-unsel-pressed.png", scaling*0.8, (20,20))
-    
-    scale_img("./img/gfx_number_1.png", scaling*0.7, (25,25))
-    scale_img("./img/gfx_number_2.png", scaling*0.7, (25,25))
-    scale_img("./img/gfx_number_3.png", scaling*0.7, (25,25))
-    scale_img("./img/gfx_number_4.png", scaling*0.7, (25,25))
-    scale_img("./img/gfx_number_5.png", scaling*0.7, (25,25))
-    scale_img("./img/hourglass.png", scaling, (25,25))
-    
-    root.tk.call("source", resource_path("forest-dark.tcl"))   
-    style = ttk.Style(root)
-    style.configure("Scale.slider", sliderlength=100, sliderthickness=100)
-    style.theme_use("forest-dark")
-    root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
-    root.tk.call('tk', 'scaling', scaling)
-    root.option_add("*TkFDialog*foreground", "black")
-    app = Application(master=root)
-    root.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(logging_thread))
+logging_thread = initialize_logging()
 
-    app.mainloop()
+root = hdpitk.HdpiTk()
+scaling = get_scaling_factor()
+
+scale_img(resource_path("forest-dark/vert-hover.png"), scaling*0.9, (20,10))
+scale_img(resource_path("forest-dark/vert-basic.png"), scaling*0.9, (20,10))
+
+scale_img(resource_path("forest-dark/thumb-hor-accent.png"), scaling*0.9, (20,8))
+scale_img(resource_path("forest-dark/thumb-hor-hover.png"), scaling*0.9, (20,8))
+scale_img(resource_path("forest-dark/thumb-hor-basic.png"), scaling*0.9, (20,8))
+scale_img(resource_path("forest-dark/scale-hor.png"), scaling, (20,20))
+
+scale_img(resource_path("forest-dark/check-accent.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-basic.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-hover.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-unsel-accent.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-unsel-basic.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-unsel-hover.png"), scaling*0.8, (20,20))
+scale_img(resource_path("forest-dark/check-unsel-pressed.png"), scaling*0.8, (20,20))
+
+scale_img(resource_path("img/gfx_number_1.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/gfx_number_2.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/gfx_number_3.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/gfx_number_4.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/gfx_number_5.png"), scaling*0.7, (25,25))
+scale_img(resource_path("img/hourglass.png"), scaling, (25,25))
+
+root.tk.call("source", resource_path("forest-dark.tcl"))   
+style = ttk.Style(root)
+style.theme_use("forest-dark")
+style.configure("TButton", padding=(8*scaling, 12*scaling, 8*scaling, 12*scaling))
+style.configure("Accent.TButton", padding=(8*scaling, 12*scaling, 8*scaling, 12*scaling))
+style.configure("TMenubutton", padding=(8*scaling, 4*scaling, 4*scaling, 4*scaling))
+root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(file=resource_path("img/Icon.png")))
+root.tk.call('tk', 'scaling', scaling)
+root.option_add("*TkFDialog*foreground", "black")
+app = Application(master=root)
+root.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(logging_thread))
+root.createcommand("::tk::mac::Quit", lambda: app.on_closing(logging_thread))
+
+if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
+    import pyi_splash
+    pyi_splash.close()        
     
+check_for_new_version()
+app.mainloop()

@@ -1,3 +1,4 @@
+import logging
 import sys
 import tkinter as tk
 from os import path
@@ -71,7 +72,7 @@ class DynamicProgressFrame(ttk.Frame):
 
     def update_progress(self, progress):
         self.pb["value"] = progress * 100
-        print(self.pb["value"])
+        logging.info("Progress: {}%".format(int(self.pb["value"])))
         self.pb.update()
 
 

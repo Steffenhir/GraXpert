@@ -1,7 +1,10 @@
-import requests
-from graxpert.localization import _
-from tkinter import messagebox
+import logging
 from datetime import datetime
+from tkinter import messagebox
+
+import requests
+
+from graxpert.localization import _
 
 release = "RELEASE"
 version = "SNAPSHOT"
@@ -30,4 +33,4 @@ def check_for_new_version():
             messagebox.showinfo(title = _("New version available!"),
                                 message= _("A newer version of GraXpert is available at") + " https://github.com/Steffenhir/GraXpert/releases/latest")
     except:
-        print("Could not check for newest version")
+        logging.warn("Could not check for newest version")

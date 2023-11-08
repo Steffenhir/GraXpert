@@ -8,8 +8,6 @@ if sys.stderr is None:
     sys.stderr = open(os.devnull, "w")
 from graxpert.mp_logging import configure_logging
 
-configure_logging()
-
 import argparse
 import logging
 import multiprocessing
@@ -125,4 +123,5 @@ def main():
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
+    configure_logging()
     main()

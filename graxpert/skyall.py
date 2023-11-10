@@ -1,5 +1,7 @@
+import logging
+
 import numpy as np
-from skimage import io, img_as_float32
+from skimage import img_as_float32, io
 
 """
 Find the mode of a distribution using a route based on the SKYALL as described in
@@ -65,7 +67,7 @@ def mode(distribution):
         iterations = iterations + 1
 
         if(iterations > 20):
-            print("More than 20 iterations in second step of SKYALL. Return median instead.")
+            logging.debug("More than 20 iterations in second step of SKYALL. Return median instead.")
             return median
     
     #print(bin_edges[left_pointer])
@@ -98,7 +100,7 @@ def mode(distribution):
 
         if(iterations >= 20):
             
-            print("More than 20 iterations in third step of SKYAL. Return median instead.L")
+            logging.debug("More than 20 iterations in third step of SKYAL. Return median instead.")
             return median
             
         num_bins = int(num_bins*1.5)

@@ -1,5 +1,7 @@
-import numpy as np
+import logging
 import math
+
+import numpy as np
 
 
 def find_darkest_quadrant(x, y, data_padded, sample_size):
@@ -28,7 +30,7 @@ def find_darkest_quadrant(x, y, data_padded, sample_size):
                 ]
             )
             if math.isnan(m):
-                print("oha")
+                logging.error("computed median is NaN", stack_info=True)
             median.append(m)
 
     min_idx = np.argmin(median)

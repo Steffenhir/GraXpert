@@ -63,7 +63,8 @@ class Application(tk.Frame):
         self.images = {
             "Original": None,
             "Background": None,
-            "Processed": None
+            "Processed": None,
+            "Reference": None
             }
         
         self.my_title = "GraXpert | Release: '{}' ({})".format(release, version)
@@ -190,7 +191,7 @@ class Application(tk.Frame):
         
         #Background extraction menu
         self.bgextr_menu = CollapsibleFrame(self.side_menu, text=_("Background Extraction") + " ")
-        self.bgextr_menu.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
+        self.bgextr_menu.grid(column=0, row=1, pady=(5*scal,5*scal), padx=15*scal, sticky="news")
         self.bgextr_menu.sub_frame.grid_columnconfigure(0, weight=1)
         
         for i in range(21):
@@ -352,6 +353,26 @@ class Application(tk.Frame):
         self.save_stretched_button.grid(column=0, row=21, pady=(5*scal,10*scal), padx=15*scal, sticky="news")
         tt_save_pic= tooltip.Tooltip(self.save_stretched_button, text=tooltip.save_stretched_pic_text)
         
+        
+        #Reference menu
+        self.reference_menu = CollapsibleFrame(self.side_menu, text=_("Reference") + " ")
+        self.reference_menu.grid(column=0, row=2, pady=(5*scal,5*scal), padx=15*scal, sticky="news")
+        self.reference_menu.sub_frame.grid_columnconfigure(0, weight=1)
+        
+        for i in range(2):
+            self.reference_menu.sub_frame.grid_rowconfigure(i, weight=1)
+            
+        self.load_reference_button = ttk.Button(self.reference_menu.sub_frame, 
+                          text=_("Load reference image"),
+                          command=self.load_reference_image,
+        )
+        self.load_reference_button.grid(column=0, row=0, pady=(20*scal,5*scal), padx=15*scal, sticky="news")
+        
+        self.reference_calculate_button = ttk.Button(self.reference_menu.sub_frame, 
+                          text=_("Calculate"),
+                          command=self.reference_calculate,
+        )
+        self.reference_calculate_button.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
 
         self.side_canvas.create_window((0,0), window=self.side_menu)
         self.side_canvas.configure(yscrollcommand=self.scrollbar.set)
@@ -420,6 +441,39 @@ class Application(tk.Frame):
         
         self.zoom_fit(width, height)
         self.redraw_image()
+        self.loading_frame.end()
+        return
+    
+    def load_reference_image(self, event=None, filename=None):
+        
+        if self.prefs["working_dir"] != "" and os.path.exists(self.prefs["working_dir"]):
+            initialdir = self.prefs["working_dir"]
+        else:
+            initialdir = os.getcwd()
+        
+        if filename is None:
+            filename = tk.filedialog.askopenfilename(
+                filetypes = [("Image file", ".bmp .png .jpg .tif .tiff .fit .fits .fts .xisf"),
+                            ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif .tiff"), ("Fits", ".fit .fits .fts"), ("XISF", ".xisf")],
+                initialdir = initialdir
+                )
+        
+        if filename == "":
+            return
+        
+        self.loading_frame.start()
+        self.data_type = os.path.splitext(filename)[1]
+        
+        try:
+            image = AstroImage(self.stretch_option_current, self.saturation)
+            image.set_from_file(filename)
+            self.images["Reference"] = image
+            
+        except Exception as e:
+            msg = _("An error occurred while loading your picture.")
+            logging.exception(msg)
+            messagebox.showerror("Error", _(msg))
+
         self.loading_frame.end()
         return
     
@@ -698,6 +752,14 @@ class Application(tk.Frame):
             progress.done_progress()
             loading_frame.close()
 
+        return
+    
+    def reference_calculate(self, event=None):
+        
+        background = background_extraction.extract_background_with_reference(
+            self.images["Original"], 
+            self.images["Reference"])
+        
         return
     
     def enter_key(self,enter):

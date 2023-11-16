@@ -261,3 +261,17 @@ def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind
     existing_shm_background.close()
 
     logging.info("background_extraction.interpol finished")
+    
+def extract_background_with_reference(in_imarray, reference, num_layers=8):
+    # Fit images to each other
+    
+    # Median Multiscale Transformation
+    in_imarray_transformed = np.copy(in_imarray)
+    reference_transformed = np.copy(reference)
+    
+    # Remove background
+    background = in_imarray_transformed - reference_transformed
+    in_imarray[:,:,:] = in_imarray - background + np.mean(background)
+    
+    return background
+    

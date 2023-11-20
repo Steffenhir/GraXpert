@@ -1,24 +1,22 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Feb 14 16:44:29 2022
-
-@author: steff
-"""
-
 import multiprocessing
 multiprocessing.freeze_support()
 
-import traceback
+import logging
+from concurrent.futures import wait
+from multiprocessing import shared_memory
+
 import numpy as np
 from astropy.visualization import AsinhStretch
 from scipy.optimize import root
-from concurrent.futures import wait
-from multiprocessing import shared_memory
-from parallel_processing import executor
+
+from graxpert.mp_logging import get_logging_queue, worker_configurer
+from graxpert.parallel_processing import executor
 
 
+def stretch_channel(shm_name, c, bg, sigma, shape, dtype, logging_queue, logging_configurer):
 
-def stretch_channel(shm_name, c, bg, sigma, shape, dtype):
+    logging_configurer(logging_queue)
+    logging.info("stretch.stretch_channel started")
 
     existing_shm = shared_memory.SharedMemory(name=shm_name)
     channels = np.ndarray(shape, dtype, buffer=existing_shm.buf) #[:,:,channel_idx]
@@ -43,11 +41,12 @@ def stretch_channel(shm_name, c, bg, sigma, shape, dtype):
 
         channel = MTF(channel, midtone)
 
-    except Exception as e:
-        print("An error occured while stretching a color channel")
-        print(traceback.format_exc(e))
+    except:
+        logging.exception("An error occured while stretching a color channel")
     finally:
         existing_shm.close()
+    
+    logging.info("stretch.stretch_channel finished")
 
 def stretch(data, bg, sigma):
 
@@ -56,8 +55,9 @@ def stretch(data, bg, sigma):
     np.copyto(copy, data)
 
     futures = []
+    logging_queue = get_logging_queue()
     for c in range(copy.shape[-1]):
-        futures.insert(c, executor.submit(stretch_channel, shm.name, c, bg, sigma, copy.shape, copy.dtype))
+        futures.insert(c, executor.submit(stretch_channel, shm.name, c, bg, sigma, copy.shape, copy.dtype, logging_queue, worker_configurer))
     wait(futures)
 
     copy = np.copy(copy)
@@ -80,6 +80,7 @@ def stretch_all(datas, stretch_params):
     copies = []
     result = []
 
+    logging_queue = get_logging_queue()
     for data in datas:
         shm = shared_memory.SharedMemory(create=True, size=data.nbytes)
         copy = np.ndarray(data.shape, dtype=data.dtype, buffer=shm.buf)
@@ -87,7 +88,7 @@ def stretch_all(datas, stretch_params):
         shms.append(shm)
         copies.append(copy)
         for c in range(copy.shape[-1]):
-            futures.insert(c, executor.submit(stretch_channel, shm.name, c, bg, sigma, copy.shape, copy.dtype))
+            futures.insert(c, executor.submit(stretch_channel, shm.name, c, bg, sigma, copy.shape, copy.dtype, logging_queue, worker_configurer))
     wait(futures)
 
     for copy in copies:

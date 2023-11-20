@@ -40,7 +40,7 @@ namespace eval ttk::theme::forest-dark {
             -insertwidth 1 \
             -insertcolor $colors(-fg) \
             -fieldbackground $colors(-selectbg) \
-            -font {Verdana 10} \
+            -font {Verdana 11} \
             -borderwidth 1 \
             -relief flat
 
@@ -103,7 +103,7 @@ namespace eval ttk::theme::forest-dark {
         ttk::style layout TCheckbutton {
             Checkbutton.button -children {
                 Checkbutton.padding -children {
-                    Checkbutton.indicator -side left
+                    Checkbutton.indicator -side left 
                     Checkbutton.label -side right -expand true
                 }
             }
@@ -248,7 +248,7 @@ namespace eval ttk::theme::forest-dark {
             ] -border 4 -sticky nsew
 
         # Menubutton
-        ttk::style configure TMenubutton -padding {8 4 4 4}
+        ttk::style configure TMenubutton -padding {8 4 4 4} -anchor center
 
         ttk::style element create Menubutton.button image \
             [list $I(rect-basic) \
@@ -297,19 +297,19 @@ namespace eval ttk::theme::forest-dark {
         ttk::style configure TCheckbutton -padding 4
 
         ttk::style element create Checkbutton.indicator image \
-            [list $I(check-unsel-accent) \
+            [list $I(check-unsel-accent-scaled) \
                 {alternate disabled} $I(check-tri-basic) \
-                {selected disabled} $I(check-basic) \
-                disabled $I(check-unsel-basic) \
+                {selected disabled} $I(check-basic-scaled) \
+                disabled $I(check-unsel-basic-scaled) \
                 {pressed alternate} $I(check-tri-hover) \
                 {active alternate} $I(check-tri-hover) \
                 alternate $I(check-tri-accent) \
-                {pressed selected} $I(check-hover) \
-                {active selected} $I(check-hover) \
-                selected $I(check-accent) \
-                {pressed !selected} $I(check-unsel-pressed) \
-                active $I(check-unsel-hover) \
-            ] -width 26 -sticky w
+                {pressed selected} $I(check-hover-scaled) \
+                {active selected} $I(check-hover-scaled) \
+                selected $I(check-accent-scaled) \
+                {pressed !selected} $I(check-unsel-pressed-scaled) \
+                active $I(check-unsel-hover-scaled) \
+            ] -sticky w
 
         # Switch
         ttk::style element create Switch.indicator image \

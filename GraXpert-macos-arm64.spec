@@ -4,11 +4,11 @@
 block_cipher = None
 
 
-a = Analysis(['./src/gui.py'],
+a = Analysis(['./graxpert/main.py'],
     pathex=[],
     binaries=[],
     datas=[('./img/*', './img/'), ('./forest-dark.tcl', './'), ('./forest-dark/*', './forest-dark/')],
-    hiddenimports=['PIL._tkinter_finder'],
+    hiddenimports=['PIL._tkinter_finder', 'tkinter'],
     hookspath=['./releng'],
     hooksconfig={},
     runtime_hooks=[],
@@ -17,8 +17,7 @@ a = Analysis(['./src/gui.py'],
     win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False)
-
-pyz = PYZ(a.pure, a.zipped_data,
+pyz = PYZ(a.pure, a.zipped_data, 
     cipher=block_cipher)
 
 exe = EXE(pyz,
@@ -30,12 +29,13 @@ exe = EXE(pyz,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch=None,
+    target_arch='arm64',
     codesign_identity=None,
     entitlements_file=None , icon='./img/Icon.ico')
+
 coll = COLLECT(
     exe,
     a.binaries,
@@ -45,5 +45,14 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='GraXpert-linux',
-)
+    name='GraXpert')
+
+app = BUNDLE(coll,
+            name='GraXpert.app',
+            icon='./img/Icon.ico',
+            bundle_identifier=None,
+            info_plist={
+                'CFBundleShortVersionString': 'Beta-Release (v1.0.6cAI)',
+                'NSHighResolutionCapable': 'True'
+            }
+            )

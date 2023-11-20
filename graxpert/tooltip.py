@@ -1,7 +1,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from ui_scaling import get_scaling_factor
-from localization import _
+from graxpert.ui_scaling import get_scaling_factor
+from graxpert.localization import _
 
 
 class Tooltip:
@@ -43,7 +43,7 @@ class Tooltip:
                  wraplength=250):
 
         self.waittime = waittime  # in miliseconds, originally 500
-        self.wraplength = wraplength * get_scaling_factor(widget.master.master)  # in pixels, originally 180
+        self.wraplength = wraplength * get_scaling_factor()  # in pixels, originally 180
         self.widget = widget
         self.text = text
         self.widget.bind("<Enter>", self.onEnter)
@@ -167,6 +167,10 @@ bg_select_text = _("Creates a grid with the specified amount of points per row "
 bg_tol_text = _("The tolerance adjusts the threshold for rejection of background points " 
                "with automatic background selection")
 
+bg_flood_text = _("If enabled, additional grid points are automatically created based on "
+                 "1) the luminance of the sample just added and "
+                 "2) the grid tolerance slider below.")
+
 num_points_text = _("Adjust the number of points per row for the grid created by"
                    " automatic background selection.")
 
@@ -185,6 +189,7 @@ saveas_text = _("Choose the bitdepth of the saved pictures and the file format. 
                "be preserved.")
 save_bg_text = _("Save the background model")
 save_pic_text = _("Save the processed picture")
+save_stretched_pic_text = _("Save the stretched and processed picture. The color saturation is not changed.")
 
 display_text = _("Switch display between \n"
                 "\n"

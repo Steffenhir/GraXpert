@@ -13,6 +13,10 @@ from scipy import interpolate, linalg
 
 from skimage.transform import resize
 from skimage.filters import  gaussian
+import skimage
+
+from graxpert.multiscale_image import MultiScaleImage
+import scipy
 
 import sys
 import os
@@ -262,16 +266,39 @@ def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind
 
     logging.info("background_extraction.interpol finished")
     
-def extract_background_with_reference(in_imarray, reference, num_layers=8):
-    # Fit images to each other
+def extract_background_with_reference(in_imarray, reference, num_layers=6):
+    in_imarray_copy = np.copy(in_imarray)
+    reference_copy = np.copy(reference)
+    
     
     # Median Multiscale Transformation
-    in_imarray_transformed = np.copy(in_imarray)
-    reference_transformed = np.copy(reference)
+
+    in_imarray_multiscale = MultiScaleImage.decompose_image(in_imarray_copy, num_layers)
+    reference_multiscale = MultiScaleImage.decompose_image(reference_copy, num_layers)
+
+    in_imarray_residual = in_imarray_multiscale.img_residual
+    reference_residual = reference_multiscale.img_residual
+    
+    # Fit residuals to each other using stars in corrected original images
+    linear_fit(in_imarray_copy, reference_copy, in_imarray_residual, reference_residual, 0.95)
+
     
     # Remove background
-    background = in_imarray_transformed - reference_transformed
+    background = in_imarray_residual - reference_residual + np.median(reference_residual, axis=[0,1])
     in_imarray[:,:,:] = in_imarray - background + np.mean(background)
     
-    return background
+    return background, in_imarray_residual, reference_residual
+
+def linear_fit(o, r, o_residual, r_residual, clipping):
+    o = o - o_residual
+    r = r - r_residual
     
+    median = np.median(o, axis=[0,1])
+    mad = np.median(np.abs(o-median), axis=[0,1])
+    threshold = median + 3*mad
+    
+    for c in range(o.shape[-1]):
+        indx_clipped = np.logical_and(o[:,:,c].flatten() < clipping, o[:,:,c].flatten() > threshold[c])
+        coeff = np.polyfit(r[:,:,c].flatten()[indx_clipped], o[:,:,c].flatten()[indx_clipped], 1)
+        r_residual[:,:,c] = r_residual[:,:,c]*coeff[0] + coeff[1]
+        logging.info(coeff)

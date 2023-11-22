@@ -112,7 +112,7 @@ class Application(tk.Frame):
         self.canvas.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)
         
         
-        self.display_options = ["Original","Processed","Background"]
+        self.display_options = ["Original","Processed","Background", "Reference"]
         self.display_type = tk.StringVar()
         self.display_type.set(self.display_options[0])
         self.display_menu = ttk.OptionMenu(self.canvas, self.display_type, self.display_type.get(), *self.display_options, command=self.switch_display)
@@ -359,7 +359,7 @@ class Application(tk.Frame):
         self.reference_menu.grid(column=0, row=2, pady=(5*scal,5*scal), padx=15*scal, sticky="news")
         self.reference_menu.sub_frame.grid_columnconfigure(0, weight=1)
         
-        for i in range(2):
+        for i in range(6):
             self.reference_menu.sub_frame.grid_rowconfigure(i, weight=1)
             
         self.load_reference_button = ttk.Button(self.reference_menu.sub_frame, 
@@ -373,6 +373,31 @@ class Application(tk.Frame):
                           command=self.reference_calculate,
         )
         self.reference_calculate_button.grid(column=0, row=1, pady=(5*scal,20*scal), padx=15*scal, sticky="news")
+        
+        self.alpha = tk.DoubleVar()
+        self.alpha.set(1.0)
+        
+        self.alpha_slider = Slider(self.reference_menu.sub_frame, self.alpha, "Alpha", 0, 3, 1, scal, self.update_alpha)
+        self.alpha_slider.grid(column=0, row=2, pady=(5*scal,30*scal), padx=15*scal, sticky="ew")
+        
+        self.red = tk.DoubleVar()
+        self.red.set(1.0)
+        
+        self.red_slider = Slider(self.reference_menu.sub_frame, self.red, "Red", 0, 3, 1, scal, self.update_alpha)
+        self.red_slider.grid(column=0, row=3, pady=(5*scal,30*scal), padx=15*scal, sticky="ew")
+        
+        self.green = tk.DoubleVar()
+        self.green.set(1.0)
+        
+        self.green_slider = Slider(self.reference_menu.sub_frame, self.green, "Green", 0, 3, 1, scal, self.update_alpha)
+        self.green_slider.grid(column=0, row=4, pady=(5*scal,30*scal), padx=15*scal, sticky="ew")
+        
+        self.blue = tk.DoubleVar()
+        self.blue.set(1.0)
+        
+        self.blue_slider = Slider(self.reference_menu.sub_frame, self.blue, "Blue", 0, 3, 1, scal, self.update_alpha)
+        self.blue_slider.grid(column=0, row=5, pady=(5*scal,30*scal), padx=15*scal, sticky="ew")
+        
 
         self.side_canvas.create_window((0,0), window=self.side_menu)
         self.side_canvas.configure(yscrollcommand=self.scrollbar.set)
@@ -755,12 +780,63 @@ class Application(tk.Frame):
         return
     
     def reference_calculate(self, event=None):
+        imarray = np.copy(self.images["Original"].img_array)
+        reference = np.copy(self.images["Reference"].img_array)
         
-        background = background_extraction.extract_background_with_reference(
-            self.images["Original"], 
-            self.images["Reference"])
+        if (self.images["Background"] == None):
+            background, original_residual, reference_residual = background_extraction.extract_background_with_reference(imarray, reference)
+        else:
+            original_residual = self.images["Original_Residual"].img_array
+            reference_residual = self.images["Reference_Residual"].img_array
+            background = np.copy(original_residual)
+            background[:,:,0] = background[:,:,0] - self.alpha.get() * self.red.get() * reference_residual[:,:,0] + np.median(self.alpha.get() * self.red.get() * reference_residual[:,:,0])
+            background[:,:,1] = background[:,:,1] - self.alpha.get() * self.green.get() * reference_residual[:,:,1] + np.median(self.alpha.get() * self.green.get() * reference_residual[:,:,1])
+            background[:,:,2] = background[:,:,2] - self.alpha.get() * self.blue.get() * reference_residual[:,:,2] + np.median(self.alpha.get() * self.blue.get() * reference_residual[:,:,2])
+            imarray = imarray - background + np.median(background, axis=[0,1])
         
+        self.images["Background"] = AstroImage(self.stretch_option_current, self.saturation)
+        self.images["Background"].set_from_array(background)
+        
+        self.images["Original_Residual"] = AstroImage(self.stretch_option_current, self.saturation)
+        self.images["Original_Residual"].set_from_array(original_residual)
+        
+        self.images["Reference_Residual"] = AstroImage(self.stretch_option_current, self.saturation)
+        self.images["Reference_Residual"].set_from_array(reference_residual)
+
+        self.images["Processed"] = AstroImage(self.stretch_option_current, self.saturation)
+        self.images["Processed"].set_from_array(imarray)
+        
+        # Update fits header and metadata
+        background_mean = np.mean(self.images["Background"].img_array)
+        self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
+        self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean, self, self.cmd.app_state)
+        
+        self.images["Processed"].copy_metadata(self.images["Original"])
+        self.images["Background"].copy_metadata(self.images["Original"])
+
+        all_images = [self.images["Original"].img_array, self.images["Processed"].img_array, self.images["Background"].img_array]
+        stretches = stretch_all(all_images, self.images["Original"].get_stretch())
+        self.images["Original"].update_display_from_array(stretches[0])
+        self.images["Processed"].update_display_from_array(stretches[1])
+        self.images["Background"].update_display_from_array(stretches[2])
+        
+        self.display_type.set("Processed")
+        self.redraw_image()
+
         return
+    
+    def update_alpha(self, event=None):
+        original_residual = self.images["Original_Residual"].img_array
+        reference_residual = self.images["Reference_Residual"].img_array
+        
+        background = np.copy(original_residual)
+        background[:,:,0] = background[:,:,0] - self.alpha.get() * self.red.get() * reference_residual[:,:,0] + np.median(self.alpha.get() * self.red.get() * reference_residual[:,:,0])
+        background[:,:,1] = background[:,:,1] - self.alpha.get() * self.green.get() * reference_residual[:,:,1] + np.median(self.alpha.get() * self.green.get() * reference_residual[:,:,1])
+        background[:,:,2] = background[:,:,2] - self.alpha.get() * self.blue.get() * reference_residual[:,:,2] + np.median(self.alpha.get() * self.blue.get() * reference_residual[:,:,2])
+        
+        self.images["Background"].set_from_array(background)
+        self.images["Background"].update_display()
+        self.redraw_image()
     
     def enter_key(self,enter):
         
@@ -1202,7 +1278,7 @@ class Application(tk.Frame):
             self.redraw_points()
             
     def switch_display(self, event):
-        if(self.images["Processed"] is None and self.display_type.get() != "Original"):
+        if(self.images["Processed"] is None and self.display_type.get() != "Original" and self.display_type.get() != "Reference"):
             self.display_type.set("Original")
             messagebox.showerror("Error", _("Please select background points and press the Calculate button first"))         
             return

@@ -84,8 +84,8 @@ class AstroImage:
         self.height = self.img_array.shape[0]
         return
     
-    def update_display(self):
-        img_display = self.stretch()
+    def update_display(self, median=None, mad=None):
+        img_display = self.stretch(median, mad)
         img_display = img_display*255
         
         #if self.roworder == "TOP-DOWN":
@@ -115,7 +115,7 @@ class AstroImage:
         
         return
     
-    def stretch(self):
+    def stretch(self, median=None, mad=None):
         bg, sigma = (0.2, 3)
         if(self.stretch_option.get() == "No Stretch"):
             return self.img_array
@@ -133,7 +133,7 @@ class AstroImage:
                 bg, sigma = (0.3,2)
             
         
-        return np.clip(stretch(self.img_array, bg, sigma), 0.0, 1.0)
+        return np.clip(stretch(self.img_array, bg, sigma, median, mad), 0.0, 1.0)
     
     def get_stretch(self):
         if(self.stretch_option.get() == "No Stretch"):

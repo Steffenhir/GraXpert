@@ -13,7 +13,7 @@ from graxpert.mp_logging import get_logging_queue, worker_configurer
 from graxpert.parallel_processing import executor
 
 
-def stretch_channel(shm_name, c, bg, sigma, shape, dtype, logging_queue, logging_configurer):
+def stretch_channel(shm_name, c, bg, sigma, shape, dtype, logging_queue, logging_configurer, median=None, mad=None):
 
     logging_configurer(logging_queue)
     logging.info("stretch.stretch_channel started")
@@ -24,8 +24,13 @@ def stretch_channel(shm_name, c, bg, sigma, shape, dtype, logging_queue, logging
     
     try:
         indx_clip = np.logical_and(channel < 1.0, channel > 0.0)
-        median = np.median(channel[indx_clip])
-        mad = np.median(np.abs(channel[indx_clip]-median))
+        
+        if median is None or mad is None:
+            median = np.median(channel[indx_clip])
+            mad = np.median(np.abs(channel[indx_clip]-median))
+        else:
+            median = median[c]
+            mad = mad[c]
 
         shadow_clipping = np.clip(median - sigma*mad, 0, 1.0)
         highlight_clipping = 1.0
@@ -48,7 +53,7 @@ def stretch_channel(shm_name, c, bg, sigma, shape, dtype, logging_queue, logging
     
     logging.info("stretch.stretch_channel finished")
 
-def stretch(data, bg, sigma):
+def stretch(data, bg, sigma, median=None, mad=None):
 
     shm = shared_memory.SharedMemory(create=True, size=data.nbytes)
     copy = np.ndarray(data.shape, dtype=data.dtype, buffer=shm.buf)
@@ -57,7 +62,8 @@ def stretch(data, bg, sigma):
     futures = []
     logging_queue = get_logging_queue()
     for c in range(copy.shape[-1]):
-        futures.insert(c, executor.submit(stretch_channel, shm.name, c, bg, sigma, copy.shape, copy.dtype, logging_queue, worker_configurer))
+        if (median is None and mad is None):
+            futures.insert(c, executor.submit(stretch_channel, shm.name, c, bg, sigma, copy.shape, copy.dtype, logging_queue, worker_configurer, median, mad))
     wait(futures)
 
     copy = np.copy(copy)

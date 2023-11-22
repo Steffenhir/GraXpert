@@ -326,7 +326,9 @@ class Help_Panel():
         remote_versions = list_remote_versions()
         local_versions = list_local_versions()
         ai_options = set([])
-        ai_options.update([rv["version"] for rv in remote_versions])
+        
+        if (remote_versions is not None):
+            ai_options.update([rv["version"] for rv in remote_versions])         
         ai_options.update(set([lv["version"] for lv in local_versions]))
         ai_options = sorted(ai_options, key=lambda k: version.parse(k), reverse=True)
 

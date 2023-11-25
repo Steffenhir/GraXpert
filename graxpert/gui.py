@@ -1,5 +1,3 @@
-from graxpert.mp_logging import initialize_logging, shutdown_logging, logfile_name
-
 import importlib
 import logging
 import os
@@ -12,37 +10,35 @@ import hdpitkinter as hdpitk
 import numpy as np
 from appdirs import user_config_dir
 from PIL import Image, ImageTk
-from skimage import io
-from skimage.transform import resize
 
 import graxpert.background_extraction as background_extraction
 import graxpert.tooltip as tooltip
+from graxpert.ai_model_handling import (ai_model_path_from_version,
+                                        download_version,
+                                        validate_local_version)
 from graxpert.app_state import INITIAL_STATE
 from graxpert.astroimage import AstroImage
 from graxpert.collapsible_frame import CollapsibleFrame
-from graxpert.slider import Slider
-from graxpert.commands import (ADD_POINT_HANDLER, ADD_POINTS_HANDLER, INIT_HANDLER,
-                      MOVE_POINT_HANDLER, RESET_POINTS_HANDLER,
-                      RM_POINT_HANDLER, SEL_POINTS_HANDLER, Command,
-                      InitHandler)
+from graxpert.commands import (ADD_POINT_HANDLER, ADD_POINTS_HANDLER,
+                               INIT_HANDLER, MOVE_POINT_HANDLER,
+                               RESET_POINTS_HANDLER, RM_POINT_HANDLER,
+                               SEL_POINTS_HANDLER, Command, InitHandler)
 from graxpert.help_panel import Help_Panel
-from graxpert.loadingframe import LoadingFrame, DynamicProgressFrame, DynamicProgressThread
+from graxpert.loadingframe import (DynamicProgressFrame, DynamicProgressThread,
+                                   LoadingFrame)
 from graxpert.localization import _
+from graxpert.mp_logging import (initialize_logging, logfile_name,
+                                 shutdown_logging)
 from graxpert.parallel_processing import executor
-from graxpert.preferences import (app_state_2_prefs, load_preferences,
-                         prefs_2_app_state, save_preferences,
-                         app_state_2_fitsheader, fitsheader_2_app_state)
+from graxpert.preferences import (app_state_2_fitsheader, app_state_2_prefs,
+                                  fitsheader_2_app_state, load_preferences,
+                                  prefs_2_app_state, save_preferences)
+from graxpert.resource_utils import (resource_path, scale_img,
+                                     temp_resource_path)
+from graxpert.slider import Slider
 from graxpert.stretch import stretch_all
 from graxpert.ui_scaling import get_scaling_factor
-from graxpert.version import release, version, check_for_new_version
-from graxpert.ai_model_handling import (validate_local_version, download_version,
-                                        ai_model_path_from_version)
-
-
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    base_path = getattr(sys, '_MEIPASS', os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-    return os.path.join(base_path, relative_path)
+from graxpert.version import check_for_new_version, release, version
 
 
 class Application(tk.Frame):
@@ -197,7 +193,7 @@ class Application(tk.Frame):
             self.bgextr_menu.sub_frame.grid_rowconfigure(i, weight=1)
         
         #---Open Image---
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_1-scaled.png"))
+        num_pic = ImageTk.PhotoImage(file=temp_resource_path("img/gfx_number_1-scaled.png"))
         text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Loading"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=0, pady=(20*scal,5*scal), padx=0, sticky="w")
@@ -211,7 +207,7 @@ class Application(tk.Frame):
         self.load_image_button.grid(column=0, row=1, pady=(5*scal,30*scal), padx=15*scal, sticky="news")
         
         #--Stretch Options--
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_2-scaled.png"))
+        num_pic = ImageTk.PhotoImage(file=temp_resource_path("img/gfx_number_2-scaled.png"))
         text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Stretch Options"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=2, pady=5*scal, padx=0, sticky="w")
@@ -235,7 +231,7 @@ class Application(tk.Frame):
 
       
         #---Sample Selection---
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_3-scaled.png"))
+        num_pic = ImageTk.PhotoImage(file=temp_resource_path("img/gfx_number_3-scaled.png"))
         text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Sample Selection"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=5, pady=5*scal, padx=0, sticky="w")
@@ -284,7 +280,7 @@ class Application(tk.Frame):
         tt_reset= tooltip.Tooltip(self.reset_button, text=tooltip.reset_text)
         
         #---Calculation---
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_4-scaled.png"))
+        num_pic = ImageTk.PhotoImage(file=temp_resource_path("img/gfx_number_4-scaled.png"))
         text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Calculation"), image=num_pic, font=heading_font, compound="left")
         text.image = num_pic
         text.grid(column=0, row=12, pady=5*scal, padx=0, sticky="w")
@@ -319,7 +315,7 @@ class Application(tk.Frame):
         tt_calculate= tooltip.Tooltip(self.calculate_button, text=tooltip.calculate_text)
         
         #---Saving---  
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_5-scaled.png"))
+        num_pic = ImageTk.PhotoImage(file=temp_resource_path("img/gfx_number_5-scaled.png"))
         self.saveas_text = tk.Label(self.bgextr_menu.sub_frame, text=_(" Saving"), image=num_pic, font=heading_font, compound="left")
         self.saveas_text.image = num_pic
         self.saveas_text.grid(column=0, row=17, pady=5*scal, padx=0, sticky="w")
@@ -1180,42 +1176,34 @@ class Application(tk.Frame):
         root.destroy()
         sys.exit(0)
 
-def scale_img(path, scaling, shape):
-    img = io.imread(resource_path(path))
-    img = resize(img, (int(shape[0]*scaling),int(shape[1]*scaling)))
-    img = img*255
-    img = img.astype(dtype=np.uint8)
-    io.imsave(resource_path(resource_path(path.replace('.png', '-scaled.png'))), img, check_contrast=False)
-
-
 
 logging_thread = initialize_logging()
 
 root = hdpitk.HdpiTk()
 scaling = get_scaling_factor()
 
-scale_img(resource_path("forest-dark/vert-hover.png"), scaling*0.9, (20,10))
-scale_img(resource_path("forest-dark/vert-basic.png"), scaling*0.9, (20,10))
+scale_img("forest-dark/vert-hover.png", scaling*0.9, (20,10))
+scale_img("forest-dark/vert-basic.png", scaling*0.9, (20,10))
 
-scale_img(resource_path("forest-dark/thumb-hor-accent.png"), scaling*0.9, (20,8))
-scale_img(resource_path("forest-dark/thumb-hor-hover.png"), scaling*0.9, (20,8))
-scale_img(resource_path("forest-dark/thumb-hor-basic.png"), scaling*0.9, (20,8))
-scale_img(resource_path("forest-dark/scale-hor.png"), scaling, (20,20))
+scale_img("forest-dark/thumb-hor-accent.png", scaling*0.9, (20,8))
+scale_img("forest-dark/thumb-hor-hover.png", scaling*0.9, (20,8))
+scale_img("forest-dark/thumb-hor-basic.png", scaling*0.9, (20,8))
+scale_img("forest-dark/scale-hor.png", scaling, (20,20))
 
-scale_img(resource_path("forest-dark/check-accent.png"), scaling*0.8, (20,20))
-scale_img(resource_path("forest-dark/check-basic.png"), scaling*0.8, (20,20))
-scale_img(resource_path("forest-dark/check-hover.png"), scaling*0.8, (20,20))
-scale_img(resource_path("forest-dark/check-unsel-accent.png"), scaling*0.8, (20,20))
-scale_img(resource_path("forest-dark/check-unsel-basic.png"), scaling*0.8, (20,20))
-scale_img(resource_path("forest-dark/check-unsel-hover.png"), scaling*0.8, (20,20))
-scale_img(resource_path("forest-dark/check-unsel-pressed.png"), scaling*0.8, (20,20))
+scale_img("forest-dark/check-accent.png", scaling*0.8, (20,20))
+scale_img("forest-dark/check-basic.png", scaling*0.8, (20,20))
+scale_img("forest-dark/check-hover.png", scaling*0.8, (20,20))
+scale_img("forest-dark/check-unsel-accent.png", scaling*0.8, (20,20))
+scale_img("forest-dark/check-unsel-basic.png", scaling*0.8, (20,20))
+scale_img("forest-dark/check-unsel-hover.png", scaling*0.8, (20,20))
+scale_img("forest-dark/check-unsel-pressed.png", scaling*0.8, (20,20))
 
-scale_img(resource_path("img/gfx_number_1.png"), scaling*0.7, (25,25))
-scale_img(resource_path("img/gfx_number_2.png"), scaling*0.7, (25,25))
-scale_img(resource_path("img/gfx_number_3.png"), scaling*0.7, (25,25))
-scale_img(resource_path("img/gfx_number_4.png"), scaling*0.7, (25,25))
-scale_img(resource_path("img/gfx_number_5.png"), scaling*0.7, (25,25))
-scale_img(resource_path("img/hourglass.png"), scaling, (25,25))
+scale_img("img/gfx_number_1.png", scaling*0.7, (25,25))
+scale_img("img/gfx_number_2.png", scaling*0.7, (25,25))
+scale_img("img/gfx_number_3.png", scaling*0.7, (25,25))
+scale_img("img/gfx_number_4.png", scaling*0.7, (25,25))
+scale_img("img/gfx_number_5.png", scaling*0.7, (25,25))
+scale_img("img/hourglass.png", scaling, (25,25))
 
 root.tk.call("source", resource_path("forest-dark.tcl"))   
 style = ttk.Style(root)

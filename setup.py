@@ -1,5 +1,5 @@
 from cx_Freeze import Executable, setup
-from graxpert.version import version
+from graxpert.version import version, release
 import astropy
 import sys
 import os
@@ -17,23 +17,41 @@ directory_table = [
 msi_data = {
     "Directory": directory_table,
     "ProgId": [
-        ("Prog.Id", None, None, "GraXpert is an astronomical image processing program for extracting and removing gradients in the background of your astrophotos", "IconId", None),
+        (
+            "Prog.Id",
+            None,
+            None,
+            "GraXpert is an astronomical image processing program for extracting and removing gradients in the background of your astrophotos",
+            "IconId",
+            None,
+        ),
     ],
     "Icon": [
         ("IconId", "./img/Icon.ico"),
     ],
 }
 
+msi_summary_data = {
+    "author": "GraXpert Development Team",
+    "comments": "<info@graxpert.com>",
+}
+
 bdist_msi_options = {
     "add_to_path": True,
     "data": msi_data,
+    "summary_data": msi_summary_data,
     "upgrade_code": "{8887032b-9211-4752-8f88-6d29833bb001}",
     "target_name": "GraXpert",
-    "install_icon": "./img/Icon.ico"
+    "install_icon": "./img/Icon.ico",
+}
+
+bidst_rpm_options = {
+    "release": release,
+    "vendor": "GraXpert Development Team <info@graxpert.com>",
+    "group": "Unspecified",
 }
 
 build_options = {
-    # "packages": ["astropy"],
     "includes": [
         "astropy.constants.codata2018",
         "astropy.constants.iau2015",
@@ -67,9 +85,9 @@ executables = [
         "./graxpert/main.py",
         base=base,
         icon="./img/Icon.ico",
+        target_name="GraXpert",
         shortcut_name="GraXpert {}".format(version),
         shortcut_dir="GraXpert",
-        target_name="GraXpert"
     )
 ]
 
@@ -78,5 +96,10 @@ setup(
     version=version,
     description="GraXpert is an astronomical image processing program for extracting and removing gradients in the background of your astrophotos",
     executables=executables,
-    options={"build_exe": build_options, "bdist_msi": bdist_msi_options},
+    options={
+        "build_exe": build_options,
+        "bdist_msi": bdist_msi_options,
+        "bdist_rpm": bidst_rpm_options,
+    },
+    license="GLP-3.0",
 )

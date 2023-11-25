@@ -11,15 +11,10 @@ from PIL import Image, ImageTk
 from graxpert.ai_model_handling import (list_local_versions,
                                         list_remote_versions)
 from graxpert.localization import _, lang
+from graxpert.resource_utils import resource_path, temp_resource_path
 from graxpert.slider import Slider
 from graxpert.ui_scaling import get_scaling_factor
 
-
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    base_path = path.abspath(path.join(path.dirname(__file__), "../"))
-
-    return path.join(base_path, relative_path)
 
 class Help_Panel():
     def __init__(self, master, canvas, app):
@@ -135,7 +130,7 @@ class Help_Panel():
         text = tk.Message(self.help_panel_window, text=_("Instructions"), width=240 * scaling, font=heading_font, anchor="center")
         text.grid(column=0, row=1, padx=(40,30), pady=(0,10*scaling), sticky="ew")
         
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_1-scaled.png"))
+        num_pic = ImageTk.PhotoImage(file=temp_resource_path("img/gfx_number_1-scaled.png"))
         text = tk.Label(self.help_panel_window, text=_(" Loading"), image=num_pic, compound="left", font=heading_font2)
         text.image = num_pic
         text.grid(column=0, row=2, padx=(40,30), pady=(5*scaling,0), sticky="w")
@@ -143,7 +138,7 @@ class Help_Panel():
         text.grid(column=0, row=3, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
         
         
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_2-scaled.png"))
+        num_pic = ImageTk.PhotoImage(file=temp_resource_path("img/gfx_number_2-scaled.png"))
         text = tk.Label(self.help_panel_window, text=_(" Stretch Options"), image=num_pic, compound="left", font=heading_font2)
         text.image = num_pic
         text.grid(column=0, row=4, padx=(40,30), pady=(5*scaling,0), sticky="w")
@@ -151,7 +146,7 @@ class Help_Panel():
         text.grid(column=0, row=5, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
         
         
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_3-scaled.png"))
+        num_pic = ImageTk.PhotoImage(file=temp_resource_path("img/gfx_number_3-scaled.png"))
         text = tk.Label(self.help_panel_window, text=_(" Sample Selection"), image=num_pic, compound="left", font=heading_font2)
         text.image = num_pic
         text.grid(column=0, row=6, padx=(40,30), pady=(5*scaling,0), sticky="w")
@@ -164,7 +159,7 @@ class Help_Panel():
         text.grid(column=0, row=7, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
         
         
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_4-scaled.png"))
+        num_pic = ImageTk.PhotoImage(file=temp_resource_path("img/gfx_number_4-scaled.png"))
         text = tk.Label(self.help_panel_window, text=_(" Calculation"), image=num_pic, compound="left", font=heading_font2)
         text.image = num_pic
         text.grid(column=0, row=8, padx=(40,30), pady=(5*scaling,0), sticky="w")
@@ -172,7 +167,7 @@ class Help_Panel():
         text.grid(column=0, row=9, padx=(40,30), pady=(5*scaling,10*scaling), sticky="w")
         
         
-        num_pic = ImageTk.PhotoImage(file=resource_path("img/gfx_number_5-scaled.png"))
+        num_pic = ImageTk.PhotoImage(file=temp_resource_path("img/gfx_number_5-scaled.png"))
         text = tk.Label(self.help_panel_window, text=_(" Saving"), image=num_pic, compound="left", font=heading_font2)
         text.image = num_pic
         text.grid(column=0, row=10, padx=(40,30), pady=(5*scaling,0), sticky="w")

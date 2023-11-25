@@ -9,13 +9,7 @@ from tkinter import LEFT, ttk
 from PIL import ImageTk
 
 from graxpert.localization import _
-
-
-def resource_path(relative_path):
-    """Get absolute path to resource, works for dev and for PyInstaller"""
-    base_path = path.abspath(path.join(path.dirname(__file__), "../"))
-
-    return path.join(base_path, relative_path)
+from graxpert.resource_utils import temp_resource_path
 
 
 class LoadingFrame:
@@ -24,7 +18,7 @@ class LoadingFrame:
 
         self.toplevel = toplevel
         hourglass_pic = ImageTk.PhotoImage(
-            file=resource_path("img/hourglass-scaled.png")
+            file=temp_resource_path("img/hourglass-scaled.png")
         )
         self.text = ttk.Label(
             widget,

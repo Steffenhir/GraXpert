@@ -110,6 +110,24 @@ def main():
             type=float,
             help="Strength of smoothing between 0 and 1",
         )
+        
+        parser.add_argument(
+            "-output",
+            "--output",
+            nargs="?",
+            required=False,
+            type=str,
+            help="Filename of the processed image",
+        )
+        
+        parser.add_argument(
+            "-bg",
+            "--bg",
+            required=False,
+            action="store_true",
+            help="Also save the background model",
+        )
+        
 
         args = parser.parse_args()
 

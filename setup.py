@@ -4,10 +4,7 @@ import astropy
 import sys
 import os
 
-libs_prefix = os.path.commonprefix([astropy.__file__, __file__])
-astropy_path = os.path.join(
-    "./", os.path.dirname(os.path.relpath(astropy.__file__, libs_prefix))
-)
+astropy_path = os.path.dirname(os.path.abspath(astropy.__file__))
 
 directory_table = [
     ("ProgramMenuFolder", "TARGETDIR", "."),

@@ -9,7 +9,7 @@ env:
 on:
   push:
     tags:
-      - v*.*.*
+      - "*.*.*"
 
 jobs:
   
@@ -37,6 +37,7 @@ jobs:
           chmod u+x ./releng/patch_version.sh && \
           ./releng/patch_version.sh
       - name: create GraXpert-linux bundle
+        # TODO migrato to cx_freeze
         run: |
           pyinstaller \
           ./GraXpert-linux.spec \
@@ -56,12 +57,6 @@ jobs:
           python-version: '3.10'
       - name: checkout repository
         uses: actions/checkout@v3
-      - name: checkout pyinstaller
-        uses: actions/checkout@v3
-        with:
-          repository: pyinstaller/pyinstaller
-          path: ./pyinstaller
-          ref: v6.1.0
       - name: configure ai s3 secrets
         run: |
           $PSDefaultParameterValues['Out-File:Encoding']='UTF8' ; `
@@ -71,32 +66,17 @@ jobs:
           "bucket_name = `"$env:ai_s3_bucket_name`"" | Out-File -Append .\graxpert\s3_secrets.py
       - name: install dependencies
         run: |
-          pip install setuptools wheel ; `
-          cd .\pyinstaller\bootloader ; `
-          (Get-Content .\wscript) -Replace "'run'", "'graxpert'" | Set-Content .\wscript ; `
-          (Get-Content .\src\main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\main.c ; `
-          (Get-Content .\src\pyi_main.h) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.h ; `
-          (Get-Content .\src\pyi_main.c) -Replace 'pyi_main\(', 'my_pyi_main(' | Set-Content .\src\pyi_main.c ; `
-          python ./waf all ; `
-          cd .. ; `
-          (Get-Content .\setup.py) -Replace 'run.exe', 'graxpert.exe' | Set-Content .\setup.py ; `
-          pushd ; `
-          python setup.py sdist ; `
-          popd ; `
-          pip install ./dist/pyinstaller-6.1.0.tar.gz ; `
-          cd .. ; `
+          pip install setuptools wheel cx_freeze; `
           pip install -r requirements.txt
       - name: patch version
         run: ./releng/patch_version.ps1
       - name: create GraXpert-win64 bundle
-        run: |
-          pyinstaller `
-          ./GraXpert-win64.spec `
+        run: python ./setup.py bdist_msi
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: GraXpert-win64.exe
-          path: ./dist/GraXpert-win64.exe
+          name: GraXpert-${{github.ref_name}}-win64.msi
+          path: ./dist/GraXpert-${{github.ref_name}}-win64.msi
           retention-days: 5
 
   build-macos-x86_64:
@@ -126,6 +106,7 @@ jobs:
           chmod u+x ./releng/patch_version.sh && \
           ./releng/patch_version.sh
       - name: create GraXpert-macos-x86_64 bundle
+        # TODO migrato to cx_freeze
         run: |
           pyinstaller \
           ./GraXpert-macos-x86_64.spec
@@ -160,7 +141,7 @@ jobs:
       - name: download windows exe
         uses: actions/download-artifact@v2
         with:
-          name: GraXpert-win64.exe
+          name: GraXpert-${{github.ref_name}}-win64.msi
       - name: download macos artifacts
         uses: actions/download-artifact@v2
         with:
@@ -170,5 +151,5 @@ jobs:
         with:
           files: |
             GraXpert-linux
-            GraXpert-win64.exe
+            GraXpert-${{github.ref_name}}-win64.msi
             GraXpert-macos-x86_64.dmg

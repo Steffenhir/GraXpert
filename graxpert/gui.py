@@ -1,6 +1,7 @@
 import importlib
 import logging
 import os
+import shutil
 import sys
 import tkinter as tk
 from colorsys import hls_to_rgb
@@ -1182,6 +1183,13 @@ logging_thread = initialize_logging()
 root = hdpitk.HdpiTk()
 scaling = get_scaling_factor()
 
+try:
+    shutil.copy(resource_path("forest-dark.tcl"), temp_resource_path("forest-dark.tcl"))
+    shutil.copytree(resource_path("forest-dark"), temp_resource_path("forest-dark"))
+except OSError as exc:
+    logging.exception("Error preparing temporary ressource, exiting")
+    sys.exit(1)
+
 scale_img("forest-dark/vert-hover.png", scaling*0.9, (20,10))
 scale_img("forest-dark/vert-basic.png", scaling*0.9, (20,10))
 
@@ -1205,7 +1213,7 @@ scale_img("img/gfx_number_4.png", scaling*0.7, (25,25))
 scale_img("img/gfx_number_5.png", scaling*0.7, (25,25))
 scale_img("img/hourglass.png", scaling, (25,25))
 
-root.tk.call("source", resource_path("forest-dark.tcl"))   
+root.tk.call("source", temp_resource_path("forest-dark.tcl"))   
 style = ttk.Style(root)
 style.theme_use("forest-dark")
 style.configure("TButton", padding=(8*scaling, 12*scaling, 8*scaling, 12*scaling))

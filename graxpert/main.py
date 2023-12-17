@@ -18,6 +18,7 @@ from packaging import version
 
 from graxpert.ai_model_handling import (list_local_versions,
                                         list_remote_versions)
+from graxpert.version import release as graxpert_release, version as graxpert_version
 
 available_local_versions = []
 available_remote_versions = []
@@ -78,6 +79,7 @@ def main():
         parser = argparse.ArgumentParser(
             description="GraXpert,the astronomical background extraction tool"
         )
+        
         parser.add_argument("filename", type=str, help="Path of the unprocessed image")
         parser.add_argument(
             "-ai_version",
@@ -136,13 +138,18 @@ def main():
             help="Has to be added when using the command line integration of GraXpert",
         )
         
+        parser.add_argument(
+            '-v',
+            '--version', 
+            action='version',
+            version="GraXpert version: " + graxpert_version + " release: " + graxpert_release)
+        
 
         args = parser.parse_args()
         
+        
         if (args.cli):
-
             from graxpert.CommandLineTool import CommandLineTool
-    
             clt = CommandLineTool(args)
             clt.execute()
         else:

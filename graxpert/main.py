@@ -128,13 +128,26 @@ def main():
             help="Also save the background model",
         )
         
+        parser.add_argument(
+            "-cli",
+            "--cli",
+            required=False,
+            action="store_true",
+            help="Has to be added when using the command line integration of GraXpert",
+        )
+        
 
         args = parser.parse_args()
+        
+        if (args.cli):
 
-        from graxpert.CommandLineTool import CommandLineTool
-
-        clt = CommandLineTool(args)
-        clt.execute()
+            from graxpert.CommandLineTool import CommandLineTool
+    
+            clt = CommandLineTool(args)
+            clt.execute()
+        else:
+            import graxpert.gui
+    
     else:
         import graxpert.gui
 

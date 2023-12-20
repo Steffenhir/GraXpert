@@ -1,11 +1,14 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from graxpert.ui_scaling import get_scaling_factor
+
+from customtkinter import CTkFrame, CTkLabel, CTkToplevel
+
 from graxpert.localization import _
+from graxpert.ui_scaling import get_scaling_factor
 
 
 class Tooltip:
-    '''
+    """
     It creates a tooltip for a given widget as the mouse goes on it.
 
     see:
@@ -33,15 +36,9 @@ class Tooltip:
       Tested on Ubuntu 16.04/16.10, running Python 3.5.2
 
     TODO: themes styles support
-    '''
+    """
 
-    def __init__(self, widget,
-                 *,
-                 pad=(5, 3, 5, 3),
-                 text='widget info',
-                 waittime=1000,
-                 wraplength=250):
-
+    def __init__(self, widget, *, pad=(5, 3, 5, 3), text="widget info", waittime=500, wraplength=250):
         self.waittime = waittime  # in miliseconds, originally 500
         self.wraplength = wraplength * get_scaling_factor()  # in pixels, originally 180
         self.widget = widget
@@ -71,16 +68,12 @@ class Tooltip:
             self.widget.after_cancel(id_)
 
     def show(self):
-        def tip_pos_calculator(widget, label,
-                               *,
-                               tip_delta=(10, 5), pad=(5, 3, 5, 3)):
-
+        def tip_pos_calculator(widget, label, *, tip_delta=(10, 5), pad=(5, 3, 5, 3)):
             w = widget
 
             s_width, s_height = w.winfo_screenwidth(), w.winfo_screenheight()
 
-            width, height = (pad[0] + label.winfo_reqwidth() + pad[2],
-                             pad[1] + label.winfo_reqheight() + pad[3])
+            width, height = (pad[0] + label.winfo_reqwidth() + pad[2], pad[1] + label.winfo_reqheight() + pad[3])
 
             mouse_x, mouse_y = w.winfo_pointerxy()
 
@@ -97,7 +90,6 @@ class Tooltip:
             offscreen = (x_delta, y_delta) != (0, 0)
 
             if offscreen:
-
                 if x_delta:
                     x1 = mouse_x - tip_delta[0] - width
 
@@ -121,23 +113,15 @@ class Tooltip:
         widget = self.widget
 
         # creates a toplevel window
-        self.tw = tk.Toplevel(widget)
+        self.tw = CTkToplevel(widget)
 
         # Leaves only the label and removes the app window
         self.tw.wm_overrideredirect(True)
 
-        win = tk.Frame(self.tw,
-                       borderwidth=0)
-        label = tk.Label(win,
-                          text=self.text,
-                          justify=tk.LEFT,
-                          relief=tk.SOLID,
-                          borderwidth=0,
-                          wraplength=self.wraplength)
+        win = CTkFrame(self.tw, border_width=0)
+        label = CTkLabel(win, text=self.text, justify=tk.LEFT, wraplength=self.wraplength)
 
-        label.grid(padx=(pad[0], pad[2]),
-                   pady=(pad[1], pad[3]),
-                   sticky=tk.NSEW)
+        label.grid(padx=(pad[0], pad[2]), pady=(pad[1], pad[3]), sticky=tk.NSEW)
         win.grid()
 
         x, y = tip_pos_calculator(widget, label)
@@ -151,48 +135,34 @@ class Tooltip:
         self.tw = None
 
 
-load_text = _("Load your image you would like to correct. \n"
-             "\n"
-             "Supported formats: .tiff, .fits, .png, .jpg \n"
-             "Supported bitdepths: 16 bit integer, 32 bit float")
+load_text = _("Load your image you would like to correct. \n" "\n" "Supported formats: .tiff, .fits, .png, .jpg \n" "Supported bitdepths: 16 bit integer, 32 bit float")
 
-stretch_text = _("Automatically stretch the picture to make gradients more visible. "
-                "The saved pictures are unaffected by the stretch.")
+stretch_text = _("Automatically stretch the picture to make gradients more visible. " "The saved pictures are unaffected by the stretch.")
 
 reset_text = _("Reset all the chosen background points.")
 
-bg_select_text = _("Creates a grid with the specified amount of points per row "
-                  "and rejects points below a threshold defined by the tolerance.")
+bg_select_text = _("Creates a grid with the specified amount of points per row " "and rejects points below a threshold defined by the tolerance.")
 
-bg_tol_text = _("The tolerance adjusts the threshold for rejection of background points " 
-               "with automatic background selection")
+bg_tol_text = _("The tolerance adjusts the threshold for rejection of background points " "with automatic background selection")
 
-bg_flood_text = _("If enabled, additional grid points are automatically created based on "
-                 "1) the luminance of the sample just added and "
-                 "2) the grid tolerance slider below.")
+bg_flood_text = _("If enabled, additional grid points are automatically created based on " "1) the luminance of the sample just added and " "2) the grid tolerance slider below.")
 
-num_points_text = _("Adjust the number of points per row for the grid created by"
-                   " automatic background selection.")
+num_points_text = _("Adjust the number of points per row for the grid created by" " automatic background selection.")
 
 interpol_type_text = _("Choose between different interpolation methods.")
 
-smoothing_text = _("Adjust the smoothing parameter for the interpolation method. "
-                  "A too small smoothing parameter may lead to over- and undershooting "
-                  "inbetween background points, while a too large smoothing parameter "
-                  "may not be suited for large deviations in gradients.")
+smoothing_text = _(
+    "Adjust the smoothing parameter for the interpolation method. "
+    "A too small smoothing parameter may lead to over- and undershooting "
+    "inbetween background points, while a too large smoothing parameter "
+    "may not be suited for large deviations in gradients."
+)
 
-calculate_text = _("Use the specified interpolation method to calculate a background model "
-                  "and subtract it from the picture. This may take a while.")
+calculate_text = _("Use the specified interpolation method to calculate a background model " "and subtract it from the picture. This may take a while.")
 
-saveas_text = _("Choose the bitdepth of the saved pictures and the file format. "
-               "If you are working with a .fits image the fits header will "
-               "be preserved.")
+saveas_text = _("Choose the bitdepth of the saved pictures and the file format. " "If you are working with a .fits image the fits header will " "be preserved.")
 save_bg_text = _("Save the background model")
 save_pic_text = _("Save the processed picture")
 save_stretched_pic_text = _("Save the stretched and processed picture. The color saturation is not changed.")
 
-display_text = _("Switch display between \n"
-                "\n"
-                "Original: Your original picture \n"
-                "Processed: Picture with subtracted background model \n"
-                "Background: The background model") 
+display_text = _("Switch display between \n" "\n" "Original: Your original picture \n" "Processed: Picture with subtracted background model \n" "Background: The background model")

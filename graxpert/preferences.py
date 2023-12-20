@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import sys
 import shutil
 from datetime import datetime
 from typing import AnyStr, List, TypedDict
@@ -20,6 +19,7 @@ class Prefs(TypedDict):
     bg_pts_option: int
     stretch_option: AnyStr
     saturation: float
+    display_pts: bool
     bg_tol_option: float
     interpol_type_option: AnyStr
     smoothing_option: float
@@ -27,10 +27,12 @@ class Prefs(TypedDict):
     sample_size: int
     sample_color: int
     RBF_kernel: AnyStr
+    spline_order: int
     lang: AnyStr
     corr_type: AnyStr
     scaling: float
     ai_version: AnyStr
+
 
 DEFAULT_PREFS: Prefs = {
     "working_dir": os.getcwd(),
@@ -41,6 +43,7 @@ DEFAULT_PREFS: Prefs = {
     "bg_pts_option": 15,
     "stretch_option": "No Stretch",
     "saturation": 1.0,
+    "display_pts": True,
     "bg_tol_option": 1.0,
     "interpol_type_option": "RBF",
     "smoothing_option": 0.0,
@@ -52,29 +55,30 @@ DEFAULT_PREFS: Prefs = {
     "lang": None,
     "corr_type": "Subtraction",
     "scaling": 1.0,
-    "ai_version": None
+    "ai_version": None,
 }
 
 
 def app_state_2_prefs(prefs: Prefs, app_state: AppState, app) -> Prefs:
     if "background_points" in app_state:
         prefs["background_points"] = [p.tolist() for p in app_state["background_points"]]
-        prefs["bg_pts_option"] = app.bg_pts.get()
-        prefs["stretch_option"] = app.stretch_option_current.get()
-        prefs["saturation"] = app.saturation.get()
-        prefs["bg_tol_option"] = app.bg_tol.get()
-        prefs["interpol_type_option"] = app.interpol_type.get()
-        prefs["smoothing_option"] = app.smoothing.get()
-        prefs["saveas_option"] = app.saveas_type.get()
-        prefs["sample_size"] = app.sample_size.get()
-        prefs["sample_color"] = app.sample_color.get()
-        prefs["RBF_kernel"] = app.RBF_kernel.get()
-        prefs["spline_order"] = app.spline_order.get()
-        prefs["lang"] = app.lang.get()
-        prefs["corr_type"] = app.corr_type.get()
-        prefs["bg_flood_selection_option"] = app.flood_select_pts.get()
-        prefs["scaling"] = app.scaling.get()
-        prefs["ai_version"] = app.ai_version.get()
+        prefs["bg_pts_option"] = app.prefs["bg_pts_option"]
+        prefs["stretch_option"] = app.prefs["stretch_option"]
+        prefs["saturation"] = app.prefs["saturation"]
+        prefs["display_pts"] = app.prefs["display_pts"]
+        prefs["bg_tol_option"] = app.prefs["bg_tol_option"]
+        prefs["interpol_type_option"] = app.prefs["interpol_type_option"]
+        prefs["smoothing_option"] = app.prefs["smoothing_option"]
+        prefs["saveas_option"] = app.prefs["saveas_option"]
+        prefs["sample_size"] = app.prefs["sample_size"]
+        prefs["sample_color"] = app.prefs["sample_color"]
+        prefs["RBF_kernel"] = app.prefs["RBF_kernel"]
+        prefs["spline_order"] = app.prefs["spline_order"]
+        prefs["lang"] = app.prefs["lang"]
+        prefs["corr_type"] = app.prefs["corr_type"]
+        prefs["bg_flood_selection_option"] = app.prefs["bg_flood_selection_option"]
+        prefs["scaling"] = app.prefs["scaling"]
+        prefs["ai_version"] = app.prefs["ai_version"]
     return prefs
 
 
@@ -101,6 +105,8 @@ def merge_json(prefs: Prefs, json) -> Prefs:
         prefs["stretch_option"] = json["stretch_option"]
     if "saturation" in json:
         prefs["saturation"] = json["saturation"]
+    if "display_pts" in json:
+        prefs["display_pts"] = json["display_pts"]
     if "bg_tol_option" in json:
         prefs["bg_tol_option"] = json["bg_tol_option"]
     if "interpol_type_option" in json:
@@ -133,8 +139,8 @@ def load_preferences(prefs_filename) -> Prefs:
     try:
         if os.path.isfile(prefs_filename):
             with open(prefs_filename) as f:
-                    json_prefs: Prefs = json.load(f)
-                    prefs = merge_json(prefs, json_prefs)
+                json_prefs: Prefs = json.load(f)
+                prefs = merge_json(prefs, json_prefs)
         else:
             logging.info("{} appears to be missing. it will be created after program shutdown".format(prefs_filename))
     except:
@@ -161,31 +167,31 @@ def app_state_2_fitsheader(app, app_state, fits_header):
     fits_header["INTP-OPT"] = prefs["interpol_type_option"]
     fits_header["SMOOTHING"] = prefs["smoothing_option"]
     fits_header["CORR-TYPE"] = prefs["corr_type"]
-    
+
     if prefs["interpol_type_option"] == "AI":
         fits_header["AI-VER"] = prefs["ai_version"]
-    
-    if prefs["interpol_type_option"] != "AI": 
+
+    if prefs["interpol_type_option"] != "AI":
         fits_header["SAMPLE-SIZE"] = prefs["sample_size"]
         fits_header["RBF-KERNEL"] = prefs["RBF_kernel"]
         fits_header["SPLINE-ORDER"] = prefs["spline_order"]
         fits_header["BG-PTS"] = str(prefs["background_points"])
-    
+
     return fits_header
 
 
 def fitsheader_2_app_state(app, app_state, fits_header):
     if "BG-PTS" in fits_header.keys():
         app_state["background_points"] = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
-    
+
     if "INTP-OPT" in fits_header.keys():
         app.interpol_type.set(fits_header["INTP-OPT"])
         app.smoothing_slider.set(fits_header["SMOOTHING"])
         app.corr_type.set(fits_header["CORR-TYPE"])
-        
+
         if fits_header["INTP-OPT"] != "AI":
             app.help_panel.sample_size_slider.set(fits_header["SAMPLE-SIZE"])
             app.RBF_kernel.set(fits_header["RBF-KERNEL"])
             app.spline_order.set(fits_header["SPLINE-ORDER"])
-    
+
     return app_state

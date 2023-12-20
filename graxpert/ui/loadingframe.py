@@ -4,60 +4,65 @@ import tkinter as tk
 from os import path
 from queue import Empty, Queue
 from threading import Thread
-from tkinter import LEFT, ttk
 
-from PIL import ImageTk
+from customtkinter import CTkFont, CTkFrame, CTkImage, CTkLabel, CTkProgressBar, DoubleVar, StringVar
+from PIL import Image
 
 from graxpert.localization import _
-from graxpert.resource_utils import temp_resource_path
+from graxpert.resource_utils import resource_path
 
 
-class LoadingFrame:
-    def __init__(self, widget, toplevel):
-        font = ("Verdana", 20, "normal")
+class LoadingFrame(CTkFrame):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, **kwargs)
+        self.create_children()
+        self.setup_layout()
+        self.place_children()
 
-        self.toplevel = toplevel
-        hourglass_pic = ImageTk.PhotoImage(
-            file=temp_resource_path("img/hourglass-scaled.png")
-        )
-        self.text = ttk.Label(
-            widget,
-            text=_("Calculating..."),
-            image=hourglass_pic,
-            font=font,
-            compound=LEFT,
-        )
-        self.text.image = hourglass_pic
-
-    def start(self):
-        self.text.pack(fill="none", expand=True)
-        self.toplevel.update()
-        # force update of label to prevent white background on mac
-        self.text.configure(background="#313131")
-        self.text.update()
-
-    def end(self):
-        self.text.pack_forget()
-        self.toplevel.update()
-
-
-class DynamicProgressFrame(ttk.Frame):
-    def __init__(self, master, label_lext=_("Progress:")):
-        super().__init__(width=400, height=200)
-        self.place(in_=master, anchor="c", relx=0.5, rely=0.5)
-        label = tk.Message(
+    def create_children(self):
+        font = CTkFont(size=15)
+        self.text = CTkLabel(
             self,
-            text=label_lext,
+            text=_("Calculating..."),
+            image=CTkImage(light_image=Image.open(resource_path("img/hourglass.png")), dark_image=Image.open(resource_path("img/hourglass.png")), size=(30, 30)),
+            font=font,
+            compound=tk.LEFT,
+        )
+
+    def setup_layout(self):
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+
+    def place_children(self):
+        self.text.grid(column=0, row=0)
+
+
+class DynamicProgressFrame(CTkFrame):
+    def __init__(self, parent, label_lext=_("Progress:"), **kwargs):
+        super().__init__(parent, **kwargs)
+
+        self.text = StringVar(self, value=label_lext)
+        self.variable = DoubleVar(self, value=0.0)
+
+        self.create_children()
+        self.setup_layout()
+        self.place_children()
+
+    def create_children(self):
+        self.label = CTkLabel(
+            self,
+            textvariable=self.text,
             width=280,
-            font="Verdana 11 bold",
-            anchor="center",
         )
-        label.pack()
-        self.pb = ttk.Progressbar(
-            self, orient="horizontal", mode="determinate", length=280
-        )
-        self.pb.pack()
-        self.update()
+        self.pb = CTkProgressBar(self, variable=self.variable)
+
+    def setup_layout(self):
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+
+    def place_children(self):
+        self.label.grid(column=0, row=0, sticky=tk.NSEW)
+        self.pb.grid(column=0, row=1, sticky=tk.NSEW)
 
     def close(self):
         self.pb.pack_forget()
@@ -65,8 +70,8 @@ class DynamicProgressFrame(ttk.Frame):
         self.destroy()
 
     def update_progress(self, progress):
-        self.pb["value"] = progress * 100
-        logging.info("Progress: {}%".format(int(self.pb["value"])))
+        self.variable.set(progress)  # * 100
+        logging.info("Progress: {}%".format(int(self.variable.get())))
         self.pb.update()
 
 
@@ -102,10 +107,7 @@ class DynamicProgressThread(Thread):
 
     def update(self, size):
         if not isinstance(size, int):
-            raise ValueError(
-                "{} type can not be displayed. "
-                "Please change it to Int.".format(type(size))
-            )
+            raise ValueError("{} type can not be displayed. " "Please change it to Int.".format(type(size)))
 
         self.current_progress += size
         self.update_queue.put((self.current_progress, self.total))

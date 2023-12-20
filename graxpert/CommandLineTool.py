@@ -79,6 +79,7 @@ class CommandLineTool:
                 logging.info("download successful".format(ai_version))
             except Exception as e:
                 logging.exception(e)
+                logging.shutdown()
                 sys.exit(1)
 
         prefs["ai_version"] = ai_version

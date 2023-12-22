@@ -18,6 +18,7 @@ import sys
 import os
 import tensorflow as tf
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1' # Run tensorflow on CPU
+tf.compat.v1.logging.set_verbosity(40) # Only show errors
 
 from graxpert.mp_logging import get_logging_queue, worker_configurer
 from graxpert.parallel_processing import executor

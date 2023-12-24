@@ -97,12 +97,12 @@ def ui_main():
     logging_thread = initialize_logging()
     check_for_new_version()
 
+    style()
     root = CTk()
     try:
         root.state("zoomed")
     except:
         root.state("normal")
-    style(root)
     root.title("GraXpert | Release: '{}' ({})".format(release, version))
     root.iconbitmap()
     root.iconphoto(True, tk.PhotoImage(file=resource_path("img/Icon.png")))

@@ -3,7 +3,6 @@ from tkinter import messagebox
 
 import customtkinter as ctk
 from customtkinter import CTkFont, CTkImage, CTkLabel, CTkScrollableFrame, CTkTextbox
-from icecream import ic
 from packaging import version
 from PIL import Image
 

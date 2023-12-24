@@ -5,7 +5,6 @@ from tkinter import messagebox
 
 import numpy as np
 from appdirs import user_config_dir
-from icecream import ic
 
 from graxpert.ai_model_handling import ai_model_path_from_version, download_version, validate_local_version
 from graxpert.app_state import INITIAL_STATE

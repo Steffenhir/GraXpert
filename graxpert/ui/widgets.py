@@ -1,7 +1,6 @@
 import tkinter as tk
 
 from customtkinter import CTkButton, CTkCheckBox, CTkEntry, CTkFrame, CTkImage, CTkLabel, CTkOptionMenu, CTkSlider, DoubleVar, StringVar, ThemeManager
-from icecream import ic
 from PIL import Image
 
 from graxpert.localization import _

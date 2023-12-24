@@ -1,7 +1,6 @@
 import tkinter as tk
 
 from customtkinter import CTkFrame, CTkLabel
-from icecream import ic
 
 from graxpert.application.app import graxpert
 from graxpert.application.app_events import AppEvents

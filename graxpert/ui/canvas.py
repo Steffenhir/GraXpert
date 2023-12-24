@@ -4,7 +4,6 @@ from tkinter import messagebox
 
 import numpy as np
 from customtkinter import CTkButton, CTkCanvas, CTkFrame, CTkOptionMenu, StringVar, ThemeManager
-from icecream import ic
 from PIL import Image, ImageTk
 
 from graxpert.application.app import graxpert

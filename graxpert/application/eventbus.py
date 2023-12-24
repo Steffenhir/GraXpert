@@ -1,9 +1,3 @@
-# import asyncio
-
-from icecream import ic
-from graxpert.ui.ui_events import UiEvents
-
-
 class EventBus:
     def __init__(self):
         self.listeners = {}
@@ -21,12 +15,8 @@ class EventBus:
             del self.listeners[event_name]
 
     def emit(self, event_name, event=None):
-        # if event_name != UiEvents.MOUSE_MOVED:
-        #     ic(f"sending {event_name}:{event} to:")
         listeners = self.listeners.get(event_name, [])
         for listener in listeners:
-            # if event_name != UiEvents.MOUSE_MOVED:
-            #     ic(f"    {listener}")
             listener(event)
 
 

@@ -1,8 +1,6 @@
-import os
 import tkinter as tk
 
 from customtkinter import CTkScrollableFrame, StringVar, ThemeManager
-from icecream import ic
 
 import graxpert.ui.tooltip as tooltip
 from graxpert.application.app import graxpert

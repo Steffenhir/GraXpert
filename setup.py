@@ -59,8 +59,7 @@ build_options = {
     ],
     "include_files": [
         ["./img", "./lib/img"],
-        ["./forest-dark.tcl", "./lib/forest-dark.tcl"],
-        ["./forest-dark/", "./lib/forest-dark/"],
+        ["./graxpert-dark-blue.json", "./lib/graxpert-dark-blue.json"],
         ["./locales/", "./lib/locales/"],
         [
             os.path.join(astropy_path, "units", "format", "generic_parsetab.py"),

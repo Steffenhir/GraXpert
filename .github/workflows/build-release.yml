@@ -13,7 +13,7 @@ on:
 
 jobs:
   
-  build-linux:
+  build-linux-deb:
     runs-on: ubuntu-20.04
     steps:
       - name: setup python
@@ -30,22 +30,56 @@ jobs:
           echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py
       - name: install dependencies
         run: |
-          pip install setuptools wheel pyinstaller && \
+          sudo apt install alien -y && \
+          pip install "cx_freeze>=6.16.0.dev" && \
           pip install -r requirements.txt
       - name: patch version
         run: |
           chmod u+x ./releng/patch_version.sh && \
           ./releng/patch_version.sh
       - name: create GraXpert-linux bundle
-        # TODO migrato to cx_freeze
-        run: |
-          pyinstaller \
-          ./GraXpert-linux.spec \
+        run: python ./setup.py bdist_deb
       - name: store artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: GraXpert-linux
-          path: ./dist/GraXpert-linux
+          name: graxpert_${{github.ref_name}}-1_amd64.deb
+          path: ./dist/graxpert_${{github.ref_name}}-1_amd64.deb
+          retention-days: 5
+  
+  build-linux-zip:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+      - name: checkout repository
+        uses: actions/checkout@v3
+      - name: configure ai s3 secrets
+        run: |
+          echo "endpoint = \"$ai_s3_endpoint\"" >> ./graxpert/s3_secrets.py && \
+          echo "ro_access_key = \"$ai_s3_access_key\"" >> ./graxpert/s3_secrets.py && \
+          echo "ro_secret_key = \"$ai_s3_secret_key\"" >> ./graxpert/s3_secrets.py && \
+          echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py
+      - name: install dependencies
+        run: |
+          pip install setuptools wheel cx_freeze && \
+          pip install -r requirements.txt
+      - name: patch version
+        run: |
+          chmod u+x ./releng/patch_version.sh && \
+          ./releng/patch_version.sh
+      - name: create GraXpert-linux bundle
+        run: python ./setup.py install_exe --install-dir=./dist/GraXpert-linux
+      - name: zip GraXpert-linux bundle
+        run: |
+          cd ./dist && \
+          zip -r ./GraXpert-linux.zip ./GraXpert-linux
+      - name: store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: GraXpert-linux.zip
+          path: ./dist/GraXpert-linux.zip
           retention-days: 5
 
   build-windows:
@@ -132,12 +166,16 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    needs: [build-linux, build-windows, build-macos-x86_64]
+    needs: [build-linux-deb, build-linux-zip, build-windows, build-macos-x86_64]
     steps:
-      - name: download linux binary
+      - name: download linux deb
         uses: actions/download-artifact@v2
         with:
-          name: GraXpert-linux
+          name: graxpert_${{github.ref_name}}-1_amd64.deb
+      - name: download linux zip
+        uses: actions/download-artifact@v2
+        with:
+          name: GraXpert-linux.zip
       - name: download windows exe
         uses: actions/download-artifact@v2
         with:
@@ -150,6 +188,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            GraXpert-linux
+            graxpert_${{github.ref_name}}-1_amd64.deb
+            GraXpert-linux.zip
             GraXpert-${{github.ref_name}}-win64.msi
             GraXpert-macos-x86_64.dmg

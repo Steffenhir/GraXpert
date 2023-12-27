@@ -66,7 +66,9 @@ def version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
 def ui_main():
     import logging
     import tkinter as tk
+    from concurrent.futures import ProcessPoolExecutor
     from datetime import datetime
+    from inspect import signature
     from tkinter import messagebox
 
     import requests
@@ -91,7 +93,11 @@ def ui_main():
         prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
         save_preferences(prefs_filename, graxpert.prefs)
         try:
-            executor.shutdown(cancel_futures=True)
+            if "cancel_futures" in signature(ProcessPoolExecutor.shutdown).parameters:
+                executor.shutdown(cancel_futures=True)  # Python > 3.8
+            else:
+                executor.shutdown()  # Python <= 3.8
+
         except Exception as e:
             logging.exception("error shutting down ProcessPoolExecutor")
         shutdown_logging(logging_thread)
@@ -122,7 +128,7 @@ def ui_main():
             elif latest_release_date > current_release_date:
                 messagebox.showinfo(title=_("New version available!"), message=_("A newer version of GraXpert is available at") + " https://github.com/Steffenhir/GraXpert/releases/latest")
         except:
-            logging.warn("Could not check for newest version")
+            logging.warning("Could not check for newest version")
 
     logging_thread = initialize_logging()
     check_for_new_version()

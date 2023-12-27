@@ -26,7 +26,7 @@ class GraXpertLabel(CTkLabel):
 
 class GraXpertOptionMenu(CTkOptionMenu):
     def __init__(self, parent, width=default_label_width, **kwargs):
-        super().__init__(parent, width=width, **kwargs)
+        super().__init__(parent, width=width, anchor=tk.CENTER, **kwargs)
 
 
 class GraXpertCheckbox(CTkCheckBox):

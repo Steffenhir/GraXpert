@@ -39,62 +39,44 @@ class ExtractionMenu(CollapsibleMenuFrame):
         # stretch options
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "30% Bg, 2 sigma"]
         self.stretch_option_current = StringVar()
-        self.stretch_option_current.set(self.stretch_options[0])
-        if "stretch_option" in graxpert.prefs:
-            self.stretch_option_current.set(graxpert.prefs["stretch_option"])
+        self.stretch_option_current.set(graxpert.prefs.stretch_option)
         self.stretch_option_current.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.STRETCH_OPTION_CHANGED, {"stretch_option": self.stretch_option_current.get()}))
 
         self.saturation = tk.DoubleVar()
-        self.saturation.set(1.0)
-        if "saturation" in graxpert.prefs:
-            self.saturation.set(graxpert.prefs["saturation"])
+        self.saturation.set(graxpert.prefs.saturation)
         self.saturation.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.CHANGE_SATURATION_REQUEST, {"saturation": self.saturation.get()}))
 
         # sample selection
         self.display_pts = tk.BooleanVar()
-        self.display_pts.set(True)
-        if "display_pts" in graxpert.prefs:
-            self.display_pts.set(graxpert.prefs["display_pts"])
+        self.display_pts.set(graxpert.prefs.display_pts)
         self.display_pts.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DISPLAY_PTS_CHANGED, {"display_pts": self.display_pts.get()}))
 
         self.flood_select_pts = tk.BooleanVar()
-        self.flood_select_pts.set(False)
-        if "bg_flood_selection_option" in graxpert.prefs:
-            self.flood_select_pts.set(graxpert.prefs["bg_flood_selection_option"])
+        self.flood_select_pts.set(graxpert.prefs.bg_flood_selection_option)
         self.flood_select_pts.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.BG_FLOOD_SELECTION_CHANGED, {"bg_flood_selection_option": self.flood_select_pts.get()}))
 
         self.bg_pts = tk.IntVar()
-        self.bg_pts.set(10)
-        if "bg_pts_option" in graxpert.prefs:
-            self.bg_pts.set(graxpert.prefs["bg_pts_option"])
+        self.bg_pts.set(graxpert.prefs.bg_pts_option)
         self.bg_pts.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.BG_PTS_CHANGED, {"bg_pts_option": self.bg_pts.get()}))
 
         self.bg_tol = tk.DoubleVar()
-        self.bg_tol.set(1)
-        if "bg_tol_option" in graxpert.prefs:
-            self.bg_tol.set(graxpert.prefs["bg_tol_option"])
+        self.bg_tol.set(graxpert.prefs.bg_tol_option)
         self.bg_tol.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.BG_TOL_CHANGED, {"bg_tol_option": self.bg_tol.get()}))
 
         # calculation
         self.interpol_options = ["RBF", "Splines", "Kriging", "AI"]
         self.interpol_type = tk.StringVar()
-        self.interpol_type.set(self.interpol_options[0])
-        if "interpol_type_option" in graxpert.prefs:
-            self.interpol_type.set(graxpert.prefs["interpol_type_option"])
+        self.interpol_type.set(graxpert.prefs.interpol_type_option)
         self.interpol_type.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.INTERPOL_TYPE_CHANGED, {"interpol_type_option": self.interpol_type.get()}))
 
         self.smoothing = tk.DoubleVar()
-        self.smoothing.set(1.0)
-        if "smoothing_option" in graxpert.prefs:
-            self.smoothing.set(graxpert.prefs["smoothing_option"])
+        self.smoothing.set(graxpert.prefs.smoothing_option)
         self.smoothing.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.SMOTTHING_CHANGED, {"smoothing_option": self.smoothing.get()}))
 
         # saving
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits", "16 bit XISF", "32 bit XISF"]
         self.saveas_type = tk.StringVar()
-        self.saveas_type.set(self.saveas_options[0])
-        if "saveas_option" in graxpert.prefs:
-            self.saveas_type.set(graxpert.prefs["saveas_option"])
+        self.saveas_type.set(graxpert.prefs.saveas_option)
         self.saveas_type.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.SAVE_AS_CHANGED, {"saveas_option": self.saveas_type.get()}))
 
         self.create_children()

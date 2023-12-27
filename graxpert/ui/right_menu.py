@@ -93,51 +93,38 @@ class AdvancedFrame(RightFrameBase):
 
         # sample points
         self.sample_size = tk.IntVar()
-        self.sample_size.set(25)
-        if "sample_size" in graxpert.prefs:
-            self.sample_size.set(graxpert.prefs["sample_size"])
+        self.sample_size.set(graxpert.prefs.sample_size)
         self.sample_size.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.SAMPLE_SIZE_CHANGED, {"sample_size": self.sample_size.get()}))
 
         self.sample_color = tk.IntVar()
-        self.sample_color.set(55)
-        if "sample_color" in graxpert.prefs:
-            self.sample_color.set(graxpert.prefs["sample_color"])
+        self.sample_color.set(graxpert.prefs.sample_color)
         self.sample_color.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.SAMPLE_COLOR_CHANGED, {"sample_color": self.sample_color.get()}))
 
         # interpolation
         self.rbf_kernels = ["thin_plate", "quintic", "cubic", "linear"]
         self.rbf_kernel = tk.StringVar()
-        self.rbf_kernel.set(self.rbf_kernels[0])
-        if "RBF_kernel" in graxpert.prefs:
-            self.rbf_kernel.set(graxpert.prefs["RBF_kernel"])
+        self.rbf_kernel.set(graxpert.prefs.RBF_kernel)
         self.rbf_kernel.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.RBF_KERNEL_CHANGED, {"RBF_kernel": self.rbf_kernel.get()}))
 
         self.spline_orders = ["1", "2", "3", "4", "5"]
         self.spline_order = tk.StringVar()
-        self.spline_order.set("3")
-        if "spline_order" in graxpert.prefs:
-            self.spline_order.set(graxpert.prefs["spline_order"])
-        self.spline_order.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.SPLINE_ORDER_CHANGED, {"spline_order": self.spline_order.get()}))
+        self.spline_order.set(str(graxpert.prefs.spline_order))
+        self.spline_order.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.SPLINE_ORDER_CHANGED, {"spline_order": int(self.spline_order.get())}))
 
         self.corr_types = ["Subtraction", "Division"]
         self.corr_type = tk.StringVar()
-        self.corr_type.set(self.corr_types[0])
-        if "corr_type" in graxpert.prefs:
-            self.corr_type.set(graxpert.prefs["corr_type"])
+        self.corr_type.set(graxpert.prefs.corr_type)
         self.corr_type.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.CORRECTION_TYPE_CHANGED, {"corr_type": self.corr_type.get()}))
 
         # interface
         self.langs = ["English", "Deutsch"]
         self.lang = tk.StringVar()
-        if "lang" in graxpert.prefs:
-            self.lang.set(graxpert.prefs["lang"])
+        self.lang.set(graxpert.prefs.lang)
         self.lang.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.LANGUAGE_CHANGED, {"lang": self.lang.get()}))
 
         self.scaling = tk.DoubleVar()
-        self.scaling.set(1.0)
-        if "scaling" in graxpert.prefs:
-            self.scaling.set(graxpert.prefs["scaling"])
-        self.scaling.trace_add("write", lambda a, b, c: ctk.set_widget_scaling(self.scaling.get()))
+        self.scaling.set(graxpert.prefs.scaling)
+        self.scaling.trace_add("write", self.on_scaling_change)
 
         # ai model
         remote_versions = list_remote_versions()
@@ -149,14 +136,18 @@ class AdvancedFrame(RightFrameBase):
 
         self.ai_version = tk.StringVar(master)
         self.ai_version.set("None")  # default value
-        if "ai_version" in graxpert.prefs:
-            self.ai_version.set(graxpert.prefs["ai_version"])
+        if graxpert.prefs.ai_version is not None:
+            self.ai_version.set(graxpert.prefs.ai_version)
         else:
             self.ai_options.insert(0, "None")
         self.ai_version.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.AI_VERSION_CHANGED, {"ai_version": self.ai_version.get()}))
 
         self.create_and_place_children()
         self.setup_layout()
+
+    def on_scaling_change(self, a, b, c):
+        eventbus.emit(AppEvents.SCALING_CHANGED, {"scaling": self.scaling.get()})
+        ctk.set_widget_scaling(self.scaling.get())
 
     def create_and_place_children(self):
         CTkLabel(self, text=_("Advanced Settings"), font=self.heading_font).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)

@@ -62,3 +62,4 @@ class AppEvents(Enum):
     SPLINE_ORDER_CHANGED = auto()
     CORRECTION_TYPE_CHANGED = auto()
     LANGUAGE_CHANGED = auto()
+    SCALING_CHANGED = auto()

@@ -2,145 +2,68 @@ import json
 import logging
 import os
 import shutil
+from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime
-from typing import AnyStr, List, TypedDict
+from typing import AnyStr, List
 
 import numpy as np
 
 from graxpert.app_state import AppState
+from graxpert.version import version as graxpert_version
 
 
-class Prefs(TypedDict):
-    working_dir: AnyStr
-    width: int
-    height: int
-    background_points: List
-    bg_flood_selection_option: bool
-    bg_pts_option: int
-    stretch_option: AnyStr
-    saturation: float
-    display_pts: bool
-    bg_tol_option: float
-    interpol_type_option: AnyStr
-    smoothing_option: float
-    saveas_option: AnyStr
-    sample_size: int
-    sample_color: int
-    RBF_kernel: AnyStr
-    spline_order: int
-    lang: AnyStr
-    corr_type: AnyStr
-    scaling: float
-    ai_version: AnyStr
+@dataclass
+class Prefs:
+    working_dir: AnyStr = os.getcwd()
+    width: int = None
+    height: int = None
+    background_points: List = field(default_factory=list)
+    bg_flood_selection_option: bool = False
+    bg_pts_option: int = 15
+    stretch_option: AnyStr = "No Stretch"
+    saturation: float = 1.0
+    display_pts: bool = True
+    bg_tol_option: float = 1.0
+    interpol_type_option: AnyStr = "RBF"
+    smoothing_option: float = 0.0
+    saveas_option: AnyStr = "32 bit Tiff"
+    sample_size: int = 25
+    sample_color: int = 55
+    RBF_kernel: AnyStr = "thin_plate"
+    spline_order: int = 3
+    lang: AnyStr = None
+    corr_type: AnyStr = "Subtraction"
+    scaling: float = 1.0
+    ai_version: AnyStr = None
+    graxpert_version: AnyStr = graxpert_version
 
 
-DEFAULT_PREFS: Prefs = {
-    "working_dir": os.getcwd(),
-    "width": None,
-    "height": None,
-    "background_points": [],
-    "bg_flood_selection_option": False,
-    "bg_pts_option": 15,
-    "stretch_option": "No Stretch",
-    "saturation": 1.0,
-    "display_pts": True,
-    "bg_tol_option": 1.0,
-    "interpol_type_option": "RBF",
-    "smoothing_option": 0.0,
-    "saveas_option": "32 bit Tiff",
-    "sample_size": 25,
-    "sample_color": 55,
-    "RBF_kernel": "thin_plate",
-    "spline_order": 3,
-    "lang": None,
-    "corr_type": "Subtraction",
-    "scaling": 1.0,
-    "ai_version": None,
-}
-
-
-def app_state_2_prefs(prefs: Prefs, app_state: AppState, app) -> Prefs:
-    if "background_points" in app_state:
-        prefs["background_points"] = [p.tolist() for p in app_state["background_points"]]
-        prefs["bg_pts_option"] = app.prefs["bg_pts_option"]
-        prefs["stretch_option"] = app.prefs["stretch_option"]
-        prefs["saturation"] = app.prefs["saturation"]
-        prefs["display_pts"] = app.prefs["display_pts"]
-        prefs["bg_tol_option"] = app.prefs["bg_tol_option"]
-        prefs["interpol_type_option"] = app.prefs["interpol_type_option"]
-        prefs["smoothing_option"] = app.prefs["smoothing_option"]
-        prefs["saveas_option"] = app.prefs["saveas_option"]
-        prefs["sample_size"] = app.prefs["sample_size"]
-        prefs["sample_color"] = app.prefs["sample_color"]
-        prefs["RBF_kernel"] = app.prefs["RBF_kernel"]
-        prefs["spline_order"] = app.prefs["spline_order"]
-        prefs["lang"] = app.prefs["lang"]
-        prefs["corr_type"] = app.prefs["corr_type"]
-        prefs["bg_flood_selection_option"] = app.prefs["bg_flood_selection_option"]
-        prefs["scaling"] = app.prefs["scaling"]
-        prefs["ai_version"] = app.prefs["ai_version"]
+def app_state_2_prefs(prefs: Prefs, app_state: AppState) -> Prefs:
+    prefs.background_points = [p.tolist() for p in app_state.background_points]
     return prefs
 
 
 def prefs_2_app_state(prefs: Prefs, app_state: AppState) -> AppState:
-    if "background_points" in prefs:
-        app_state["background_points"] = [np.array(p) for p in prefs["background_points"]]
+    app_state.background_points = [np.array(p) for p in prefs.background_points]
     return app_state
 
 
 def merge_json(prefs: Prefs, json) -> Prefs:
-    if "working_dir" in json:
-        prefs["working_dir"] = json["working_dir"]
-    if "width" in json:
-        prefs["width"] = json["width"]
-    if "height" in json:
-        prefs["height"] = json["height"]
-    if "background_points" in json:
-        prefs["background_points"] = json["background_points"]
-    if "bg_flood_selection_option" in json:
-        prefs["bg_flood_selection_option"] = json["bg_flood_selection_option"]
-    if "bg_pts_option" in json:
-        prefs["bg_pts_option"] = json["bg_pts_option"]
-    if "stretch_option" in json:
-        prefs["stretch_option"] = json["stretch_option"]
-    if "saturation" in json:
-        prefs["saturation"] = json["saturation"]
-    if "display_pts" in json:
-        prefs["display_pts"] = json["display_pts"]
-    if "bg_tol_option" in json:
-        prefs["bg_tol_option"] = json["bg_tol_option"]
-    if "interpol_type_option" in json:
-        prefs["interpol_type_option"] = json["interpol_type_option"]
-    if "smoothing_option" in json:
-        prefs["smoothing_option"] = json["smoothing_option"]
-    if "saveas_option" in json:
-        prefs["saveas_option"] = json["saveas_option"]
-    if "sample_size" in json:
-        prefs["sample_size"] = json["sample_size"]
-    if "sample_color" in json:
-        prefs["sample_color"] = json["sample_color"]
-    if "RBF_kernel" in json:
-        prefs["RBF_kernel"] = json["RBF_kernel"]
-    if "spline_order" in json:
-        prefs["spline_order"] = json["spline_order"]
-    if "lang" in json:
-        prefs["lang"] = json["lang"]
-    if "corr_type" in json:
-        prefs["corr_type"] = json["corr_type"]
-    if "scaling" in json:
-        prefs["scaling"] = json["scaling"]
-    if "ai_version" in json:
-        prefs["ai_version"] = json["ai_version"]
+    for f in fields(prefs):
+        if f.name in json:
+            setattr(prefs, f.name, json[f.name])
     return prefs
 
 
 def load_preferences(prefs_filename) -> Prefs:
-    prefs = DEFAULT_PREFS
+    prefs = Prefs()
     try:
         if os.path.isfile(prefs_filename):
             with open(prefs_filename) as f:
-                json_prefs: Prefs = json.load(f)
+                json_prefs = json.load(f)
                 prefs = merge_json(prefs, json_prefs)
+                if not "graxpert_version" in json_prefs:  # reset scaling in case we start from GraXpert < 2.1.0
+                    prefs.scaling = 1.0
         else:
             logging.info("{} appears to be missing. it will be created after program shutdown".format(prefs_filename))
     except:
@@ -156,42 +79,40 @@ def save_preferences(prefs_filename, prefs):
     try:
         os.makedirs(os.path.dirname(prefs_filename), exist_ok=True)
         with open(prefs_filename, "w") as f:
-            json.dump(prefs, f)
+            json.dump(asdict(prefs), f)
     except OSError as err:
         logging.exception("error serializing preferences")
 
 
-def app_state_2_fitsheader(app, app_state, fits_header):
-    prefs = Prefs()
-    prefs = app_state_2_prefs(prefs, app_state, app)
-    fits_header["INTP-OPT"] = prefs["interpol_type_option"]
-    fits_header["SMOOTHING"] = prefs["smoothing_option"]
-    fits_header["CORR-TYPE"] = prefs["corr_type"]
+def app_state_2_fitsheader(prefs: Prefs, app_state: AppState, fits_header):
+    fits_header["INTP-OPT"] = prefs.interpol_type_option
+    fits_header["SMOOTHING"] = prefs.smoothing_option
+    fits_header["CORR-TYPE"] = prefs.corr_type
 
-    if prefs["interpol_type_option"] == "AI":
-        fits_header["AI-VER"] = prefs["ai_version"]
+    if prefs.interpol_type_option == "AI":
+        fits_header["AI-VER"] = prefs.ai_version
 
-    if prefs["interpol_type_option"] != "AI":
-        fits_header["SAMPLE-SIZE"] = prefs["sample_size"]
-        fits_header["RBF-KERNEL"] = prefs["RBF_kernel"]
-        fits_header["SPLINE-ORDER"] = prefs["spline_order"]
-        fits_header["BG-PTS"] = str(prefs["background_points"])
+    if prefs.interpol_type_option != "AI":
+        fits_header["SAMPLE-SIZE"] = prefs.sample_size
+        fits_header["RBF-KERNEL"] = prefs.RBF_kernel
+        fits_header["SPLINE-ORDER"] = prefs.spline_order
+        fits_header["BG-PTS"] = str(app_state.background_points)
 
     return fits_header
 
 
-def fitsheader_2_app_state(app, app_state, fits_header):
+def fitsheader_2_app_state(prefs: Prefs, app_state: AppState, fits_header):
     if "BG-PTS" in fits_header.keys():
-        app_state["background_points"] = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
+        app_state.background_points = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
 
     if "INTP-OPT" in fits_header.keys():
-        app.interpol_type.set(fits_header["INTP-OPT"])
-        app.smoothing_slider.set(fits_header["SMOOTHING"])
-        app.corr_type.set(fits_header["CORR-TYPE"])
+        prefs.interpol_type_option = fits_header["INTP-OPT"]
+        prefs.smoothing_option = fits_header["SMOOTHING"]
+        prefs.corr_type = fits_header["CORR-TYPE"]
 
         if fits_header["INTP-OPT"] != "AI":
-            app.help_panel.sample_size_slider.set(fits_header["SAMPLE-SIZE"])
-            app.RBF_kernel.set(fits_header["RBF-KERNEL"])
-            app.spline_order.set(fits_header["SPLINE-ORDER"])
+            prefs.sample_size = fits_header["SAMPLE-SIZE"]
+            prefs.RBF_kernel = fits_header["RBF-KERNEL"]
+            prefs.spline_order = fits_header["SPLINE-ORDER"]
 
     return app_state

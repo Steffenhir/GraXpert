@@ -64,13 +64,18 @@ def version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
 
 
 def ui_main():
+    import logging
     import tkinter as tk
+    from datetime import datetime
+    from tkinter import messagebox
 
+    import requests
     from appdirs import user_config_dir
     from customtkinter import CTk
 
     from graxpert.application.app import graxpert
     from graxpert.application.eventbus import eventbus
+    from graxpert.localization import _
     from graxpert.mp_logging import initialize_logging, shutdown_logging
     from graxpert.parallel_processing import executor
     from graxpert.preferences import app_state_2_prefs, save_preferences
@@ -78,10 +83,10 @@ def ui_main():
     from graxpert.ui.application_frame import ApplicationFrame
     from graxpert.ui.styling import style
     from graxpert.ui.ui_events import UiEvents
-    from graxpert.version import check_for_new_version, release, version
+    from graxpert.version import release, version
 
     def on_closing(root, logging_thread):
-        graxpert.prefs = app_state_2_prefs(graxpert.prefs, graxpert.cmd.app_state, graxpert)
+        app_state_2_prefs(graxpert.prefs, graxpert.cmd.app_state)
 
         prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
         save_preferences(prefs_filename, graxpert.prefs)
@@ -94,6 +99,31 @@ def ui_main():
         logging.shutdown()
         sys.exit(0)
 
+    def check_for_new_version():
+        try:
+            response = requests.get("https://api.github.com/repos/Steffenhir/GraXpert/releases/latest", timeout=2.5)
+            latest_release_date = datetime.strptime(response.json()["created_at"], "%Y-%m-%dT%H:%M:%SZ")
+
+            response_current = requests.get("https://api.github.com/repos/Steffenhir/GraXpert/releases/tags/" + version, timeout=2.5)
+            current_release_date = datetime.strptime(response_current.json()["created_at"], "%Y-%m-%dT%H:%M:%SZ")
+            current_is_beta = response_current.json()["prerelease"]
+
+            if current_is_beta:
+                if current_release_date >= latest_release_date:
+                    messagebox.showinfo(
+                        title=_("This is a Beta release!"), message=_("Please note that this is a Beta release of GraXpert. You will be notified when a newer official version is available.")
+                    )
+                else:
+                    messagebox.showinfo(
+                        title=_("New official release available!"),
+                        message=_("This Beta version is deprecated. A newer official release of GraXpert is available at") + " https://github.com/Steffenhir/GraXpert/releases/latest",
+                    )
+
+            elif latest_release_date > current_release_date:
+                messagebox.showinfo(title=_("New version available!"), message=_("A newer version of GraXpert is available at") + " https://github.com/Steffenhir/GraXpert/releases/latest")
+        except:
+            logging.warn("Could not check for newest version")
+
     logging_thread = initialize_logging()
     check_for_new_version()
 
@@ -102,6 +132,7 @@ def ui_main():
     try:
         root.state("zoomed")
     except:
+        root.geometry("1024x768")
         root.state("normal")
     root.title("GraXpert | Release: '{}' ({})".format(release, version))
     root.iconbitmap()

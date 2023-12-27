@@ -174,6 +174,7 @@ class Canvas(CTkFrame):
     def on_display_start_badge_request(self, event=None):
         self.start_badge = ImageTk.PhotoImage(file=resource_path("img/graXpert_Startbadge_Ariel.png"))
         self.canvas.create_image(self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2, anchor=tk.CENTER, image=self.start_badge, tags="start_badge")
+        self.canvas.after(5000, lambda: self.canvas.delete("start_badge"))
 
     def on_load_image_begin(self, event=None):
         self.canvas.delete("start_badge")
@@ -201,11 +202,11 @@ class Canvas(CTkFrame):
         self.clicked_inside_pt = False
         point_im = graxpert.to_image_point(event.x, event.y)
 
-        if len(graxpert.cmd.app_state["background_points"]) != 0 and len(point_im) != 0 and graxpert.prefs["display_pts"]:
+        if len(graxpert.cmd.app_state.background_points) != 0 and len(point_im) != 0 and graxpert.prefs.display_pts:
             eventx_im = point_im[0]
             eventy_im = point_im[1]
 
-            background_points = graxpert.cmd.app_state["background_points"]
+            background_points = graxpert.cmd.app_state.background_points
 
             min_idx = -1
             min_dist = -1
@@ -220,10 +221,10 @@ class Canvas(CTkFrame):
                     min_dist = dist
                     min_idx = i
 
-            if min_idx != -1 and min_dist <= graxpert.prefs["sample_size"]:
+            if min_idx != -1 and min_dist <= graxpert.prefs.sample_size:
                 self.clicked_inside_pt = True
                 self.clicked_inside_pt_idx = min_idx
-                self.clicked_inside_pt_coord = graxpert.cmd.app_state["background_points"][min_idx]
+                self.clicked_inside_pt_coord = graxpert.cmd.app_state.background_points[min_idx]
 
         if self.crop_mode:
             # Check if inside circles to move crop corners
@@ -235,7 +236,7 @@ class Canvas(CTkFrame):
         self.__old_event = event
 
     def on_mouse_down_right(self, event=None):
-        if graxpert.images["Original"] is None or not graxpert.prefs["display_pts"]:
+        if graxpert.images["Original"] is None or not graxpert.prefs.display_pts:
             return
 
         graxpert.remove_pt(event)
@@ -255,10 +256,10 @@ class Canvas(CTkFrame):
         if self.left_drag_timer == -1:
             self.left_drag_timer = event.time
 
-        if self.clicked_inside_pt and graxpert.prefs["display_pts"] and not self.crop_mode:
+        if self.clicked_inside_pt and graxpert.prefs.display_pts and not self.crop_mode:
             new_point = graxpert.to_image_point(event.x, event.y)
             if len(new_point) != 0:
-                graxpert.cmd.app_state["background_points"][self.clicked_inside_pt_idx] = new_point
+                graxpert.cmd.app_state.background_points[self.clicked_inside_pt_idx] = new_point
 
             self.redraw_points()
 
@@ -288,28 +289,28 @@ class Canvas(CTkFrame):
         return
 
     def on_mouse_release_left(self, event=None):
-        if graxpert.images["Original"] is None or not graxpert.prefs["display_pts"]:
+        if graxpert.images["Original"] is None or not graxpert.prefs.display_pts:
             return
 
         if self.clicked_inside_pt and not self.crop_mode:
             new_point = graxpert.to_image_point(event.x, event.y)
-            graxpert.cmd.app_state["background_points"][self.clicked_inside_pt_idx] = self.clicked_inside_pt_coord
+            graxpert.cmd.app_state.background_points[self.clicked_inside_pt_idx] = self.clicked_inside_pt_coord
             graxpert.cmd = Command(MOVE_POINT_HANDLER, prev=graxpert.cmd, new_point=new_point, idx=self.clicked_inside_pt_idx)
             graxpert.cmd.execute()
 
         elif len(graxpert.to_image_point(event.x, event.y)) != 0 and (event.time - self.left_drag_timer < 100 or self.left_drag_timer == -1):
             point = graxpert.to_image_point(event.x, event.y)
 
-            if not graxpert.prefs["bg_flood_selection_option"]:
+            if not graxpert.prefs.bg_flood_selection_option:
                 graxpert.cmd = Command(ADD_POINT_HANDLER, prev=graxpert.cmd, point=point)
             else:
                 graxpert.cmd = Command(
                     ADD_POINTS_HANDLER,
                     prev=graxpert.cmd,
                     point=point,
-                    tol=graxpert.prefs["bg_tol_option"],
-                    bg_pts=graxpert.prefs["bg_pts_option"],
-                    sample_size=graxpert.prefs["sample_size"],
+                    tol=graxpert.prefs.bg_tol_option,
+                    bg_pts=graxpert.prefs.bg_pts_option,
+                    sample_size=graxpert.prefs.sample_size,
                     image=graxpert.images["Original"],
                 )
             graxpert.cmd.execute()
@@ -397,16 +398,16 @@ class Canvas(CTkFrame):
         if graxpert.images["Original"] is None:
             return
 
-        color = hls_to_rgb(graxpert.prefs["sample_color"] / 360, 0.5, 1.0)
+        color = hls_to_rgb(graxpert.prefs.sample_color / 360, 0.5, 1.0)
         color = (int(color[0] * 255), int(color[1] * 255), int(color[2] * 255))
         color = "#%02x%02x%02x" % color
 
         self.canvas.delete("sample")
         self.canvas.delete("crop")
-        rectsize = graxpert.prefs["sample_size"]
-        background_points = graxpert.cmd.app_state["background_points"]
+        rectsize = graxpert.prefs.sample_size
+        background_points = graxpert.cmd.app_state.background_points
 
-        if graxpert.prefs["display_pts"] and not self.crop_mode:
+        if graxpert.prefs.display_pts and not self.crop_mode:
             for point in background_points:
                 corner1 = graxpert.to_canvas_point(point[0] - rectsize, point[1] - rectsize)
                 corner2 = graxpert.to_canvas_point(point[0] + rectsize, point[1] + rectsize)

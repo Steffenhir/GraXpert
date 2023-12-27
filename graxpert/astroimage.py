@@ -6,10 +6,11 @@ from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
 from PIL import Image, ImageEnhance
 from skimage import exposure, img_as_float32, io
-from skimage.util import img_as_ubyte, img_as_uint
+from skimage.util import img_as_uint
 from xisf import XISF
 
-from graxpert.preferences import app_state_2_fitsheader
+from graxpert.app_state import AppState
+from graxpert.preferences import Prefs, app_state_2_fitsheader
 from graxpert.stretch import stretch
 
 
@@ -154,7 +155,7 @@ class AstroImage:
         self.height = self.img_array.shape[0]
         return
 
-    def update_fits_header(self, original_header, background_mean, app, app_state):
+    def update_fits_header(self, original_header, background_mean, prefs: Prefs, app_state: AppState):
         if original_header is None:
             self.fits_header = fits.Header()
         else:
@@ -164,7 +165,7 @@ class AstroImage:
         self.fits_header["CBG-1"] = background_mean
         self.fits_header["CBG-2"] = background_mean
         self.fits_header["CBG-3"] = background_mean
-        self.fits_header = app_state_2_fitsheader(app, app_state, self.fits_header)
+        self.fits_header = app_state_2_fitsheader(prefs, app_state, self.fits_header)
 
         if "ROWORDER" in self.fits_header:
             self.roworder = self.fits_header["ROWORDER"]

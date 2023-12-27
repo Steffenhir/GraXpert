@@ -1,8 +1,10 @@
-from typing import TypedDict, List, AnyStr
+from dataclasses import dataclass, field
+from typing import List
 
-class AppState(TypedDict):
-    background_points: List
 
-INITIAL_STATE: AppState = {
-    "background_points": []
-}
+@dataclass
+class AppState:
+    background_points: List = field(default_factory=list)
+
+
+INITIAL_STATE = AppState()

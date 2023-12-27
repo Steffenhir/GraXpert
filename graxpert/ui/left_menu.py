@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from customtkinter import CTkScrollableFrame, StringVar, ThemeManager
+from customtkinter import StringVar, ThemeManager
 
 import graxpert.ui.tooltip as tooltip
 from graxpert.application.app import graxpert
@@ -8,7 +8,19 @@ from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 from graxpert.localization import _
 from graxpert.ui.ui_events import UiEvents
-from graxpert.ui.widgets import CollapsibleMenuFrame, ExtractionStep, GraXpertButton, GraXpertCheckbox, GraXpertLabel, GraXpertOptionMenu, ValueSlider, default_label_width, padx, pady
+from graxpert.ui.widgets import (
+    CollapsibleMenuFrame,
+    ExtractionStep,
+    GraXpertButton,
+    GraXpertCheckbox,
+    GraXpertLabel,
+    GraXpertOptionMenu,
+    GraXpertScrollableFrame,
+    ValueSlider,
+    default_label_width,
+    padx,
+    pady,
+)
 
 
 class CropMenu(CollapsibleMenuFrame):
@@ -204,7 +216,7 @@ class ExtractionMenu(CollapsibleMenuFrame):
         eventbus.emit(AppEvents.OPEN_FILE_DIALOG_REQUEST)
 
 
-class LeftMenu(CTkScrollableFrame):
+class LeftMenu(GraXpertScrollableFrame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         self.create_children()

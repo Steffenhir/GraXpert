@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 import customtkinter as ctk
-from customtkinter import CTkFont, CTkImage, CTkLabel, CTkScrollableFrame, CTkTextbox
+from customtkinter import CTkFont, CTkImage, CTkLabel, CTkTextbox
 from packaging import version
 from PIL import Image
 
@@ -12,7 +12,7 @@ from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 from graxpert.localization import _, lang
 from graxpert.resource_utils import resource_path
-from graxpert.ui.widgets import ExtractionStep, GraXpertOptionMenu, ValueSlider, padx, pady
+from graxpert.ui.widgets import ExtractionStep, GraXpertOptionMenu, GraXpertScrollableFrame, ValueSlider, padx, pady
 
 
 class HelpText(CTkTextbox):
@@ -22,7 +22,7 @@ class HelpText(CTkTextbox):
         self.insert("0.0", text)
 
 
-class RightFrameBase(CTkScrollableFrame):
+class RightFrameBase(GraXpertScrollableFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.row = 0

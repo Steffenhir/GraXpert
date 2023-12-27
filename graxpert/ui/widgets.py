@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from customtkinter import CTkButton, CTkCheckBox, CTkEntry, CTkFrame, CTkImage, CTkLabel, CTkOptionMenu, CTkSlider, DoubleVar, StringVar, ThemeManager
+from customtkinter import CTkButton, CTkCheckBox, CTkEntry, CTkFrame, CTkImage, CTkLabel, CTkOptionMenu, CTkScrollableFrame, CTkSlider, DoubleVar, StringVar, ThemeManager
 from PIL import Image
 
 from graxpert.localization import _
@@ -32,6 +32,29 @@ class GraXpertOptionMenu(CTkOptionMenu):
 class GraXpertCheckbox(CTkCheckBox):
     def __init__(self, parent, width=default_label_width, **kwargs):
         super().__init__(parent, width=width, checkbox_width=20, checkbox_height=20, **kwargs)
+
+
+class GraXpertScrollableFrame(CTkScrollableFrame):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, **kwargs)
+
+        self.bind_all("<Button-4>", self.on_mouse_wheel, add="+")  # Mouse Wheel Linux
+        self.bind_all("<Button-5>", self.on_mouse_wheel, add="+")  # Mouse Wheel Linux
+
+    def on_mouse_wheel(self, event=None):
+        if self.check_if_master_is_canvas(event.widget):
+            if self._shift_pressed:
+                if self._parent_canvas.xview() != (0.0, 1.0):
+                    if event.delta > 0 or event.num == 4:
+                        self._parent_canvas.xview_scroll(-1, "units")
+                    else:
+                        self._parent_canvas.xview_scroll(1, "units")
+            else:
+                if self._parent_canvas.yview() != (0.0, 1.0):
+                    if event.delta > 0 or event.num == 4:
+                        self._parent_canvas.yview_scroll(-1, "units")
+                    else:
+                        self._parent_canvas.yview_scroll(1, "units")
 
 
 class ExtractionStep(CTkFrame):

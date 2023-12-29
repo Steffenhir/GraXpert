@@ -9,5 +9,6 @@ pykrige
 requests
 scikit-image == 0.21.0
 scipy
-tensorflow == 2.13.1
 xisf
+onnxruntime-silicon; sys_platform == "darwin"
+onnxruntime-gpu; sys_platform != "darwin"

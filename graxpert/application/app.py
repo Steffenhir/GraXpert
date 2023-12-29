@@ -35,10 +35,6 @@ class GraXpert:
         self.images = {"Original": None, "Background": None, "Processed": None}
         self.display_type = "Original"
 
-        self.ai_version = None
-        if self.prefs.ai_version is not None:
-            self.ai_version = self.prefs.ai_version
-
         self.mat_affine = np.eye(3)
 
         # state handling
@@ -95,10 +91,8 @@ class GraXpert:
         self.prefs.bg_tol_option = event["bg_tol_option"]
 
     def on_calculate_request(self, event=None):
-        eventbus.emit(AppEvents.CALCULATE_BEGIN)
 
         if self.images["Original"] is None:
-            eventbus.emit(AppEvents.CALCULATE_END)
             messagebox.showerror("Error", _("Please load your picture first."))
             return
 
@@ -106,28 +100,24 @@ class GraXpert:
 
         # Error messages if not enough points
         if len(background_points) == 0 and self.prefs.interpol_type_option != "AI":
-            eventbus.emit(AppEvents.CALCULATE_END)
             messagebox.showerror("Error", _("Please select background points with left click."))
             return
 
         if len(background_points) < 2 and self.prefs.interpol_type_option == "Kriging":
-            eventbus.emit(AppEvents.CALCULATE_END)
             messagebox.showerror("Error", _("Please select at least 2 background points with left click for the Kriging method."))
             return
 
         if len(background_points) < 16 and self.prefs.interpol_type_option == "Splines":
-            eventbus.emit(AppEvents.CALCULATE_END)
             messagebox.showerror("Error", _("Please select at least 16 background points with left click for the Splines method."))
             return
 
         if self.prefs.interpol_type_option == "AI":
             if not self.validate_ai_installation():
                 return
+        
+        eventbus.emit(AppEvents.CALCULATE_BEGIN)
 
-        def callback(p):
-            eventbus.emit(AppEvents.CALCULATE_PROGRESS, {"progress": p})
-
-        progress = DynamicProgressThread(callback=callback)
+        progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.CALCULATE_PROGRESS, {"progress": p}))
 
         imarray = np.copy(self.images["Original"].img_array)
 
@@ -512,7 +502,7 @@ class GraXpert:
         self.mat_affine = np.dot(mat, self.mat_affine)
 
     def validate_ai_installation(self):
-        if self.ai_version is None or self.prefs.ai_version == "None":
+        if self.prefs.ai_version is None or self.prefs.ai_version == "None":
             messagebox.showerror("Error", _("No AI-Model selected. Please select one from the Advanced panel on the right."))
             return False
 
@@ -525,7 +515,7 @@ class GraXpert:
                 def callback(p):
                     eventbus.emit(AppEvents.AI_DOWNLOAD_PROGRESS, {"progress": p})
 
-                download_version(self.ai_version, progress=callback)
+                download_version(self.prefs.ai_version, progress=callback)
                 eventbus.emit(AppEvents.AI_DOWNLOAD_END)
         return True
 

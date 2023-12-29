@@ -75,14 +75,14 @@ class InitHandler(ICommandHandler):
 
     def execute(self, app_state: AppState, cmd_args: Dict) -> AppState:
         state = INITIAL_STATE
-        state["background_points"] = cmd_args["background_points"]
+        state.background_points = cmd_args["background_points"]
         return state
 
     def undo(
         self, cur_state: AppState, prev_state: AppState, cmd_args: Dict
     ) -> AppState:
         state = INITIAL_STATE
-        state["background_points"] = cmd_args["background_points"]
+        state.background_points = cmd_args["background_points"]
         return state
 
     def redo(
@@ -98,16 +98,16 @@ class PointHandler(ICommandHandler):
         self, cur_state: AppState, prev_state: AppState, cmd_args: Dict
     ) -> AppState:
         app_state_copy = deepcopy(cur_state)
-        prev_background_points = deepcopy(prev_state["background_points"])
-        app_state_copy["background_points"] = prev_background_points
+        prev_background_points = deepcopy(prev_state.background_points)
+        app_state_copy.background_points = prev_background_points
         return app_state_copy
 
     def redo(
         self, cur_state: AppState, next_state: AppState, cmd_args: Dict
     ) -> AppState:
         app_state_copy = deepcopy(cur_state)
-        next_background_points = deepcopy(next_state["background_points"])
-        app_state_copy["background_points"] = next_background_points
+        next_background_points = deepcopy(next_state.background_points)
+        app_state_copy.background_points = next_background_points
         return app_state_copy
 
 
@@ -115,7 +115,7 @@ class AddPointHandler(PointHandler):
     def execute(self, app_state: AppState, cmd_args: Dict) -> AppState:
         app_state_copy = deepcopy(app_state)
         point = cmd_args["point"]
-        app_state_copy["background_points"].append(point)
+        app_state_copy.background_points.append(point)
         return app_state_copy
 
     def progress(self) -> float:
@@ -126,13 +126,13 @@ class AddPointsHandler(PointHandler):
     def execute(self, app_state: AppState, cmd_args: Dict) -> AppState:
         app_state_copy = deepcopy(app_state)
         point = cmd_args["point"]
-        background_points = app_state_copy["background_points"]
+        background_points = app_state_copy.background_points
         tol = cmd_args["tol"]
         bg_pts = cmd_args["bg_pts"]
         sample_size = cmd_args["sample_size"]
         image = cmd_args["image"]
         new_points = background_flood_selection(point, background_points, tol, bg_pts, sample_size, image)
-        app_state_copy["background_points"].extend(new_points)
+        app_state_copy.background_points.extend(new_points)
         return app_state_copy
 
     def progress(self) -> float:
@@ -143,7 +143,7 @@ class RemovePointHandler(PointHandler):
     def execute(self, app_state: AppState, cmd_args: Dict) -> AppState:
         app_state_copy = deepcopy(app_state)
         idx = cmd_args["idx"]
-        app_state_copy["background_points"].pop(idx)
+        app_state_copy.background_points.pop(idx)
         return app_state_copy
 
     def progress(self) -> float:
@@ -157,9 +157,9 @@ class MovePointHandler(PointHandler):
         new_point = cmd_args["new_point"]
         
         if len(new_point) == 0:
-            app_state_copy["background_points"].pop(idx)
+            app_state_copy.background_points.pop(idx)
         else:
-            app_state_copy["background_points"][idx] = new_point
+            app_state_copy.background_points[idx] = new_point
         
         return app_state_copy
         
@@ -175,7 +175,7 @@ class SelectPointsHandler(PointHandler):
         tol = cmd_args["tol"]
         sample_size = cmd_args["sample_size"]
         automatic_points = background_grid_selection(data, num_pts, tol, sample_size)
-        app_state_copy["background_points"] = automatic_points
+        app_state_copy.background_points = automatic_points
         return app_state_copy
 
     def progress(self) -> float:
@@ -184,7 +184,7 @@ class SelectPointsHandler(PointHandler):
 class ResetPointsHandler(PointHandler):
     def execute(self, app_state: AppState, cmd_args: Dict) -> AppState:
         app_state_copy = deepcopy(app_state)
-        app_state_copy["background_points"].clear()
+        app_state_copy.background_points.clear()
         return app_state_copy
 
     def progress(self) -> float:

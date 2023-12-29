@@ -248,7 +248,7 @@ def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind
         #     del gpr
         
         else:
-            logging.warn("Interpolation method not recognized")
+            logging.warning("Interpolation method not recognized")
             return
         
         if(downscale_factor != 1):

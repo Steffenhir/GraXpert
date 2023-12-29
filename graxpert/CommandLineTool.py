@@ -59,7 +59,7 @@ class CommandLineTool:
         if self.args.ai_version:
             ai_version = self.args.ai_version
         else:
-            ai_version = prefs["ai_version"]
+            ai_version = prefs.ai_version
 
         if ai_version is None:
             ai_version = latest_version()
@@ -79,9 +79,10 @@ class CommandLineTool:
                 logging.info("download successful".format(ai_version))
             except Exception as e:
                 logging.exception(e)
+                logging.shutdown()
                 sys.exit(1)
 
-        prefs["ai_version"] = ai_version
+        prefs.ai_version = ai_version
         save_preferences(prefs_filename, prefs)
         
         return ai_version

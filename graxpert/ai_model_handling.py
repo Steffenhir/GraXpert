@@ -10,17 +10,22 @@ from appdirs import user_data_dir
 from minio import Minio
 from packaging import version
 
-from graxpert.s3_secrets import bucket_name, endpoint, ro_access_key, ro_secret_key
+try:
+    from graxpert.s3_secrets import bucket_name, endpoint, ro_access_key, ro_secret_key
+    client = Minio(endpoint, ro_access_key, ro_secret_key)
+except Exception as e:
+    logging.exception(e)
+    client = None
+
 from graxpert.ui.loadingframe import DynamicProgressThread
 
 ai_models_dir = os.path.join(user_data_dir(appname="GraXpert"), "ai-models")
 os.makedirs(ai_models_dir, exist_ok=True)
 
-client = Minio(endpoint, ro_access_key, ro_secret_key)
-
-
 # ui operations
 def list_remote_versions():
+    if client is None:
+        return []
     try:
         objects = client.list_objects(bucket_name)
         versions = []

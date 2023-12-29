@@ -132,7 +132,6 @@ def ui_main():
             logging.warning("Could not check for newest version")
 
     logging_thread = initialize_logging()
-    check_for_new_version()
 
     style()
     root = CTk()
@@ -153,6 +152,7 @@ def ui_main():
     app = ApplicationFrame(root)
     app.grid(column=0, row=0, sticky=tk.NSEW)
     root.update()
+    check_for_new_version()
     eventbus.emit(UiEvents.DISPLAY_START_BADGE_REQUEST)
     root.mainloop()
 

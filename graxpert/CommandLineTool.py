@@ -18,7 +18,7 @@ class CommandLineTool:
 
     def execute(self):
         astro_Image = AstroImage(do_update_display=False)
-        astro_Image.set_from_file(self.args.filename)
+        astro_Image.set_from_file(self.args.filename, None, None)
         
         processed_Astro_Image = AstroImage(do_update_display=False)
         background_Astro_Image = AstroImage(do_update_display=False)

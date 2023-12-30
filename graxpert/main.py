@@ -14,9 +14,10 @@ import sys
 
 from packaging import version
 
-from graxpert.version import release as graxpert_release, version as graxpert_version
 from graxpert.ai_model_handling import list_local_versions, list_remote_versions
 from graxpert.mp_logging import configure_logging
+from graxpert.version import release as graxpert_release
+from graxpert.version import version as graxpert_version
 
 available_local_versions = []
 available_remote_versions = []
@@ -177,22 +178,31 @@ def main():
         )
         parser.add_argument("-correction", "--correction", nargs="?", required=False, default="Subtraction", choices=["Subtraction", "Division"], type=str, help="Subtraction or Division")
         parser.add_argument("-smoothing", "--smoothing", nargs="?", required=False, default=0.0, type=float, help="Strength of smoothing between 0 and 1")
+        parser.add_argument(
+            "-preferences_file",
+            "--preferences_file",
+            nargs="?",
+            required=False,
+            default="",
+            type=str,
+            help="Allows GraXpert commandline to run all extraction methods based on a preferences file that contains background grid points",
+        )
         parser.add_argument("-output", "--output", nargs="?", required=False, type=str, help="Filename of the processed image")
         parser.add_argument("-bg", "--bg", required=False, action="store_true", help="Also save the background model")
         parser.add_argument("-cli", "--cli", required=False, action="store_true", help="Has to be added when using the command line integration of GraXpert")
-        parser.add_argument('-v', '--version', action='version', version="GraXpert version: " + graxpert_version + " release: " + graxpert_release)
-        
+        parser.add_argument("-v", "--version", action="version", version=f"GraXpert version: {graxpert_version} release: {graxpert_release}")
 
         args = parser.parse_args()
-        
-        if (args.cli):
+
+        if args.cli:
             from graxpert.CommandLineTool import CommandLineTool
+
             clt = CommandLineTool(args)
             clt.execute()
             logging.shutdown()
         else:
             ui_main()
-            
+
     else:
         ui_main()
 

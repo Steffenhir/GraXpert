@@ -28,15 +28,9 @@ test_images_color = ["color_16bit.fits", "color_16bit.xisf", "color_16bit.tiff",
 
 file_types = ["16 bit Fits", "32 bit Fits", "16 bit Tiff", "32 bit Tiff", "16 bit XISF", "32 bit XISF"]
 
-
-class DummyStretchOption:
-    def get(self):
-        return "30% Bg, 2 sigma"
+saturation = 2.0
+stretch = "30% Bg, 2 sigma"
     
-class DummySaturationOption:
-    def get(self):
-        return 2.0
-
 
 
 def test_set_from_array_mono():
@@ -78,8 +72,6 @@ def test_set_from_file_color(img):
 
 
 def test_update_display_mono():
-    stretch = DummyStretchOption()
-    saturation = DummySaturationOption()
     a = AstroImage(do_update_display=False)
     
     a.set_from_array(array_mono)
@@ -88,8 +80,6 @@ def test_update_display_mono():
     assert np.asarray(a.img_display_saturated).shape == (5,6)
     
 def test_update_display_color():
-    stretch = DummyStretchOption()
-    saturation = DummySaturationOption()
     a = AstroImage(do_update_display=False)
     
     a.set_from_array(array_color)
@@ -100,8 +90,6 @@ def test_update_display_color():
 
 @pytest.mark.parametrize("file_type", file_types)
 def test_save_mono(tmp_path, file_type):
-    stretch = DummyStretchOption()
-    saturation = DummySaturationOption()
     a = AstroImage()
     
     a.set_from_file("./tests/test_images/mono_32bit.fits", stretch, saturation)
@@ -131,8 +119,6 @@ def test_save_mono(tmp_path, file_type):
     
 @pytest.mark.parametrize("file_type", file_types)
 def test_save_color(tmp_path, file_type):
-    stretch = DummyStretchOption()
-    saturation = DummySaturationOption()
     a = AstroImage()
     
     a.set_from_file("./tests/test_images/color_32bit.fits", stretch, saturation)
@@ -161,14 +147,12 @@ def test_save_color(tmp_path, file_type):
 
 @pytest.mark.parametrize("file_type", file_types)
 def test_save_stretched_mono(tmp_path, file_type):
-    stretch = DummyStretchOption()
-    saturation = DummySaturationOption()
     a = AstroImage()
     
     a.set_from_file("./tests/test_images/mono_32bit.fits", stretch, saturation)
     file_ending = file_type[-4::].lower()
     file_dir = os.path.join(tmp_path, file_type + "." + file_ending)
-    a.save_stretched(file_dir, file_type)
+    a.save_stretched(file_dir, file_type, stretch)
     
     if file_ending == "fits":
         hdul = fits.open(file_dir)
@@ -192,14 +176,12 @@ def test_save_stretched_mono(tmp_path, file_type):
     
 @pytest.mark.parametrize("file_type", file_types)
 def test_save_stretched_color(tmp_path, file_type):
-    stretch = DummyStretchOption()
-    saturation = DummySaturationOption()
-    a = AstroImage(stretch,saturation)
+    a = AstroImage()
     
     a.set_from_file("./tests/test_images/color_32bit.fits", stretch, saturation)
     file_ending = file_type[-4::].lower()
     file_dir = os.path.join(tmp_path, file_type + "." + file_ending)
-    a.save_stretched(file_dir, file_type)
+    a.save_stretched(file_dir, file_type, stretch)
     
     if file_ending == "fits":
         hdul = fits.open(file_dir)

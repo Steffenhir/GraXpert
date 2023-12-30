@@ -41,16 +41,21 @@ class CommandLineTool:
                         json_prefs = json.load(f)
                         if "background_points" in json_prefs:
                             preferences.background_points = json_prefs["background_points"]
-                        if "sample_size" in json_prefs:
-                            preferences.sample_size = json_prefs["sample_size"]
-                        if "spline_order" in json_prefs:
-                            preferences.spline_order = json_prefs["spline_order"]
                         if "RBF_kernel" in json_prefs:
                             preferences.RBF_kernel = json_prefs["RBF_kernel"]
                         if "interpol_type_option" in json_prefs:
                             preferences.interpol_type_option = json_prefs["interpol_type_option"]
+                        if "smoothing_option" in json_prefs:
+                            preferences.smoothing_option = json_prefs["smoothing_option"]
+                        if "sample_size" in json_prefs:
+                            preferences.sample_size = json_prefs["sample_size"]
+                        if "spline_order" in json_prefs:
+                            preferences.spline_order = json_prefs["spline_order"]
+                        if "corr_type" in json_prefs:
+                            preferences.corr_type = json_prefs["corr_type"]
                         if "ai_version" in json_prefs:
                             preferences.ai_version = json_prefs["ai_version"]
+
                         if preferences.interpol_type_option == "Kriging" or preferences.interpol_type_option == "RBF":
                             downscale_factor = 4
 

@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 
 # ensure sys.stdout and sys.stderr are not None in PyInstaller environments
@@ -89,7 +90,7 @@ def ui_main():
     from graxpert.ui.ui_events import UiEvents
     from graxpert.version import release, version
 
-    def on_closing(root, logging_thread):
+    def on_closing(root: CTk, logging_thread):
         app_state_2_prefs(graxpert.prefs, graxpert.cmd.app_state)
 
         prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
@@ -136,11 +137,16 @@ def ui_main():
 
     style()
     root = CTk()
+
     try:
-        root.state("zoomed")
-    except:
-        root.geometry("1024x768")
+        if "Linux" == platform.system():
+            root.attributes("-zoomed", True)
+        else:
+            root.state("zoomed")
+    except Exception as e:
         root.state("normal")
+        logging.warning(e, stack_info=True)
+
     root.title("GraXpert | Release: '{}' ({})".format(release, version))
     root.iconbitmap()
     root.iconphoto(True, tk.PhotoImage(file=resource_path("img/Icon.png")))

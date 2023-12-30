@@ -40,9 +40,7 @@ class DummySaturationOption:
 
 
 def test_set_from_array_mono():
-    stretch = DummyStretchOption()
-    saturation = DummySaturationOption()
-    a = AstroImage(stretch,saturation)
+    a = AstroImage(do_update_display=False)
     
     a.set_from_array(array_mono)
     assert_array_almost_equal(a.img_array, array_mono, decimal=5)
@@ -50,9 +48,7 @@ def test_set_from_array_mono():
     assert a.height == 5  
     
 def test_set_from_array_color():
-    stretch = DummyStretchOption()
-    saturation = DummySaturationOption()
-    a = AstroImage(stretch,saturation)
+    a = AstroImage(do_update_display=False)
     
     a.set_from_array(array_color)
     assert_array_almost_equal(a.img_array, array_color, decimal=5)
@@ -63,22 +59,18 @@ def test_set_from_array_color():
 
 @pytest.mark.parametrize("img", test_images_mono)
 def test_set_from_file_mono(img):
-    stretch = DummyStretchOption()
-    saturation = DummySaturationOption()
-    a = AstroImage(stretch,saturation)
+    a = AstroImage(do_update_display=False)
     
-    a.set_from_file("./tests/test_images/" + img)
+    a.set_from_file("./tests/test_images/" + img, None, None)
     assert_array_almost_equal(a.img_array, array_mono, decimal=5)
     assert a.width == 6
     assert a.height == 5
     
 @pytest.mark.parametrize("img", test_images_color)
 def test_set_from_file_color(img):
-    stretch = DummyStretchOption()
-    saturation = DummySaturationOption()
-    a = AstroImage(stretch,saturation)
+    a = AstroImage(do_update_display=False)
     
-    a.set_from_file("./tests/test_images/" + img)
+    a.set_from_file("./tests/test_images/" + img, None, None)
     assert_array_almost_equal(a.img_array, array_color, decimal=5)
     assert a.width == 6
     assert a.height == 5
@@ -88,20 +80,20 @@ def test_set_from_file_color(img):
 def test_update_display_mono():
     stretch = DummyStretchOption()
     saturation = DummySaturationOption()
-    a = AstroImage(stretch,saturation)
+    a = AstroImage(do_update_display=False)
     
     a.set_from_array(array_mono)
-    a.update_display()
+    a.update_display(stretch, saturation)
     assert np.asarray(a.img_display).shape == (5,6)
     assert np.asarray(a.img_display_saturated).shape == (5,6)
     
 def test_update_display_color():
     stretch = DummyStretchOption()
     saturation = DummySaturationOption()
-    a = AstroImage(stretch,saturation)
+    a = AstroImage(do_update_display=False)
     
     a.set_from_array(array_color)
-    a.update_display()
+    a.update_display(stretch, saturation)
     assert np.asarray(a.img_display).shape == (5,6,3)
     assert np.asarray(a.img_display_saturated).shape == (5,6,3)
 
@@ -110,9 +102,9 @@ def test_update_display_color():
 def test_save_mono(tmp_path, file_type):
     stretch = DummyStretchOption()
     saturation = DummySaturationOption()
-    a = AstroImage(stretch,saturation)
+    a = AstroImage()
     
-    a.set_from_file("./tests/test_images/mono_32bit.fits")
+    a.set_from_file("./tests/test_images/mono_32bit.fits", stretch, saturation)
     file_ending = file_type[-4::].lower()
     file_dir = os.path.join(tmp_path, file_type + "." + file_ending)
     a.save(file_dir, file_type)
@@ -141,9 +133,9 @@ def test_save_mono(tmp_path, file_type):
 def test_save_color(tmp_path, file_type):
     stretch = DummyStretchOption()
     saturation = DummySaturationOption()
-    a = AstroImage(stretch,saturation)
+    a = AstroImage()
     
-    a.set_from_file("./tests/test_images/color_32bit.fits")
+    a.set_from_file("./tests/test_images/color_32bit.fits", stretch, saturation)
     file_ending = file_type[-4::].lower()
     file_dir = os.path.join(tmp_path, file_type + "." + file_ending)
     a.save(file_dir, file_type)
@@ -171,9 +163,9 @@ def test_save_color(tmp_path, file_type):
 def test_save_stretched_mono(tmp_path, file_type):
     stretch = DummyStretchOption()
     saturation = DummySaturationOption()
-    a = AstroImage(stretch,saturation)
+    a = AstroImage()
     
-    a.set_from_file("./tests/test_images/mono_32bit.fits")
+    a.set_from_file("./tests/test_images/mono_32bit.fits", stretch, saturation)
     file_ending = file_type[-4::].lower()
     file_dir = os.path.join(tmp_path, file_type + "." + file_ending)
     a.save_stretched(file_dir, file_type)
@@ -204,7 +196,7 @@ def test_save_stretched_color(tmp_path, file_type):
     saturation = DummySaturationOption()
     a = AstroImage(stretch,saturation)
     
-    a.set_from_file("./tests/test_images/color_32bit.fits")
+    a.set_from_file("./tests/test_images/color_32bit.fits", stretch, saturation)
     file_ending = file_type[-4::].lower()
     file_dir = os.path.join(tmp_path, file_type + "." + file_ending)
     a.save_stretched(file_dir, file_type)

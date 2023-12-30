@@ -71,7 +71,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
             progress.update(8)
 
         # model = tf.saved_model.load(AI_dir)
-        session = ort.InferenceSession(os.path.join(AI_dir, "model.onnx"), providers=ort.get_available_providers())
+        session = ort.InferenceSession(os.path.join(os.path.split(AI_dir)[0], "bg_model.onnx"), providers=ort.get_available_providers())
 
         # background = np.array(model(np.expand_dims(imarray_shrink, axis=0))[0])
         background = session.run(None, {"gen_input_image": np.expand_dims(imarray_shrink, axis=0)})[0][0]
@@ -103,7 +103,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
             progress.update(8)
 
         # background = tf.image.resize(background,size=(in_imarray.shape[0],in_imarray.shape[1]),method='gaussian')
-        background = gaussian(background, sigma=3.0) # To simulate method='gaussian
+        background = gaussian(background, sigma=3.0) # To simulate method='gaussian'
         background = resize(background, output_shape=(in_imarray.shape[0],in_imarray.shape[1]))
 
         if progress is not None:

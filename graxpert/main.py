@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 
 # ensure sys.stdout and sys.stderr are not None in PyInstaller environments
@@ -89,7 +90,7 @@ def ui_main():
     from graxpert.ui.ui_events import UiEvents
     from graxpert.version import release, version
 
-    def on_closing(root, logging_thread):
+    def on_closing(root: CTk, logging_thread):
         app_state_2_prefs(graxpert.prefs, graxpert.cmd.app_state)
 
         prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
@@ -136,11 +137,16 @@ def ui_main():
 
     style()
     root = CTk()
+
     try:
-        root.state("zoomed")
-    except:
-        root.geometry("1024x768")
+        if "Linux" == platform.system():
+            root.attributes("-zoomed", True)
+        else:
+            root.state("zoomed")
+    except Exception as e:
         root.state("normal")
+        logging.warning(e, stack_info=True)
+
     root.title("GraXpert | Release: '{}' ({})".format(release, version))
     root.iconbitmap()
     root.iconphoto(True, tk.PhotoImage(file=resource_path("img/Icon.png")))
@@ -176,14 +182,14 @@ def main():
             type=version_type,
             help='Version of the AI model, default: "latest"; available locally: [{}], available remotely: [{}]'.format(", ".join(available_local_versions), ", ".join(available_remote_versions)),
         )
-        parser.add_argument("-correction", "--correction", nargs="?", required=False, default="Subtraction", choices=["Subtraction", "Division"], type=str, help="Subtraction or Division")
-        parser.add_argument("-smoothing", "--smoothing", nargs="?", required=False, default=0.0, type=float, help="Strength of smoothing between 0 and 1")
+        parser.add_argument("-correction", "--correction", nargs="?", required=False, default=None, choices=["Subtraction", "Division"], type=str, help="Subtraction or Division")
+        parser.add_argument("-smoothing", "--smoothing", nargs="?", required=False, default=None, type=float, help="Strength of smoothing between 0 and 1")
         parser.add_argument(
             "-preferences_file",
             "--preferences_file",
             nargs="?",
             required=False,
-            default="",
+            default=None,
             type=str,
             help="Allows GraXpert commandline to run all extraction methods based on a preferences file that contains background grid points",
         )
@@ -197,10 +203,12 @@ def main():
         if args.cli:
             from graxpert.CommandLineTool import CommandLineTool
 
+            logging.info(f"Starting GraXpert CLI, version: {graxpert_version} release: {graxpert_release}")
             clt = CommandLineTool(args)
             clt.execute()
             logging.shutdown()
         else:
+            logging.info(f"Starting GraXpert UI, version: {graxpert_version} release: {graxpert_release}")
             ui_main()
 
     else:

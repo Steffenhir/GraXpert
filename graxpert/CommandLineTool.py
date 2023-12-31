@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import sys
+from textwrap import dedent
 
 import numpy as np
 from appdirs import user_config_dir
@@ -30,7 +31,7 @@ class CommandLineTool:
 
         downscale_factor = 1
 
-        if self.args.preferences_file:
+        if self.args.preferences_file is not None:
             preferences = Prefs()
             preferences.interpol_type_option = "AI"
             try:
@@ -38,12 +39,22 @@ class CommandLineTool:
                 if os.path.isfile(preferences_file):
                     with open(preferences_file, "r") as f:
                         json_prefs = json.load(f)
-                        preferences.background_points = json_prefs["background_points"]
-                        preferences.sample_size = json_prefs["sample_size"]
-                        preferences.spline_order = json_prefs["spline_order"]
-                        preferences.RBF_kernel = json_prefs["RBF_kernel"]
-                        preferences.interpol_type_option = json_prefs["interpol_type_option"]
-                        preferences.ai_version = json_prefs["ai_version"]
+                        if "background_points" in json_prefs:
+                            preferences.background_points = json_prefs["background_points"]
+                        if "RBF_kernel" in json_prefs:
+                            preferences.RBF_kernel = json_prefs["RBF_kernel"]
+                        if "interpol_type_option" in json_prefs:
+                            preferences.interpol_type_option = json_prefs["interpol_type_option"]
+                        if "smoothing_option" in json_prefs:
+                            preferences.smoothing_option = json_prefs["smoothing_option"]
+                        if "sample_size" in json_prefs:
+                            preferences.sample_size = json_prefs["sample_size"]
+                        if "spline_order" in json_prefs:
+                            preferences.spline_order = json_prefs["spline_order"]
+                        if "corr_type" in json_prefs:
+                            preferences.corr_type = json_prefs["corr_type"]
+                        if "ai_version" in json_prefs:
+                            preferences.ai_version = json_prefs["ai_version"]
 
                         if preferences.interpol_type_option == "Kriging" or preferences.interpol_type_option == "RBF":
                             downscale_factor = 4
@@ -53,21 +64,52 @@ class CommandLineTool:
                 logging.shutdown()
                 sys.exit(1)
         else:
-            preferences = load_preferences(user_preferences_filename)
+            preferences = Prefs()
             preferences.interpol_type_option = "AI"
 
-        if self.args.smoothing:
+        if self.args.smoothing is not None:
             preferences.smoothing_option = self.args.smoothing
             logging.info(f"Using user-supplied smoothing value {preferences.smoothing_option}.")
+        else:
+            logging.info(f"Using stored smoothing value {preferences.smoothing_option}.")
 
-        if self.args.correction:
+        if self.args.correction is not None:
             preferences.corr_type = self.args.correction
             logging.info(f"Using user-supplied correction type {preferences.corr_type}.")
+        else:
+            logging.info(f"Using stored correction type {preferences.corr_type}.")
 
         if preferences.interpol_type_option == "AI":
             ai_model_path = ai_model_path_from_version(self.get_ai_version(preferences))
         else:
             ai_model_path = None
+
+        if preferences.interpol_type_option == "AI":
+            logging.info(
+                dedent(
+                    f"""\
+                        Excecuting background extraction with the following parameters:
+                        interpolation type - {preferences.interpol_type_option}
+                                 smoothing - {preferences.smoothing_option}
+                           correction type - {preferences.corr_type}
+                             AI model path - {ai_model_path}"""
+                )
+            )
+        else:
+            logging.info(
+                dedent(
+                    f"""\
+                        Excecuting background extraction with the following parameters:
+                        interpolation type - {preferences.interpol_type_option}
+                         background points - {preferences.background_points}
+                               sample size - {preferences.sample_size}
+                                    kernel - {preferences.RBF_kernel}
+                              spline order - {preferences.spline_order}
+                                 smoothing - {preferences.smoothing_option}
+                            orrection type - {preferences.corr_type}
+                         downscale_factor  - {downscale_factor}"""
+                )
+            )
 
         background_Astro_Image.set_from_array(
             extract_background(

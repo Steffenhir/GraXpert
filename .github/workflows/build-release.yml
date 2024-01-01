@@ -1,11 +1,5 @@
 name: build-release
 
-env:
-  ai_s3_endpoint: ${{ secrets.AI_S3_ENDPOINT }}
-  ai_s3_access_key: ${{ secrets.AI_S3_ACCESS_KEY }}
-  ai_s3_secret_key: ${{ secrets.AI_S3_SECRET_KEY }}
-  ai_s3_bucket_name: ${{ secrets.AI_S3_BUCKET_NAME }}
-
 on:
   push:
     tags:
@@ -22,12 +16,6 @@ jobs:
           python-version: '3.10'
       - name: checkout repository
         uses: actions/checkout@v3
-      - name: configure ai s3 secrets
-        run: |
-          echo "endpoint = \"$ai_s3_endpoint\"" >> ./graxpert/s3_secrets.py && \
-          echo "ro_access_key = \"$ai_s3_access_key\"" >> ./graxpert/s3_secrets.py && \
-          echo "ro_secret_key = \"$ai_s3_secret_key\"" >> ./graxpert/s3_secrets.py && \
-          echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py
       - name: install dependencies
         run: |
           sudo apt install alien -y && \
@@ -56,12 +44,6 @@ jobs:
           python-version: '3.10'
       - name: checkout repository
         uses: actions/checkout@v3
-      - name: configure ai s3 secrets
-        run: |
-          echo "endpoint = \"$ai_s3_endpoint\"" >> ./graxpert/s3_secrets.py && \
-          echo "ro_access_key = \"$ai_s3_access_key\"" >> ./graxpert/s3_secrets.py && \
-          echo "ro_secret_key = \"$ai_s3_secret_key\"" >> ./graxpert/s3_secrets.py && \
-          echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py
       - name: install dependencies
         run: |
           pip install setuptools wheel cx_freeze && \
@@ -93,13 +75,6 @@ jobs:
           python-version: '3.10'
       - name: checkout repository
         uses: actions/checkout@v3
-      - name: configure ai s3 secrets
-        run: |
-          $PSDefaultParameterValues['Out-File:Encoding']='UTF8' ; `
-          "endpoint = `"$env:ai_s3_endpoint`"" | Out-File -Append .\graxpert\s3_secrets.py ; `
-          "ro_access_key = `"$env:ai_s3_access_key`"" | Out-File -Append .\graxpert\s3_secrets.py ; `
-          "ro_secret_key = `"$env:ai_s3_secret_key`"" | Out-File -Append .\graxpert\s3_secrets.py ; `
-          "bucket_name = `"$env:ai_s3_bucket_name`"" | Out-File -Append .\graxpert\s3_secrets.py
       - name: install dependencies
         run: |
           pip install setuptools wheel cx_freeze; `
@@ -121,13 +96,6 @@ jobs:
     steps:
       - name: checkout repository
         uses: actions/checkout@v3
-      - name: configure ai s3 secrets
-        run: |
-          echo "endpoint = \"$ai_s3_endpoint\"" >> ./graxpert/s3_secrets.py && \
-          echo "ro_access_key = \"$ai_s3_access_key\"" >> ./graxpert/s3_secrets.py && \
-          echo "ro_secret_key = \"$ai_s3_secret_key\"" >> ./graxpert/s3_secrets.py && \
-          echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py
-      # github actions overwrites brew's python. Force it to reassert itself, by running in a separate step.
       - name: unbreak python in github actions
         run: |
          find /usr/local/bin -lname '*/Library/Frameworks/Python.framework/*' -delete

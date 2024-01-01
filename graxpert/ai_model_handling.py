@@ -79,7 +79,7 @@ def ai_model_path_from_version(local_version):
     if local_version is None:
         return None
 
-    return os.path.join(ai_models_dir, local_version, "bg_model")
+    return os.path.join(ai_models_dir, local_version, "bg_model.onnx")
 
 
 def compute_orphaned_local_versions():
@@ -141,4 +141,4 @@ def download_version(remote_version, progress=None):
 
 
 def validate_local_version(local_version):
-    return os.path.isdir(os.path.join(ai_models_dir, local_version, "bg_model"))
+    return os.path.isfile(os.path.join(ai_models_dir, local_version, "bg_model.onnx"))

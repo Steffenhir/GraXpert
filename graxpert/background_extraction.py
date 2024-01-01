@@ -16,9 +16,7 @@ from skimage.filters import  gaussian
 
 import sys
 import os
-import tensorflow as tf
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1' # Run tensorflow on CPU
-tf.compat.v1.logging.set_verbosity(40) # Only show errors
+import onnxruntime as ort
 
 from graxpert.mp_logging import get_logging_queue, worker_configurer
 from graxpert.parallel_processing import executor
@@ -39,7 +37,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
     if interpolation_type == 'AI':
         # Shrink and pad to avoid artifacts on borders
         padding = 8
-        imarray_shrink = tf.image.resize(imarray,size=(256 - 2*padding,256 - 2*padding))
+        imarray_shrink = resize(imarray, output_shape=(256 - 2*padding, 256 - 2*padding))
         imarray_shrink = np.pad(imarray_shrink, ((padding,padding),(padding,padding),(0,0)), mode='edge')
 
         median = []
@@ -68,9 +66,9 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         if progress is not None:
             progress.update(8)
             
-        model = tf.saved_model.load(AI_dir)
+        model = ort.InferenceSession(AI_dir, providers=["CPUExecutionProvider"])
 
-        background = np.array(model(np.expand_dims(imarray_shrink, axis=0))[0])
+        background = model.run(None, {"gen_input_image": np.expand_dims(imarray_shrink, axis=0)})[0][0]
         background = background / 0.04 * mad + median
         
         if progress is not None:
@@ -96,8 +94,9 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         
         if progress is not None:
             progress.update(8)
-        
-        background = tf.image.resize(background,size=(in_imarray.shape[0],in_imarray.shape[1]),method='gaussian')
+
+        background = gaussian(background, sigma=3.0)  # To simulate method='gaussian'
+        background = resize(background, output_shape=(in_imarray.shape[0], in_imarray.shape[1]))
         
         if progress is not None:
             progress.update(8)

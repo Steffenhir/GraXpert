@@ -65,8 +65,11 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         
         if progress is not None:
             progress.update(8)
-            
-        model = ort.InferenceSession(AI_dir, providers=["CPUExecutionProvider"])
+
+        supported_providers = {"CUDAExecutionProvider", "CPUExecutionProvider"}
+        available_providers = list(supported_providers.intersection(ort.get_available_providers()))
+
+        model = ort.InferenceSession(AI_dir, providers=available_providers)
 
         background = model.run(None, {"gen_input_image": np.expand_dims(imarray_shrink, axis=0)})[0][0]
         background = background / 0.04 * mad + median

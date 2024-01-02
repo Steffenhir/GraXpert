@@ -91,7 +91,6 @@ class GraXpert:
         self.prefs.bg_tol_option = event["bg_tol_option"]
 
     def on_calculate_request(self, event=None):
-
         if self.images["Original"] is None:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
@@ -114,7 +113,7 @@ class GraXpert:
         if self.prefs.interpol_type_option == "AI":
             if not self.validate_ai_installation():
                 return
-        
+
         eventbus.emit(AppEvents.CALCULATE_BEGIN)
 
         progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.CALCULATE_PROGRESS, {"progress": p}))
@@ -320,7 +319,8 @@ class GraXpert:
 
         try:
             self.images["Processed"].save(dir, self.prefs.saveas_option)
-        except:
+        except Exception as e:
+            logging.exception(e)
             eventbus.emit(AppEvents.SAVE_ERROR)
             messagebox.showerror("Error", _("Error occured when saving the image."))
 
@@ -341,7 +341,8 @@ class GraXpert:
 
         try:
             self.images["Background"].save(dir, self.prefs.saveas_option)
-        except:
+        except Exception as e:
+            logging.exception(e)
             eventbus.emit(AppEvents.SAVE_ERROR)
             messagebox.showerror("Error", _("Error occured when saving the image."))
 

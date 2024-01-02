@@ -96,7 +96,7 @@ def app_state_2_fitsheader(prefs: Prefs, app_state: AppState, fits_header):
         fits_header["SAMPLE-SIZE"] = prefs.sample_size
         fits_header["RBF-KERNEL"] = prefs.RBF_kernel
         fits_header["SPLINE-ORDER"] = prefs.spline_order
-        fits_header["BG-PTS"] = str(app_state.background_points)
+        fits_header["BG-PTS"] = str(list(map(lambda e: e.tolist(), app_state.background_points)))
 
     return fits_header
 

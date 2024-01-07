@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 import numpy as np
@@ -271,10 +272,13 @@ class AstroImage:
 
         for key in unique_keys:
             if key == "BG-PTS":
-                bg_pts = json.loads(self.fits_header["BG-PTS"])
+                try:
+                    bg_pts = json.loads(self.fits_header["BG-PTS"])
 
-                for i in range(len(bg_pts)):
-                    self.image_metadata["FITSKeywords"]["BG-PTS" + str(i)] = [{"value": bg_pts[i], "comment": ""}]
+                    for i in range(len(bg_pts)):
+                        self.image_metadata["FITSKeywords"]["BG-PTS" + str(i)] = [{"value": bg_pts[i], "comment": ""}]
+                except:
+                    logging.warning("Could not transfer background points from fits header to xisf image metadata", stack_info=True)
             else:
                 value = str(self.fits_header[key]).splitlines()
                 comment = str(self.fits_header.comments[key]).splitlines()
@@ -303,23 +307,27 @@ class AstroImage:
         bg_pts = []
         for key in self.image_metadata["FITSKeywords"].keys():
             if key.startswith("BG-PTS"):
-                bg_pts.append(json.loads(self.image_metadata["FITSKeywords"][key][0]["value"]))
+                try:
+                    bg_pts.append(json.loads(self.image_metadata["FITSKeywords"][key][0]["value"]))
+                except:
+                    logging.warning(f"Could not load background points from xisf image metadata. Affected entry: {self.image_metadata['FITSKeywords'][key]}", stack_info=True)
 
-            for i in range(len(self.image_metadata["FITSKeywords"][key])):
-                value = self.image_metadata["FITSKeywords"][key][i]["value"]
-                comment = self.image_metadata["FITSKeywords"][key][i]["comment"]
+            else:
+                for i in range(len(self.image_metadata["FITSKeywords"][key])):
+                    value = self.image_metadata["FITSKeywords"][key][i]["value"]
+                    comment = self.image_metadata["FITSKeywords"][key][i]["comment"]
 
-                # Commentary cards have to comments in Fits standard
-                if key in commentary_keys:
-                    if value == "":
-                        value = comment
+                    # Commentary cards have to comments in Fits standard
+                    if key in commentary_keys:
+                        if value == "":
+                            value = comment
 
-                if value.isdigit():
-                    value = int(value)
-                elif value.isdecimal():
-                    value = float(value)
+                    if value.isdigit():
+                        value = int(value)
+                    elif value.isdecimal():
+                        value = float(value)
 
-                self.fits_header[key] = (value, comment)
+                    self.fits_header[key] = (value, comment)
 
         if len(bg_pts) > 0:
             self.fits_header["BG-PTS"] = str(bg_pts)

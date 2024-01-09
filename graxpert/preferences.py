@@ -103,7 +103,10 @@ def app_state_2_fitsheader(prefs: Prefs, app_state: AppState, fits_header):
 
 def fitsheader_2_app_state(prefs: Prefs, app_state: AppState, fits_header):
     if "BG-PTS" in fits_header.keys():
-        app_state.background_points = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
+        try:
+            app_state.background_points = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
+        except:
+            logging.warning("Could not transfer background points from fits header to application state", stack_info=True)
 
     if "INTP-OPT" in fits_header.keys():
         prefs.interpol_type_option = fits_header["INTP-OPT"]

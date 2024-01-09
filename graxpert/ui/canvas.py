@@ -30,6 +30,7 @@ class Canvas(CTkFrame):
         self.endx = 0
         self.endy = 0
         self.crop_mode = False
+        self.clicked_inside_pt = False
 
         self.create_children()
         self.setup_layout()

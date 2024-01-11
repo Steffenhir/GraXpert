@@ -12,7 +12,6 @@ import logging
 import multiprocessing
 import re
 import sys
-import asyncio
 
 from packaging import version
 

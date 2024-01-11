@@ -12,6 +12,7 @@ import logging
 import multiprocessing
 import re
 import sys
+import asyncio
 
 from packaging import version
 
@@ -66,7 +67,7 @@ def version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
     return arg_value
 
 
-def ui_main():
+def ui_main(open_with_file = None):
     import logging
     import tkinter as tk
     from concurrent.futures import ProcessPoolExecutor
@@ -80,6 +81,7 @@ def ui_main():
 
     from graxpert.application.app import graxpert
     from graxpert.application.eventbus import eventbus
+    from graxpert.application.app_events import AppEvents
     from graxpert.localization import _
     from graxpert.mp_logging import initialize_logging, shutdown_logging
     from graxpert.parallel_processing import executor
@@ -160,7 +162,12 @@ def ui_main():
     app.grid(column=0, row=0, sticky=tk.NSEW)
     root.update()
     check_for_new_version()
-    eventbus.emit(UiEvents.DISPLAY_START_BADGE_REQUEST)
+    
+    if open_with_file and len(open_with_file) > 0:
+        eventbus.emit(AppEvents.LOAD_IMAGE_REQUEST, {"filename": open_with_file})
+    else:
+        eventbus.emit(UiEvents.DISPLAY_START_BADGE_REQUEST)
+    
     root.mainloop()
 
 
@@ -209,7 +216,7 @@ def main():
             logging.shutdown()
         else:
             logging.info(f"Starting GraXpert UI, version: {graxpert_version} release: {graxpert_release}")
-            ui_main()
+            ui_main(args.filename)
 
     else:
         ui_main()

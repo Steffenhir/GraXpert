@@ -363,11 +363,12 @@ class GraXpert:
 
         try:
             if self.images["Processed"] is None:
-                self.images["Original"].save_stretched(dir, self.prefs.saveas_option)
+                self.images["Original"].save_stretched(dir, self.prefs.saveas_option, self.prefs.stretch_option)
             else:
-                self.images["Processed"].save_stretched(dir, self.prefs.saveas_option)
-        except:
+                self.images["Processed"].save_stretched(dir, self.prefs.saveas_option, self.prefs.stretch_option)
+        except Exception as e:
             eventbus.emit(AppEvents.SAVE_ERROR)
+            logging.exception(e)
             messagebox.showerror("Error", _("Error occured when saving the image."))
 
         eventbus.emit(AppEvents.SAVE_END)

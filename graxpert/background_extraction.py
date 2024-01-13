@@ -99,7 +99,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         if progress is not None:
             progress.update(8)
 
-        background = gaussian(background, sigma=3.0)  # To simulate method='gaussian'
+        background = gaussian(background, sigma=3.0, channel_axis=-1)  # To simulate method='gaussian'
         background = resize(background, output_shape=(in_imarray.shape[0], in_imarray.shape[1]))
         
         if progress is not None:

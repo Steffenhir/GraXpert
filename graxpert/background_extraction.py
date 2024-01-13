@@ -66,8 +66,8 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         if progress is not None:
             progress.update(8)
 
-        supported_providers = {"CUDAExecutionProvider", "CPUExecutionProvider"}
-        available_providers = list(supported_providers.intersection(ort.get_available_providers()))
+        supported_providers = ["CoreMLExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider"]
+        available_providers = [provider for provider in ort.get_available_providers() if provider in supported_providers]
 
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL

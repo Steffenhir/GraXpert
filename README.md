@@ -30,9 +30,12 @@ GraXpert comes with a graphical user interface. However, the AI method which doe
 Here are the available command-line arguments and their descriptions:
 
 - filename: The path of the unprocessed image (required).
+- -cli: This flag always has to be added when using the command line integration of GraXpert. Otherwise, the GUI will start and open the specified file name.
+- -output [output_file_name]: Specify the name of the output image (without file ending). Otherwise the image will be saved with the suffix '_GraXpert' added to the original file name.
 - -ai_version [version]: Specify the version of the AI model to use. If not provided, it defaults to the latest available version. You can choose from locally available versions and remotely available versions.
 - -correction [type]: Select the background correction method. Options are "Subtraction" (default) or "Division."
 - -smoothing [strength]: Adjust the strength of smoothing, ranging from 0.0 (no smoothing) to 1 (maximum smoothing).
+- -bg: Also save the generated background model.
 
 ## Examples
 The following examples show how GraXpert can be used from the command line in Windows. For Linux and macOS, you have to do the following replacements:
@@ -42,12 +45,12 @@ The following examples show how GraXpert can be used from the command line in Wi
 
 Basic Usage:
 ```
-GraXpert-win64.exe my_image.fits
+GraXpert-win64.exe my_image.fits -cli
 ```
 
-Specify AI Model Version '1.1', correction type 'Division' and smoothing '0.5':
+Specify AI Model Version '1.1', correction type 'Division', smoothing '0.1', and save background model:
 ```
-GraXpert-win64.exe my_image.fits -ai_version 1.1 -correction Division -smoothing 0.5
+GraXpert-win64.exe my_image.fits -cli -ai_version 1.1 -correction Division -smoothing 0.1 -bg
 ```
 
 # Installation for Developers

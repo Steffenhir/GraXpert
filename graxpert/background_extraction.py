@@ -69,7 +69,11 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         supported_providers = {"CUDAExecutionProvider", "CPUExecutionProvider"}
         available_providers = list(supported_providers.intersection(ort.get_available_providers()))
 
-        model = ort.InferenceSession(AI_dir, providers=available_providers)
+        sess_options = ort.SessionOptions()
+        sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        sess_options.optimized_model_filepath = AI_dir
+
+        model = ort.InferenceSession(AI_dir, sess_options=sess_options, providers=available_providers)
         print(f"Used providers : {model.get_providers()}")
 
         background = model.run(None, {"gen_input_image": np.expand_dims(imarray_shrink, axis=0)})[0][0]

@@ -107,8 +107,18 @@ def stretch_all(datas, stretch_params: StretchParameters):
     shms = []
     copies = []
     result = []
-
     logging_queue = get_logging_queue()
+    
+    common_mtf_stretch_params_per_channel = []
+    if stretch_params.images_linked:
+        if stretch_params.channels_linked:
+            mtf_stretch_params_for_all_channel = calculate_mtf_stretch_parameters(stretch_params, datas[0])
+            common_mtf_stretch_params_per_channel = [mtf_stretch_params_for_all_channel] * datas[0].shape[-1]
+        else:
+            for c in range(datas[0].shape[-1]):
+                common_mtf_stretch_params_per_channel.append(calculate_mtf_stretch_parameters(stretch_params, datas[0][:,:,c]))
+             
+    
     for data in datas:
         shm = shared_memory.SharedMemory(create=True, size=data.nbytes)
         copy = np.ndarray(data.shape, dtype=data.dtype, buffer=shm.buf)
@@ -116,12 +126,16 @@ def stretch_all(datas, stretch_params: StretchParameters):
         shms.append(shm)
         copies.append(copy)
         
-        mtf_stretch_params = None
-        if stretch_params.channels_linked:
+        mtf_stretch_params = [None] * data.shape[-1]
+        
+        if stretch_params.images_linked:
+            mtf_stretch_params = common_mtf_stretch_params_per_channel
+        elif stretch_params.channels_linked:
             mtf_stretch_params = calculate_mtf_stretch_parameters(stretch_params, copy)
+            mtf_stretch_params = [mtf_stretch_params] * data.shape[-1]
         
         for c in range(copy.shape[-1]):
-            futures.insert(c, executor.submit(stretch_channel, shm.name, c, stretch_params, mtf_stretch_params, copy.shape, copy.dtype, logging_queue, worker_configurer))
+            futures.insert(c, executor.submit(stretch_channel, shm.name, c, stretch_params, mtf_stretch_params[c], copy.shape, copy.dtype, logging_queue, worker_configurer))
     wait(futures)
 
     for copy in copies:

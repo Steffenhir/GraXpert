@@ -1,4 +1,5 @@
 from graxpert.astroimage import AstroImage
+from graxpert.stretch import StretchParameters
 from numpy.testing import assert_array_almost_equal
 import os
 import numpy as np
@@ -29,7 +30,7 @@ test_images_color = ["color_16bit.fits", "color_16bit.xisf", "color_16bit.tiff",
 file_types = ["16 bit Fits", "32 bit Fits", "16 bit Tiff", "32 bit Tiff", "16 bit XISF", "32 bit XISF"]
 
 saturation = 2.0
-stretch = "30% Bg, 2 sigma"
+stretch_params = StretchParameters("30% Bg, 2 sigma")
     
 
 
@@ -75,7 +76,7 @@ def test_update_display_mono():
     a = AstroImage(do_update_display=False)
     
     a.set_from_array(array_mono)
-    a.update_display(stretch, saturation)
+    a.update_display(stretch_params, saturation)
     assert np.asarray(a.img_display).shape == (5,6)
     assert np.asarray(a.img_display_saturated).shape == (5,6)
     
@@ -83,7 +84,7 @@ def test_update_display_color():
     a = AstroImage(do_update_display=False)
     
     a.set_from_array(array_color)
-    a.update_display(stretch, saturation)
+    a.update_display(stretch_params, saturation)
     assert np.asarray(a.img_display).shape == (5,6,3)
     assert np.asarray(a.img_display_saturated).shape == (5,6,3)
 
@@ -92,7 +93,7 @@ def test_update_display_color():
 def test_save_mono(tmp_path, file_type):
     a = AstroImage()
     
-    a.set_from_file("./tests/test_images/mono_32bit.fits", stretch, saturation)
+    a.set_from_file("./tests/test_images/mono_32bit.fits", stretch_params, saturation)
     file_ending = file_type[-4::].lower()
     file_dir = os.path.join(tmp_path, file_type + "." + file_ending)
     a.save(file_dir, file_type)
@@ -121,7 +122,7 @@ def test_save_mono(tmp_path, file_type):
 def test_save_color(tmp_path, file_type):
     a = AstroImage()
     
-    a.set_from_file("./tests/test_images/color_32bit.fits", stretch, saturation)
+    a.set_from_file("./tests/test_images/color_32bit.fits", stretch_params, saturation)
     file_ending = file_type[-4::].lower()
     file_dir = os.path.join(tmp_path, file_type + "." + file_ending)
     a.save(file_dir, file_type)
@@ -149,10 +150,10 @@ def test_save_color(tmp_path, file_type):
 def test_save_stretched_mono(tmp_path, file_type):
     a = AstroImage()
     
-    a.set_from_file("./tests/test_images/mono_32bit.fits", stretch, saturation)
+    a.set_from_file("./tests/test_images/mono_32bit.fits", stretch_params, saturation)
     file_ending = file_type[-4::].lower()
     file_dir = os.path.join(tmp_path, file_type + "." + file_ending)
-    a.save_stretched(file_dir, file_type, stretch)
+    a.save_stretched(file_dir, file_type, stretch_params)
     
     if file_ending == "fits":
         hdul = fits.open(file_dir)
@@ -178,10 +179,10 @@ def test_save_stretched_mono(tmp_path, file_type):
 def test_save_stretched_color(tmp_path, file_type):
     a = AstroImage()
     
-    a.set_from_file("./tests/test_images/color_32bit.fits", stretch, saturation)
+    a.set_from_file("./tests/test_images/color_32bit.fits", stretch_params, saturation)
     file_ending = file_type[-4::].lower()
     file_dir = os.path.join(tmp_path, file_type + "." + file_ending)
-    a.save_stretched(file_dir, file_type, stretch)
+    a.save_stretched(file_dir, file_type, stretch_params)
     
     if file_ending == "fits":
         hdul = fits.open(file_dir)

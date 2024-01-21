@@ -16,7 +16,7 @@ from graxpert.commands import INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDL
 from graxpert.localization import _
 from graxpert.mp_logging import logfile_name
 from graxpert.preferences import fitsheader_2_app_state, load_preferences, prefs_2_app_state
-from graxpert.stretch import stretch_all
+from graxpert.stretch import stretch_all, StretchParameters
 from graxpert.ui.loadingframe import DynamicProgressThread
 
 
@@ -155,7 +155,7 @@ class GraXpert:
             self.images["Background"].copy_metadata(self.images["Original"])
 
             all_images = [self.images["Original"].img_array, self.images["Processed"].img_array, self.images["Background"].img_array]
-            stretches = stretch_all(all_images, self.images["Original"].get_stretch(self.prefs.stretch_option))
+            stretches = stretch_all(all_images, StretchParameters(self.prefs.stretch_option))
             self.images["Original"].update_display_from_array(stretches[0], self.prefs.saturation)
             self.images["Processed"].update_display_from_array(stretches[1], self.prefs.saturation)
             self.images["Background"].update_display_from_array(stretches[2], self.prefs.saturation)
@@ -220,7 +220,7 @@ class GraXpert:
 
         try:
             image = AstroImage()
-            image.set_from_file(filename, self.prefs.stretch_option, self.prefs.saturation)
+            image.set_from_file(filename, StretchParameters(self.prefs.stretch_option), self.prefs.saturation)
 
         except Exception as e:
             eventbus.emit(AppEvents.LOAD_IMAGE_ERROR)
@@ -363,9 +363,9 @@ class GraXpert:
 
         try:
             if self.images["Processed"] is None:
-                self.images["Original"].save_stretched(dir, self.prefs.saveas_option, self.prefs.stretch_option)
+                self.images["Original"].save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option))
             else:
-                self.images["Processed"].save_stretched(dir, self.prefs.saveas_option, self.prefs.stretch_option)
+                self.images["Processed"].save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option))
         except Exception as e:
             eventbus.emit(AppEvents.SAVE_ERROR)
             logging.exception(e)
@@ -391,8 +391,7 @@ class GraXpert:
                 if img is not None:
                     all_images.append(img.img_array)
             if len(all_images) > 0:
-                stretch_params = self.images["Original"].get_stretch(self.prefs.stretch_option)
-                stretches = stretch_all(all_images, stretch_params)
+                stretches = stretch_all(all_images, StretchParameters(self.prefs.stretch_option))
             for idx, img in enumerate(self.images.values()):
                 if img is not None:
                     img.update_display_from_array(stretches[idx], self.prefs.saturation)

@@ -53,8 +53,8 @@ class AstroImage:
             self.xisf_imagedata_2_fitsheader()
             img_array = np.copy(xisf.read_image(0))
 
-            entry = {"id": "BackgroundExtraction", "type": "String", "value": "GraXpert"}
-            self.image_metadata["XISFProperties"] = {"ProcessingHistory": entry}
+            entry = {"id": "GraXpert:ProcessingHistory", "type": "String", "value": "BackgroundExtraction"}
+            self.image_metadata["XISFProperties"]["GraXpert:ProcessingHistory"] = entry
 
         else:
             img_array = np.copy(io.imread(directory))

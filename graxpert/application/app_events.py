@@ -22,6 +22,7 @@ class AppEvents(Enum):
     REDRAW_POINTS_REQUEST = auto()
     # stretch options
     STRETCH_OPTION_CHANGED = auto()
+    CHANNELS_LINKED_CHANGED = auto()
     # sample selection
     DISPLAY_PTS_CHANGED = auto()
     BG_FLOOD_SELECTION_CHANGED = auto()

@@ -12,7 +12,7 @@ from xisf import XISF
 
 from graxpert.app_state import AppState
 from graxpert.preferences import Prefs, app_state_2_fitsheader
-from graxpert.stretch import stretch
+from graxpert.stretch import stretch, StretchParameters
 
 
 class AstroImage:
@@ -29,7 +29,7 @@ class AstroImage:
         self.height = 0
         self.roworder = "BOTTOM-UP"
 
-    def set_from_file(self, directory, stretch_option, saturation):
+    def set_from_file(self, directory: str, stretch_params: StretchParameters, saturation: float):
         self.img_format = os.path.splitext(directory)[1].lower()
 
         img_array = None
@@ -53,8 +53,8 @@ class AstroImage:
             self.xisf_imagedata_2_fitsheader()
             img_array = np.copy(xisf.read_image(0))
 
-            entry = {"id": "BackgroundExtraction", "type": "String", "value": "GraXpert"}
-            self.image_metadata["XISFProperties"] = {"ProcessingHistory": entry}
+            entry = {"id": "GraXpert:ProcessingHistory", "type": "String", "value": "BackgroundExtraction"}
+            self.image_metadata["XISFProperties"]["GraXpert:ProcessingHistory"] = entry
 
         else:
             img_array = np.copy(io.imread(directory))
@@ -76,7 +76,7 @@ class AstroImage:
         self.height = self.img_array.shape[0]
 
         if self.do_update_display:
-            self.update_display(stretch_option, saturation)
+            self.update_display(stretch_params, saturation)
 
         return
 
@@ -86,8 +86,8 @@ class AstroImage:
         self.height = self.img_array.shape[0]
         return
 
-    def update_display(self, stretch_option, saturation):
-        img_display = self.stretch(stretch_option)
+    def update_display(self, stretch_params: StretchParameters, saturation: float):
+        img_display = self.stretch(stretch_params)
         img_display = img_display * 255
 
         # if self.roworder == "TOP-DOWN":
@@ -117,36 +117,8 @@ class AstroImage:
 
         return
 
-    def stretch(self, stretch_option):
-        bg, sigma = (0.2, 3)
-        if stretch_option == "No Stretch":
-            return self.img_array
-
-        elif stretch_option == "10% Bg, 3 sigma":
-            bg, sigma = (0.1, 3)
-
-        elif stretch_option == "15% Bg, 3 sigma":
-            bg, sigma = (0.15, 3)
-
-        elif stretch_option == "20% Bg, 3 sigma":
-            bg, sigma = (0.2, 3)
-
-        elif stretch_option == "30% Bg, 2 sigma":
-            bg, sigma = (0.3, 2)
-
-        return np.clip(stretch(self.img_array, bg, sigma), 0.0, 1.0)
-
-    def get_stretch(self, stretch_option):
-        if stretch_option == "No Stretch":
-            return None
-        elif stretch_option == "10% Bg, 3 sigma":
-            return (0.1, 3)
-        elif stretch_option == "15% Bg, 3 sigma":
-            return (0.15, 3)
-        elif stretch_option == "20% Bg, 3 sigma":
-            return (0.2, 3)
-        elif stretch_option == "30% Bg, 2 sigma":
-            return (0.3, 2)
+    def stretch(self, stretch_params: StretchParameters):
+        return np.clip(stretch(self.img_array, stretch_params), 0.0, 1.0)
 
     def crop(self, startx, endx, starty, endy):
         self.img_array = self.img_array[starty:endy, startx:endx, :]
@@ -201,13 +173,13 @@ class AstroImage:
 
         return
 
-    def save_stretched(self, dir, saveas_type, stretch_option):
+    def save_stretched(self, dir, saveas_type, stretch_params):
         if self.img_array is None:
             return
 
-        self.fits_header["STRETCH"] = stretch_option
+        self.fits_header["STRETCH"] = stretch_params.stretch_option
 
-        stretched_img = self.stretch(stretch_option)
+        stretched_img = self.stretch(stretch_params)
 
         if saveas_type == "16 bit Tiff" or saveas_type == "16 bit Fits" or saveas_type == "16 bit XISF":
             image_converted = img_as_uint(stretched_img)

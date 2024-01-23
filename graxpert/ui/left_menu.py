@@ -57,6 +57,10 @@ class ExtractionMenu(CollapsibleMenuFrame):
         self.saturation = tk.DoubleVar()
         self.saturation.set(graxpert.prefs.saturation)
         self.saturation.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.CHANGE_SATURATION_REQUEST, {"saturation": self.saturation.get()}))
+        
+        self.channels_linked = tk.BooleanVar()
+        self.channels_linked.set(graxpert.prefs.channels_linked_option)
+        self.channels_linked.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.CHANNELS_LINKED_CHANGED, {"channels_linked": self.channels_linked.get()}))
 
         # sample selection
         self.display_pts = tk.BooleanVar()
@@ -126,6 +130,7 @@ class ExtractionMenu(CollapsibleMenuFrame):
             max_value=3,
             precision=1,
         )
+        self.channels_linked_switch = GraXpertCheckbox(self.sub_frame, width=default_label_width, text=_("Channels linked"), variable=self.channels_linked)
 
         # sample selection
         self.sample_selection_title = ExtractionStep(self.sub_frame, 3, _(" Sample Selection"))
@@ -188,29 +193,30 @@ class ExtractionMenu(CollapsibleMenuFrame):
         self.stretch_options_title.grid(column=0, row=2, columnspan=2, pady=pady, sticky=tk.EW)
         self.stretch_menu.grid(column=1, row=3, pady=pady, sticky=tk.EW)
         self.saturation_slider.grid(column=1, row=4, pady=pady, sticky=tk.EW)
+        self.channels_linked_switch.grid(column=1, row=5, pady=pady, sticky=tk.EW)
 
         # sample selection
-        self.sample_selection_title.grid(column=0, row=5, columnspan=2, pady=pady, sticky=tk.EW)
-        self.display_pts_switch.grid(column=1, row=6, pady=pady, sticky=tk.EW)
-        self.flood_select_pts_switch.grid(column=1, row=7, pady=pady, sticky=tk.EW)
-        self.bg_pts_slider.grid(column=1, row=8, pady=pady, sticky=tk.EW)
-        self.bg_tol_slider.grid(column=1, row=9, pady=pady, sticky=tk.EW)
-        self.bg_selection_button.grid(column=1, row=10, pady=pady, sticky=tk.EW)
-        self.reset_button.grid(column=1, row=11, pady=pady, sticky=tk.EW)
+        self.sample_selection_title.grid(column=0, row=6, columnspan=2, pady=pady, sticky=tk.EW)
+        self.display_pts_switch.grid(column=1, row=7, pady=pady, sticky=tk.EW)
+        self.flood_select_pts_switch.grid(column=1, row=8, pady=pady, sticky=tk.EW)
+        self.bg_pts_slider.grid(column=1, row=9, pady=pady, sticky=tk.EW)
+        self.bg_tol_slider.grid(column=1, row=10, pady=pady, sticky=tk.EW)
+        self.bg_selection_button.grid(column=1, row=11, pady=pady, sticky=tk.EW)
+        self.reset_button.grid(column=1, row=12, pady=pady, sticky=tk.EW)
 
         # calculation
-        self.calculation_title.grid(column=0, row=12, pady=pady, columnspan=2, sticky=tk.EW)
-        self.intp_type_text.grid(column=1, row=13, pady=pady, sticky=tk.EW)
-        self.interpol_menu.grid(column=1, row=14, pady=pady, sticky=tk.EW)
-        self.smoothing_slider.grid(column=1, row=15, pady=pady, sticky=tk.EW)
-        self.calculate_button.grid(column=1, row=16, pady=pady, sticky=tk.EW)
+        self.calculation_title.grid(column=0, row=13, pady=pady, columnspan=2, sticky=tk.EW)
+        self.intp_type_text.grid(column=1, row=14, pady=pady, sticky=tk.EW)
+        self.interpol_menu.grid(column=1, row=15, pady=pady, sticky=tk.EW)
+        self.smoothing_slider.grid(column=1, row=16, pady=pady, sticky=tk.EW)
+        self.calculate_button.grid(column=1, row=17, pady=pady, sticky=tk.EW)
 
         # saving
-        self.saving_title.grid(column=0, row=17, pady=pady, columnspan=2, sticky=tk.EW)
-        self.saveas_menu.grid(column=1, row=18, pady=pady, sticky=tk.EW)
-        self.save_button.grid(column=1, row=19, pady=pady, sticky=tk.EW)
-        self.save_background_button.grid(column=1, row=20, pady=pady, sticky=tk.EW)
-        self.save_stretched_button.grid(column=1, row=21, pady=pady, sticky=tk.EW)
+        self.saving_title.grid(column=0, row=18, pady=pady, columnspan=2, sticky=tk.EW)
+        self.saveas_menu.grid(column=1, row=19, pady=pady, sticky=tk.EW)
+        self.save_button.grid(column=1, row=20, pady=pady, sticky=tk.EW)
+        self.save_background_button.grid(column=1, row=21, pady=pady, sticky=tk.EW)
+        self.save_stretched_button.grid(column=1, row=22, pady=pady, sticky=tk.EW)
 
     def menu_open_clicked(self, event=None):
         eventbus.emit(AppEvents.OPEN_FILE_DIALOG_REQUEST)

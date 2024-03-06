@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 
 # ensure sys.stdout and sys.stderr are not None in PyInstaller environments
@@ -16,6 +17,8 @@ from packaging import version
 
 from graxpert.ai_model_handling import list_local_versions, list_remote_versions
 from graxpert.mp_logging import configure_logging
+from graxpert.version import release as graxpert_release
+from graxpert.version import version as graxpert_version
 
 available_local_versions = []
 available_remote_versions = []
@@ -63,7 +66,7 @@ def version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
     return arg_value
 
 
-def ui_main():
+def ui_main(open_with_file = None):
     import logging
     import tkinter as tk
     from concurrent.futures import ProcessPoolExecutor
@@ -77,6 +80,7 @@ def ui_main():
 
     from graxpert.application.app import graxpert
     from graxpert.application.eventbus import eventbus
+    from graxpert.application.app_events import AppEvents
     from graxpert.localization import _
     from graxpert.mp_logging import initialize_logging, shutdown_logging
     from graxpert.parallel_processing import executor
@@ -87,7 +91,7 @@ def ui_main():
     from graxpert.ui.ui_events import UiEvents
     from graxpert.version import release, version
 
-    def on_closing(root, logging_thread):
+    def on_closing(root: CTk, logging_thread):
         app_state_2_prefs(graxpert.prefs, graxpert.cmd.app_state)
 
         prefs_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
@@ -131,15 +135,19 @@ def ui_main():
             logging.warning("Could not check for newest version")
 
     logging_thread = initialize_logging()
-    check_for_new_version()
 
     style()
     root = CTk()
+
     try:
-        root.state("zoomed")
-    except:
-        root.geometry("1024x768")
+        if "Linux" == platform.system():
+            root.attributes("-zoomed", True)
+        else:
+            root.state("zoomed")
+    except Exception as e:
         root.state("normal")
+        logging.warning(e, stack_info=True)
+
     root.title("GraXpert | Release: '{}' ({})".format(release, version))
     root.iconbitmap()
     root.iconphoto(True, tk.PhotoImage(file=resource_path("img/Icon.png")))
@@ -152,7 +160,13 @@ def ui_main():
     app = ApplicationFrame(root)
     app.grid(column=0, row=0, sticky=tk.NSEW)
     root.update()
-    eventbus.emit(UiEvents.DISPLAY_START_BADGE_REQUEST)
+    check_for_new_version()
+    
+    if open_with_file and len(open_with_file) > 0:
+        eventbus.emit(AppEvents.LOAD_IMAGE_REQUEST, {"filename": open_with_file})
+    else:
+        eventbus.emit(UiEvents.DISPLAY_START_BADGE_REQUEST)
+    
     root.mainloop()
 
 
@@ -174,16 +188,35 @@ def main():
             type=version_type,
             help='Version of the AI model, default: "latest"; available locally: [{}], available remotely: [{}]'.format(", ".join(available_local_versions), ", ".join(available_remote_versions)),
         )
-        parser.add_argument("-correction", "--correction", nargs="?", required=False, default="Subtraction", choices=["Subtraction", "Division"], type=str, help="Subtraction or Division")
-        parser.add_argument("-smoothing", "--smoothing", nargs="?", required=False, default=0.0, type=float, help="Strength of smoothing between 0 and 1")
+        parser.add_argument("-correction", "--correction", nargs="?", required=False, default=None, choices=["Subtraction", "Division"], type=str, help="Subtraction or Division")
+        parser.add_argument("-smoothing", "--smoothing", nargs="?", required=False, default=None, type=float, help="Strength of smoothing between 0 and 1")
+        parser.add_argument(
+            "-preferences_file",
+            "--preferences_file",
+            nargs="?",
+            required=False,
+            default=None,
+            type=str,
+            help="Allows GraXpert commandline to run all extraction methods based on a preferences file that contains background grid points",
+        )
+        parser.add_argument("-output", "--output", nargs="?", required=False, type=str, help="Filename of the processed image")
+        parser.add_argument("-bg", "--bg", required=False, action="store_true", help="Also save the background model")
+        parser.add_argument("-cli", "--cli", required=False, action="store_true", help="Has to be added when using the command line integration of GraXpert")
+        parser.add_argument("-v", "--version", action="version", version=f"GraXpert version: {graxpert_version} release: {graxpert_release}")
 
         args = parser.parse_args()
 
-        from graxpert.CommandLineTool import CommandLineTool
+        if args.cli:
+            from graxpert.CommandLineTool import CommandLineTool
 
-        clt = CommandLineTool(args)
-        clt.execute()
-        logging.shutdown()
+            logging.info(f"Starting GraXpert CLI, version: {graxpert_version} release: {graxpert_release}")
+            clt = CommandLineTool(args)
+            clt.execute()
+            logging.shutdown()
+        else:
+            logging.info(f"Starting GraXpert UI, version: {graxpert_version} release: {graxpert_release}")
+            ui_main(args.filename)
+
     else:
         ui_main()
 

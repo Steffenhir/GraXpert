@@ -3,6 +3,8 @@ import tkinter.ttk as ttk
 
 from customtkinter import CTkFrame, CTkLabel, CTkToplevel
 
+from graxpert.application.app_events import AppEvents
+from graxpert.application.eventbus import eventbus
 from graxpert.localization import _
 from graxpert.ui_scaling import get_scaling_factor
 
@@ -49,6 +51,7 @@ class Tooltip:
         self.pad = pad
         self.id = None
         self.tw = None
+        eventbus.add_listener(AppEvents.CALCULATE_BEGIN, lambda e: self.hide())
 
     def onEnter(self, event=None):
         self.schedule()

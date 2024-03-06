@@ -22,6 +22,7 @@ class Prefs:
     bg_pts_option: int = 15
     stretch_option: AnyStr = "No Stretch"
     saturation: float = 1.0
+    channels_linked_option: bool = False
     display_pts: bool = True
     bg_tol_option: float = 1.0
     interpol_type_option: AnyStr = "RBF"
@@ -96,14 +97,17 @@ def app_state_2_fitsheader(prefs: Prefs, app_state: AppState, fits_header):
         fits_header["SAMPLE-SIZE"] = prefs.sample_size
         fits_header["RBF-KERNEL"] = prefs.RBF_kernel
         fits_header["SPLINE-ORDER"] = prefs.spline_order
-        fits_header["BG-PTS"] = str(app_state.background_points)
+        fits_header["BG-PTS"] = str(list(map(lambda e: e.tolist(), app_state.background_points)))
 
     return fits_header
 
 
 def fitsheader_2_app_state(prefs: Prefs, app_state: AppState, fits_header):
     if "BG-PTS" in fits_header.keys():
-        app_state.background_points = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
+        try:
+            app_state.background_points = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
+        except:
+            logging.warning("Could not transfer background points from fits header to application state", stack_info=True)
 
     if "INTP-OPT" in fits_header.keys():
         prefs.interpol_type_option = fits_header["INTP-OPT"]

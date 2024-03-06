@@ -16,7 +16,7 @@ from graxpert.commands import INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDL
 from graxpert.localization import _
 from graxpert.mp_logging import logfile_name
 from graxpert.preferences import fitsheader_2_app_state, load_preferences, prefs_2_app_state
-from graxpert.stretch import stretch_all
+from graxpert.stretch import stretch_all, StretchParameters
 from graxpert.ui.loadingframe import DynamicProgressThread
 
 
@@ -51,6 +51,7 @@ class GraXpert:
         # stretch options
         eventbus.add_listener(AppEvents.STRETCH_OPTION_CHANGED, self.on_stretch_option_changed)
         eventbus.add_listener(AppEvents.CHANGE_SATURATION_REQUEST, self.on_change_saturation_request)
+        eventbus.add_listener(AppEvents.CHANNELS_LINKED_CHANGED, self.on_channels_linked_option_changed)
         # sample selection
         eventbus.add_listener(AppEvents.DISPLAY_PTS_CHANGED, self.on_display_pts_changed)
         eventbus.add_listener(AppEvents.BG_FLOOD_SELECTION_CHANGED, self.on_bg_floot_selection_changed)
@@ -91,7 +92,6 @@ class GraXpert:
         self.prefs.bg_tol_option = event["bg_tol_option"]
 
     def on_calculate_request(self, event=None):
-
         if self.images["Original"] is None:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
@@ -114,7 +114,7 @@ class GraXpert:
         if self.prefs.interpol_type_option == "AI":
             if not self.validate_ai_installation():
                 return
-        
+
         eventbus.emit(AppEvents.CALCULATE_BEGIN)
 
         progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.CALCULATE_PROGRESS, {"progress": p}))
@@ -156,7 +156,7 @@ class GraXpert:
             self.images["Background"].copy_metadata(self.images["Original"])
 
             all_images = [self.images["Original"].img_array, self.images["Processed"].img_array, self.images["Background"].img_array]
-            stretches = stretch_all(all_images, self.images["Original"].get_stretch(self.prefs.stretch_option))
+            stretches = stretch_all(all_images, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
             self.images["Original"].update_display_from_array(stretches[0], self.prefs.saturation)
             self.images["Processed"].update_display_from_array(stretches[1], self.prefs.saturation)
             self.images["Background"].update_display_from_array(stretches[2], self.prefs.saturation)
@@ -221,7 +221,7 @@ class GraXpert:
 
         try:
             image = AstroImage()
-            image.set_from_file(filename, self.prefs.stretch_option, self.prefs.saturation)
+            image.set_from_file(filename, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option), self.prefs.saturation)
 
         except Exception as e:
             eventbus.emit(AppEvents.LOAD_IMAGE_ERROR)
@@ -320,7 +320,8 @@ class GraXpert:
 
         try:
             self.images["Processed"].save(dir, self.prefs.saveas_option)
-        except:
+        except Exception as e:
+            logging.exception(e)
             eventbus.emit(AppEvents.SAVE_ERROR)
             messagebox.showerror("Error", _("Error occured when saving the image."))
 
@@ -341,7 +342,8 @@ class GraXpert:
 
         try:
             self.images["Background"].save(dir, self.prefs.saveas_option)
-        except:
+        except Exception as e:
+            logging.exception(e)
             eventbus.emit(AppEvents.SAVE_ERROR)
             messagebox.showerror("Error", _("Error occured when saving the image."))
 
@@ -362,11 +364,12 @@ class GraXpert:
 
         try:
             if self.images["Processed"] is None:
-                self.images["Original"].save_stretched(dir, self.prefs.saveas_option)
+                self.images["Original"].save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
             else:
-                self.images["Processed"].save_stretched(dir, self.prefs.saveas_option)
-        except:
+                self.images["Processed"].save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
+        except Exception as e:
             eventbus.emit(AppEvents.SAVE_ERROR)
+            logging.exception(e)
             messagebox.showerror("Error", _("Error occured when saving the image."))
 
         eventbus.emit(AppEvents.SAVE_END)
@@ -379,7 +382,15 @@ class GraXpert:
 
     def on_stretch_option_changed(self, event):
         self.prefs.stretch_option = event["stretch_option"]
+        self.do_stretch()
+        
+    def on_channels_linked_option_changed(self, event):
+        self.prefs.channels_linked_option = event["channels_linked"]
+        self.do_stretch()
+        
 
+    # application logic
+    def do_stretch(self):
         eventbus.emit(AppEvents.STRETCH_IMAGE_BEGIN)
 
         try:
@@ -389,8 +400,7 @@ class GraXpert:
                 if img is not None:
                     all_images.append(img.img_array)
             if len(all_images) > 0:
-                stretch_params = self.images["Original"].get_stretch(self.prefs.stretch_option)
-                stretches = stretch_all(all_images, stretch_params)
+                stretches = stretch_all(all_images, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
             for idx, img in enumerate(self.images.values()):
                 if img is not None:
                     img.update_display_from_array(stretches[idx], self.prefs.saturation)
@@ -399,8 +409,7 @@ class GraXpert:
             logging.exception(e)
 
         eventbus.emit(AppEvents.STRETCH_IMAGE_END)
-
-    # application logic
+        
     def remove_pt(self, event):
         if len(self.cmd.app_state.background_points) == 0 or not self.prefs.display_pts:
             return False
@@ -435,7 +444,6 @@ class GraXpert:
         else:
             return False
 
-    # application logic
     def reset_backgroundpts(self):
         if len(self.cmd.app_state.background_points) > 0:
             self.cmd = Command(RESET_POINTS_HANDLER, self.cmd)

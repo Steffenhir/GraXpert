@@ -68,7 +68,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         if progress is not None:
             progress.update(8)
             
-        model = tf.keras.models.load_model(AI_dir)
+        model = tf.saved_model.load(AI_dir)
 
         background = np.array(model(np.expand_dims(imarray_shrink, axis=0))[0])
         background = background / 0.04 * mad + median

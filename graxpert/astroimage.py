@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 import numpy as np
@@ -11,7 +12,7 @@ from xisf import XISF
 
 from graxpert.app_state import AppState
 from graxpert.preferences import Prefs, app_state_2_fitsheader
-from graxpert.stretch import stretch
+from graxpert.stretch import stretch, StretchParameters
 
 
 class AstroImage:
@@ -28,7 +29,7 @@ class AstroImage:
         self.height = 0
         self.roworder = "BOTTOM-UP"
 
-    def set_from_file(self, directory, stretch_option, saturation):
+    def set_from_file(self, directory: str, stretch_params: StretchParameters, saturation: float):
         self.img_format = os.path.splitext(directory)[1].lower()
 
         img_array = None
@@ -52,8 +53,8 @@ class AstroImage:
             self.xisf_imagedata_2_fitsheader()
             img_array = np.copy(xisf.read_image(0))
 
-            entry = {"id": "BackgroundExtraction", "type": "String", "value": "GraXpert"}
-            self.image_metadata["XISFProperties"] = {"ProcessingHistory": entry}
+            entry = {"id": "GraXpert:ProcessingHistory", "type": "String", "value": "BackgroundExtraction"}
+            self.image_metadata["XISFProperties"]["GraXpert:ProcessingHistory"] = entry
 
         else:
             img_array = np.copy(io.imread(directory))
@@ -75,7 +76,7 @@ class AstroImage:
         self.height = self.img_array.shape[0]
 
         if self.do_update_display:
-            self.update_display(stretch_option, saturation)
+            self.update_display(stretch_params, saturation)
 
         return
 
@@ -85,8 +86,8 @@ class AstroImage:
         self.height = self.img_array.shape[0]
         return
 
-    def update_display(self, stretch_option, saturation):
-        img_display = self.stretch(stretch_option)
+    def update_display(self, stretch_params: StretchParameters, saturation: float):
+        img_display = self.stretch(stretch_params)
         img_display = img_display * 255
 
         # if self.roworder == "TOP-DOWN":
@@ -116,36 +117,8 @@ class AstroImage:
 
         return
 
-    def stretch(self, stretch_option):
-        bg, sigma = (0.2, 3)
-        if stretch_option == "No Stretch":
-            return self.img_array
-
-        elif stretch_option == "10% Bg, 3 sigma":
-            bg, sigma = (0.1, 3)
-
-        elif stretch_option == "15% Bg, 3 sigma":
-            bg, sigma = (0.15, 3)
-
-        elif stretch_option == "20% Bg, 3 sigma":
-            bg, sigma = (0.2, 3)
-
-        elif stretch_option == "30% Bg, 2 sigma":
-            bg, sigma = (0.3, 2)
-
-        return np.clip(stretch(self.img_array, bg, sigma), 0.0, 1.0)
-
-    def get_stretch(self, stretch_option):
-        if stretch_option == "No Stretch":
-            return None
-        elif stretch_option == "10% Bg, 3 sigma":
-            return (0.1, 3)
-        elif stretch_option == "15% Bg, 3 sigma":
-            return (0.15, 3)
-        elif stretch_option == "20% Bg, 3 sigma":
-            return (0.2, 3)
-        elif stretch_option == "30% Bg, 2 sigma":
-            return (0.3, 2)
+    def stretch(self, stretch_params: StretchParameters):
+        return np.clip(stretch(self.img_array, stretch_params), 0.0, 1.0)
 
     def crop(self, startx, endx, starty, endy):
         self.img_array = self.img_array[starty:endy, startx:endx, :]
@@ -200,13 +173,13 @@ class AstroImage:
 
         return
 
-    def save_stretched(self, dir, saveas_type, stretch_option):
+    def save_stretched(self, dir, saveas_type, stretch_params):
         if self.img_array is None:
             return
 
-        self.fits_header["STRETCH"] = stretch_option
+        self.fits_header["STRETCH"] = stretch_params.stretch_option
 
-        stretched_img = self.stretch(stretch_option)
+        stretched_img = self.stretch(stretch_params)
 
         if saveas_type == "16 bit Tiff" or saveas_type == "16 bit Fits" or saveas_type == "16 bit XISF":
             image_converted = img_as_uint(stretched_img)
@@ -271,10 +244,13 @@ class AstroImage:
 
         for key in unique_keys:
             if key == "BG-PTS":
-                bg_pts = json.loads(self.fits_header["BG-PTS"])
+                try:
+                    bg_pts = json.loads(self.fits_header["BG-PTS"])
 
-                for i in range(len(bg_pts)):
-                    self.image_metadata["FITSKeywords"]["BG-PTS" + str(i)] = [{"value": bg_pts[i], "comment": ""}]
+                    for i in range(len(bg_pts)):
+                        self.image_metadata["FITSKeywords"]["BG-PTS" + str(i)] = [{"value": bg_pts[i], "comment": ""}]
+                except:
+                    logging.warning("Could not transfer background points from fits header to xisf image metadata", stack_info=True)
             else:
                 value = str(self.fits_header[key]).splitlines()
                 comment = str(self.fits_header.comments[key]).splitlines()
@@ -303,23 +279,27 @@ class AstroImage:
         bg_pts = []
         for key in self.image_metadata["FITSKeywords"].keys():
             if key.startswith("BG-PTS"):
-                bg_pts.append(json.loads(self.image_metadata["FITSKeywords"][key][0]["value"]))
+                try:
+                    bg_pts.append(json.loads(self.image_metadata["FITSKeywords"][key][0]["value"]))
+                except:
+                    logging.warning(f"Could not load background points from xisf image metadata. Affected entry: {self.image_metadata['FITSKeywords'][key]}", stack_info=True)
 
-            for i in range(len(self.image_metadata["FITSKeywords"][key])):
-                value = self.image_metadata["FITSKeywords"][key][i]["value"]
-                comment = self.image_metadata["FITSKeywords"][key][i]["comment"]
+            else:
+                for i in range(len(self.image_metadata["FITSKeywords"][key])):
+                    value = self.image_metadata["FITSKeywords"][key][i]["value"]
+                    comment = self.image_metadata["FITSKeywords"][key][i]["comment"]
 
-                # Commentary cards have to comments in Fits standard
-                if key in commentary_keys:
-                    if value == "":
-                        value = comment
+                    # Commentary cards have to comments in Fits standard
+                    if key in commentary_keys:
+                        if value == "":
+                            value = comment
 
-                if value.isdigit():
-                    value = int(value)
-                elif value.isdecimal():
-                    value = float(value)
+                    if value.isdigit():
+                        value = int(value)
+                    elif value.isdecimal():
+                        value = float(value)
 
-                self.fits_header[key] = (value, comment)
+                    self.fits_header[key] = (value, comment)
 
         if len(bg_pts) > 0:
             self.fits_header["BG-PTS"] = str(bg_pts)

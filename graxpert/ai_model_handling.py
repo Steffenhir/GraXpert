@@ -3,25 +3,29 @@ import os
 import re
 import shutil
 import zipfile
-from queue import Empty, Queue
-from threading import Thread
 
 from appdirs import user_data_dir
 from minio import Minio
 from packaging import version
 
-from graxpert.loadingframe import DynamicProgressThread
-from graxpert.s3_secrets import (bucket_name, endpoint, ro_access_key,
-                                 ro_secret_key)
+try:
+    from graxpert.s3_secrets import bucket_name, endpoint, ro_access_key, ro_secret_key
+
+    client = Minio(endpoint, ro_access_key, ro_secret_key)
+except Exception as e:
+    logging.exception(e)
+    client = None
+
+from graxpert.ui.loadingframe import DynamicProgressThread
 
 ai_models_dir = os.path.join(user_data_dir(appname="GraXpert"), "ai-models")
 os.makedirs(ai_models_dir, exist_ok=True)
 
-client = Minio(endpoint, ro_access_key, ro_secret_key)
-
 
 # ui operations
 def list_remote_versions():
+    if client is None:
+        return []
     try:
         objects = client.list_objects(bucket_name)
         versions = []
@@ -40,16 +44,13 @@ def list_remote_versions():
 
     except Exception as e:
         logging.exception(e)
-        return None
+    finally:
+        return versions
 
 
 def list_local_versions():
     try:
-        model_dirs = [
-            {"path": os.path.join(ai_models_dir, f), "version": f}
-            for f in os.listdir(ai_models_dir)
-            if re.search(r"\d\.\d\.\d", f)
-        ]  # match semantic version
+        model_dirs = [{"path": os.path.join(ai_models_dir, f), "version": f} for f in os.listdir(ai_models_dir) if re.search(r"\d\.\d\.\d", f)]  # match semantic version
         return model_dirs
     except Exception as e:
         logging.exception(e)
@@ -75,6 +76,9 @@ def latest_version():
 
 
 def ai_model_path_from_version(local_version):
+    if local_version is None:
+        return None
+
     return os.path.join(ai_models_dir, local_version, "bg_model")
 
 
@@ -82,28 +86,16 @@ def compute_orphaned_local_versions():
     remote_versions = list_remote_versions()
 
     if remote_versions is None:
-        logging.warning(
-            "Could not fetch remote versions. Thus, aborting cleaning of local versions in {}. Consider manual cleaning".format(
-                ai_models_dir
-            )
-        )
+        logging.warning("Could not fetch remote versions. Thus, aborting cleaning of local versions in {}. Consider manual cleaning".format(ai_models_dir))
         return
 
     local_versions = list_local_versions()
 
     if local_versions is None:
-        logging.warning(
-            "Could not read local versions in {}. Thus, aborting cleaning. Consider manual cleaning".format(
-                ai_models_dir
-            )
-        )
+        logging.warning("Could not read local versions in {}. Thus, aborting cleaning. Consider manual cleaning".format(ai_models_dir))
         return
 
-    orphaned_local_versions = [
-        {"path": lv["path"], "version": lv["version"]}
-        for lv in local_versions
-        if lv["version"] not in [rv["version"] for rv in remote_versions]
-    ]
+    orphaned_local_versions = [{"path": lv["path"], "version": lv["version"]} for lv in local_versions if lv["version"] not in [rv["version"] for rv in remote_versions]]
 
     return orphaned_local_versions
 
@@ -124,14 +116,10 @@ def download_version(remote_version, progress=None):
                 remote_version = r
                 break
 
-        ai_model_dir = os.path.join(
-            ai_models_dir, "{}".format(remote_version["version"])
-        )
+        ai_model_dir = os.path.join(ai_models_dir, "{}".format(remote_version["version"]))
         os.makedirs(ai_model_dir, exist_ok=True)
 
-        ai_model_file = os.path.join(
-            ai_model_dir, "{}.zip".format(remote_version["version"])
-        )
+        ai_model_file = os.path.join(ai_model_dir, "{}.zip".format(remote_version["version"]))
         client.fget_object(
             remote_version["bucket"],
             remote_version["object"],

@@ -1,4 +1,6 @@
+import logging
 from concurrent.futures.process import _ResultItem
+
 import numpy as np
 from scipy.spatial import KDTree
 from skimage.color import rgb2gray
@@ -140,7 +142,7 @@ def background_flood_selection(
         candidate_idx = candidate_idxs.pop()
 
         if candidate_visited(candidate_idx, found_row_segments):
-            print("candidate_valid")
+            logging.debug("candidate_valid")
             continue
 
         if not candidate_valid(
@@ -154,7 +156,7 @@ def background_flood_selection(
             data_mono_padded,
             halfsize,
         ):
-            print("candidate_valid")
+            logging.debug("candidate_valid")
             continue
 
         row_segment = {

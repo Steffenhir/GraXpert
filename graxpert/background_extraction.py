@@ -18,6 +18,7 @@ import sys
 import os
 import tensorflow as tf
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1' # Run tensorflow on CPU
+tf.compat.v1.logging.set_verbosity(40) # Only show errors
 
 from graxpert.mp_logging import get_logging_queue, worker_configurer
 from graxpert.parallel_processing import executor
@@ -67,7 +68,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         if progress is not None:
             progress.update(8)
             
-        model = tf.keras.models.load_model(AI_dir)
+        model = tf.saved_model.load(AI_dir)
 
         background = np.array(model(np.expand_dims(imarray_shrink, axis=0))[0])
         background = background / 0.04 * mad + median
@@ -247,7 +248,7 @@ def interpol(shm_imarray_name, shm_background_name, c, x_sub, y_sub, shape, kind
         #     del gpr
         
         else:
-            logging.warn("Interpolation method not recognized")
+            logging.warning("Interpolation method not recognized")
             return
         
         if(downscale_factor != 1):

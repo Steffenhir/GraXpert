@@ -92,7 +92,6 @@ def ai_model_path_from_version(ai_models_dir, local_version):
     if local_version is None:
         return None
 
-    # TODO migrate to onnx
     return os.path.join(ai_models_dir, local_version, "model.onnx")
 
 
@@ -133,18 +132,13 @@ def download_version(ai_models_dir, bucket_name, remote_version, progress=None):
         ai_model_dir = os.path.join(ai_models_dir, "{}".format(remote_version["version"]))
         os.makedirs(ai_model_dir, exist_ok=True)
 
-        ai_model_file = os.path.join(ai_model_dir, "{}.zip".format(remote_version["version"]))
+        ai_model_file = os.path.join(ai_model_dir, "model.onnx")
         client.fget_object(
             remote_version["bucket"],
             remote_version["object"],
             ai_model_file,
             progress=DynamicProgressThread(callback=progress),
         )
-
-        with zipfile.ZipFile(ai_model_file, "r") as zip_ref:
-            zip_ref.extractall(ai_model_dir)
-
-        os.remove(ai_model_file)
     except Exception as e:
         # try to delete (rollback) ai_model_dir in case of errors
         logging.exception(e)

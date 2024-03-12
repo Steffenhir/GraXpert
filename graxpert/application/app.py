@@ -166,7 +166,6 @@ class GraXpert:
             self.images["Processed"].update_display_from_array(stretches[1], self.prefs.saturation)
             self.images["Background"].update_display_from_array(stretches[2], self.prefs.saturation)
 
-            # self.display_type = "Processed"
             eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Processed"})
 
         except Exception as e:
@@ -326,9 +325,21 @@ class GraXpert:
         progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.DENOISE_PROGRESS, {"progress": p}))
 
         try:
-            imarray = np.copy(self.images["Original"].img_array)
+            imarray = denoise(self.images["Original"].img_array, ai_model_path_from_version(denoise_ai_models_dir, self.prefs.denoise_ai_version), progress=progress)
 
-            denoise(imarray, ai_model_path_from_version(denoise_ai_models_dir, self.prefs.denoise_ai_version), progress=progress)
+            self.images["Processed"] = AstroImage()
+            self.images["Processed"].set_from_array(imarray)
+
+            # Update fits header and metadata
+            background_mean = np.mean(self.images["Original"].img_array)
+            self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean, self.prefs, self.cmd.app_state)
+
+            self.images["Processed"].copy_metadata(self.images["Original"])
+
+            all_images = [self.images["Original"].img_array, self.images["Processed"].img_array]
+            stretches = stretch_all(all_images, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
+            self.images["Original"].update_display_from_array(stretches[0], self.prefs.saturation)
+            self.images["Processed"].update_display_from_array(stretches[1], self.prefs.saturation)
 
             eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Processed"})
 
@@ -429,15 +440,16 @@ class GraXpert:
 
         try:
             all_images = []
+            all_image_arrays = []
             stretches = []
             for img in self.images.values():
                 if img is not None:
-                    all_images.append(img.img_array)
+                    all_images.append(img)
+                    all_image_arrays.append(img.img_array)
             if len(all_images) > 0:
-                stretches = stretch_all(all_images, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
-            for idx, img in enumerate(self.images.values()):
-                if img is not None:
-                    img.update_display_from_array(stretches[idx], self.prefs.saturation)
+                stretches = stretch_all(all_image_arrays, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
+            for idx, img in enumerate(all_images):
+                all_images[idx].update_display_from_array(stretches[idx], self.prefs.saturation)
         except Exception as e:
             eventbus.emit(AppEvents.STRETCH_IMAGE_ERROR)
             logging.exception(e)

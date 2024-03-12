@@ -4,6 +4,8 @@ from enum import Enum, auto
 class UiEvents(Enum):
     # main ui requests
     RESET_ZOOM_REQUEST = auto()
+    # menu requests
+    SHOW_MENU_REQUEST = auto()
     # crop
     TOGGLE_CROP_REQUEST = auto()
     APPLY_CROP_REQUEST = auto()

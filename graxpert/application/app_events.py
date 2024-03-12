@@ -42,6 +42,12 @@ class AppEvents(Enum):
     CALCULATE_PROGRESS = auto()
     CALCULATE_END = auto()
     CALCULATE_ERROR = auto()
+    # denoising
+    DENOISE_REQUEST = auto()
+    DENOISE_BEGIN = auto()
+    DENOISE_PROGRESS = auto()
+    DENOISE_END = auto()
+    DENOISE_ERROR = auto()
     # saving
     SAVE_AS_CHANGED = auto()
     SAVE_REQUEST = auto()

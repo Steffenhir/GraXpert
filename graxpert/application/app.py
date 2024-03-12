@@ -13,10 +13,11 @@ from graxpert.application.eventbus import eventbus
 from graxpert.astroimage import AstroImage
 from graxpert.background_extraction import extract_background
 from graxpert.commands import INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, SEL_POINTS_HANDLER, Command
+from graxpert.denoising import denoise
 from graxpert.localization import _
 from graxpert.mp_logging import logfile_name
 from graxpert.preferences import fitsheader_2_app_state, load_preferences, prefs_2_app_state
-from graxpert.stretch import stretch_all, StretchParameters
+from graxpert.stretch import StretchParameters, stretch_all
 from graxpert.ui.loadingframe import DynamicProgressThread
 
 
@@ -63,6 +64,8 @@ class GraXpert:
         eventbus.add_listener(AppEvents.INTERPOL_TYPE_CHANGED, self.on_interpol_type_changed)
         eventbus.add_listener(AppEvents.SMOTTHING_CHANGED, self.on_smoothing_changed)
         eventbus.add_listener(AppEvents.CALCULATE_REQUEST, self.on_calculate_request)
+        # denoising
+        eventbus.add_listener(AppEvents.DENOISE_REQUEST, self.on_denoise_request)
         # saving
         eventbus.add_listener(AppEvents.SAVE_AS_CHANGED, self.on_save_as_changed)
         eventbus.add_listener(AppEvents.SAVE_REQUEST, self.on_save_request)
@@ -305,6 +308,30 @@ class GraXpert:
     def on_smoothing_changed(self, event):
         self.prefs.smoothing_option = event["smoothing_option"]
 
+    def on_denoise_request(self, event):
+        if self.images["Original"] is None:
+            messagebox.showerror("Error", _("Please load your picture first."))
+            return
+
+        eventbus.emit(AppEvents.CALCULATE_BEGIN)
+
+        progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.CALCULATE_PROGRESS, {"progress": p}))
+
+        try:
+            imarray = np.copy(self.images["Original"].img_array)
+
+            denoise(imarray, ai_model_path_from_version(self.prefs.ai_version), progress=progress)
+
+            eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Processed"})
+
+        except Exception as e:
+            logging.exception(e)
+            eventbus.emit(AppEvents.DENOISE_ERROR)
+            messagebox.showerror("Error", _("An error occured during denoising. Please see the log at {}.".format(logfile_name)))
+        finally:
+            progress.done_progress()
+            eventbus.emit(AppEvents.DENOISE_END)
+
     def on_save_request(self, event):
         if self.prefs.saveas_option == "16 bit Tiff" or self.prefs.saveas_option == "32 bit Tiff":
             dir = tk.filedialog.asksaveasfilename(initialfile=self.filename + "_GraXpert.tiff", filetypes=[("Tiff", ".tiff")], defaultextension=".tiff", initialdir=self.prefs.working_dir)
@@ -383,11 +410,10 @@ class GraXpert:
     def on_stretch_option_changed(self, event):
         self.prefs.stretch_option = event["stretch_option"]
         self.do_stretch()
-        
+
     def on_channels_linked_option_changed(self, event):
         self.prefs.channels_linked_option = event["channels_linked"]
         self.do_stretch()
-        
 
     # application logic
     def do_stretch(self):
@@ -409,7 +435,7 @@ class GraXpert:
             logging.exception(e)
 
         eventbus.emit(AppEvents.STRETCH_IMAGE_END)
-        
+
     def remove_pt(self, event):
         if len(self.cmd.app_state.background_points) == 0 or not self.prefs.display_pts:
             return False

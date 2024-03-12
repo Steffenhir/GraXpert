@@ -26,7 +26,7 @@ from graxpert.radialbasisinterpolation import RadialBasisInterpolation
 
 
 def extract_background(in_imarray, background_points, interpolation_type, smoothing, 
-                       downscale_factor, sample_size, RBF_kernel, spline_order, corr_type, AI_dir, progress=None):
+                       downscale_factor, sample_size, RBF_kernel, spline_order, corr_type, ai_path, progress=None):
     
     shm_imarray = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
     shm_background = shared_memory.SharedMemory(create=True, size=in_imarray.nbytes)
@@ -68,7 +68,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         if progress is not None:
             progress.update(8)
             
-        model = tf.saved_model.load(AI_dir)
+        model = tf.saved_model.load(ai_path)
 
         background = np.array(model(np.expand_dims(imarray_shrink, axis=0))[0])
         background = background / 0.04 * mad + median

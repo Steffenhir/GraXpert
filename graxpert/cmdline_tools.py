@@ -7,15 +7,16 @@ from textwrap import dedent
 import numpy as np
 from appdirs import user_config_dir
 
-from graxpert.ai_model_handling import ai_model_path_from_version, download_version, latest_version, list_local_versions
+from graxpert.ai_model_handling import ai_model_path_from_version, bge_ai_models_dir, download_version, latest_version, list_local_versions
 from graxpert.astroimage import AstroImage
 from graxpert.background_extraction import extract_background
 from graxpert.preferences import Prefs, load_preferences, save_preferences
+from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name
 
 user_preferences_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
 
 
-class CommandLineTool:
+class BGECmdlineTool:
     def __init__(self, args):
         self.args = args
 
@@ -80,7 +81,7 @@ class CommandLineTool:
             logging.info(f"Using stored correction type {preferences.corr_type}.")
 
         if preferences.interpol_type_option == "AI":
-            ai_model_path = ai_model_path_from_version(self.get_ai_version(preferences))
+            ai_model_path = ai_model_path_from_version(bge_ai_models_dir, self.get_ai_version(preferences))
         else:
             ai_model_path = None
 
@@ -140,16 +141,16 @@ class CommandLineTool:
             ai_version = self.args.ai_version
             logging.info(f"Using user-supplied AI version {ai_version}.")
         else:
-            ai_version = prefs.ai_version
+            ai_version = prefs.bge_ai_version
 
         if ai_version is None:
-            ai_version = latest_version()
+            ai_version = latest_version(bge_ai_models_dir, bge_bucket_name)
             logging.info(f"Using AI version {ai_version}. You can overwrite this by providing the argument '-ai_version'")
 
-        if not ai_version in [v["version"] for v in list_local_versions()]:
+        if not ai_version in [v["version"] for v in list_local_versions(bge_ai_models_dir)]:
             try:
                 logging.info(f"AI version {ai_version} not found locally, downloading...")
-                download_version(ai_version)
+                download_version(bge_ai_models_dir, bge_bucket_name, ai_version)
                 logging.info("download successful")
             except Exception as e:
                 logging.exception(e)
@@ -188,3 +189,11 @@ class CommandLineTool:
     def get_background_save_path(self):
         save_path = self.get_save_path()
         return os.path.splitext(save_path)[0] + "_background" + self.get_output_file_ending()
+
+
+class DenoiseCmdlineTool:
+    def __init__(self, args):
+        self.args = args
+
+    def execute(self):
+        raise NotImplementedError("Denoising CLI has not been implemented yet.")

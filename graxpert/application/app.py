@@ -6,7 +6,7 @@ from tkinter import messagebox
 import numpy as np
 from appdirs import user_config_dir
 
-from graxpert.ai_model_handling import ai_model_path_from_version, download_version, validate_local_version
+from graxpert.ai_model_handling import ai_model_path_from_version, bge_ai_models_dir, denoise_ai_models_dir, download_version, validate_local_version
 from graxpert.app_state import INITIAL_STATE
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
@@ -17,6 +17,7 @@ from graxpert.denoising import denoise
 from graxpert.localization import _
 from graxpert.mp_logging import logfile_name
 from graxpert.preferences import fitsheader_2_app_state, load_preferences, prefs_2_app_state
+from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name
 from graxpert.stretch import StretchParameters, stretch_all
 from graxpert.ui.loadingframe import DynamicProgressThread
 
@@ -78,12 +79,13 @@ class GraXpert:
         eventbus.add_listener(AppEvents.SPLINE_ORDER_CHANGED, self.on_spline_order_changed)
         eventbus.add_listener(AppEvents.CORRECTION_TYPE_CHANGED, self.on_correction_type_changed)
         eventbus.add_listener(AppEvents.LANGUAGE_CHANGED, self.on_language_selected)
-        eventbus.add_listener(AppEvents.AI_VERSION_CHANGED, self.on_ai_version_changed)
+        eventbus.add_listener(AppEvents.BGE_AI_VERSION_CHANGED, self.on_bge_ai_version_changed)
+        eventbus.add_listener(AppEvents.DENOISE_AI_VERSION_CHANGED, self.on_denoise_ai_version_changed)
         eventbus.add_listener(AppEvents.SCALING_CHANGED, self.on_scaling_changed)
 
     # event handling
-    def on_ai_version_changed(self, event):
-        self.prefs.ai_version = event["ai_version"]
+    def on_bge_ai_version_changed(self, event):
+        self.prefs.bge_ai_version = event["bge_ai_version"]
 
     def on_bg_floot_selection_changed(self, event):
         self.prefs.bg_flood_selection_option = event["bg_flood_selection_option"]
@@ -115,7 +117,7 @@ class GraXpert:
             return
 
         if self.prefs.interpol_type_option == "AI":
-            if not self.validate_ai_installation():
+            if not self.validate_bge_ai_installation():
                 return
 
         eventbus.emit(AppEvents.CALCULATE_BEGIN)
@@ -142,7 +144,7 @@ class GraXpert:
                     self.prefs.RBF_kernel,
                     self.prefs.spline_order,
                     self.prefs.corr_type,
-                    ai_model_path_from_version(self.prefs.ai_version),
+                    ai_model_path_from_version(bge_ai_models_dir, self.prefs.bge_ai_version),
                     progress,
                 )
             )
@@ -200,6 +202,9 @@ class GraXpert:
         self.cmd.execute()
 
         eventbus.emit(AppEvents.CREATE_GRID_END)
+
+    def on_denoise_ai_version_changed(self, event):
+        self.prefs.denoise_ai_version = event["denoise_ai_version"]
 
     def on_display_pts_changed(self, event):
         self.prefs.display_pts = event["display_pts"]
@@ -313,14 +318,17 @@ class GraXpert:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
 
-        eventbus.emit(AppEvents.CALCULATE_BEGIN)
+        if not self.validate_denoise_ai_installation():
+            return
 
-        progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.CALCULATE_PROGRESS, {"progress": p}))
+        eventbus.emit(AppEvents.DENOISE_BEGIN)
+
+        progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.DENOISE_PROGRESS, {"progress": p}))
 
         try:
             imarray = np.copy(self.images["Original"].img_array)
 
-            denoise(imarray, ai_model_path_from_version(self.prefs.ai_version), progress=progress)
+            denoise(imarray, ai_model_path_from_version(denoise_ai_models_dir, self.prefs.denoise_ai_version), progress=progress)
 
             eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Processed"})
 
@@ -535,13 +543,13 @@ class GraXpert:
 
         self.mat_affine = np.dot(mat, self.mat_affine)
 
-    def validate_ai_installation(self):
-        if self.prefs.ai_version is None or self.prefs.ai_version == "None":
-            messagebox.showerror("Error", _("No AI-Model selected. Please select one from the Advanced panel on the right."))
+    def validate_bge_ai_installation(self):
+        if self.prefs.bge_ai_version is None or self.prefs.bge_ai_version == "None":
+            messagebox.showerror("Error", _("No Background Extraction AI-Model selected. Please select one from the Advanced panel on the right."))
             return False
 
-        if not validate_local_version(self.prefs.ai_version):
-            if not messagebox.askyesno(_("Install AI-Model?"), _("Selected AI-Model is not installed. Should I download it now?")):
+        if not validate_local_version(bge_ai_models_dir, self.prefs.bge_ai_version):
+            if not messagebox.askyesno(_("Install AI-Model?"), _("Selected Background Extraction AI-Model is not installed. Should I download it now?")):
                 return False
             else:
                 eventbus.emit(AppEvents.AI_DOWNLOAD_BEGIN)
@@ -549,7 +557,25 @@ class GraXpert:
                 def callback(p):
                     eventbus.emit(AppEvents.AI_DOWNLOAD_PROGRESS, {"progress": p})
 
-                download_version(self.prefs.ai_version, progress=callback)
+                download_version(bge_ai_models_dir, bge_bucket_name, self.prefs.bge_ai_version, progress=callback)
+                eventbus.emit(AppEvents.AI_DOWNLOAD_END)
+        return True
+
+    def validate_denoise_ai_installation(self):
+        if self.prefs.denoise_ai_version is None or self.prefs.denoise_ai_version == "None":
+            messagebox.showerror("Error", _("No Denoising AI-Model selected. Please select one from the Advanced panel on the right."))
+            return False
+
+        if not validate_local_version(denoise_ai_models_dir, self.prefs.denoise_ai_version):
+            if not messagebox.askyesno(_("Install AI-Model?"), _("Selected Denoising AI-Model is not installed. Should I download it now?")):
+                return False
+            else:
+                eventbus.emit(AppEvents.AI_DOWNLOAD_BEGIN)
+
+                def callback(p):
+                    eventbus.emit(AppEvents.AI_DOWNLOAD_PROGRESS, {"progress": p})
+
+                download_version(denoise_ai_models_dir, denoise_bucket_name, self.prefs.denoise_ai_version, progress=callback)
                 eventbus.emit(AppEvents.AI_DOWNLOAD_END)
         return True
 

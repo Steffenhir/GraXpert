@@ -57,11 +57,14 @@ class AppEvents(Enum):
     SAVE_END = auto()
     SAVE_ERROR = auto()
     # ai model handling
-    AI_VERSION_CHANGED = auto()
     AI_DOWNLOAD_BEGIN = auto()
     AI_DOWNLOAD_PROGRESS = auto()
     AI_DOWNLOAD_END = auto()
     AI_DOWNLOAD_ERROR = auto()
+    # bge ai model handling
+    BGE_AI_VERSION_CHANGED = auto()
+    # bge ai model handling
+    DENOISE_AI_VERSION_CHANGED = auto()
     # advanced settings
     SAMPLE_SIZE_CHANGED = auto()
     SAMPLE_COLOR_CHANGED = auto()

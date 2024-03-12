@@ -1,4 +1,5 @@
 import copy
+import logging
 
 import numpy as np
 import onnxruntime as ort
@@ -34,7 +35,7 @@ def denoise(image, ai_path, window_size=256, stride=128, strength=1.0, progress=
     output = copy.deepcopy(image)
 
     session = ort.InferenceSession(ai_path, providers=ort.get_available_providers())
-    
+
     for i in range(ith):
         for j in range(itw):
             x = stride * i
@@ -52,8 +53,11 @@ def denoise(image, ai_path, window_size=256, stride=128, strength=1.0, progress=
             tile = tile / 0.04 * mad + median
             tile = tile[offset : offset + stride, offset : offset + stride, :]
             output[x + offset : stride * (i + 1) + offset, y + offset : stride * (j + 1) + offset, :] = tile
-        
-        progress.update(int(100/ith))
+
+        if progress is not None:
+            progress.update(int(100 / ith))
+        else:
+            logging.info(f"Progress: {int(i/ith*100)}%")
 
     output = np.clip(output, 0, 1)
     output = output[offset : H + offset, offset : W + offset, :]

@@ -12,7 +12,7 @@ from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 from graxpert.localization import _, lang
 from graxpert.resource_utils import resource_path
-from graxpert.ui.widgets import ExtractionStep, GraXpertOptionMenu, GraXpertScrollableFrame, ValueSlider, padx, pady
+from graxpert.ui.widgets import GraXpertOptionMenu, GraXpertScrollableFrame, ProcessingStep, ValueSlider, padx, pady
 
 
 class HelpText(CTkTextbox):
@@ -54,23 +54,23 @@ class HelpFrame(RightFrameBase):
         CTkLabel(self, image=logo, text="").grid(column=0, row=self.nrow(), padx=padx, pady=pady, sticky=tk.NSEW)
         CTkLabel(self, text=_("Instructions"), font=self.heading_font).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
 
-        ExtractionStep(self, number=1, title=_(" Loading")).grid(**self.default_grid())
+        ProcessingStep(self, number=1, indent=0, title=_(" Loading")).grid(**self.default_grid())
         HelpText(self, text=_("Load your image.")).grid(**self.default_grid())
 
-        ExtractionStep(self, number=2, title=_(" Stretch Options")).grid(**self.default_grid())
+        ProcessingStep(self, number=2, indent=0, title=_(" Stretch Options")).grid(**self.default_grid())
         HelpText(self, rows=2, text=_("Stretch your image if necessary to reveal gradients.")).grid(**self.default_grid())
 
-        ExtractionStep(self, number=3, title=_(" Sample Selection")).grid(**self.default_grid())
+        ProcessingStep(self, number=3, indent=0, title=_(" Sample Selection")).grid(**self.default_grid())
         HelpText(
             self,
             rows=5,
             text=_("Select background points\n  a) manually with left click\n  b) automatically via grid (grid selection)" "\nYou can remove already set points by right clicking on them."),
         ).grid(**self.default_grid())
 
-        ExtractionStep(self, number=4, title=_(" Calculation")).grid(**self.default_grid())
+        ProcessingStep(self, number=4, indent=0, title=_(" Calculation")).grid(**self.default_grid())
         HelpText(self, rows=2, text=_("Click on Calculate Background to get the processed image.")).grid(**self.default_grid())
 
-        ExtractionStep(self, number=5, title=_(" Saving")).grid(**self.default_grid())
+        ProcessingStep(self, number=5, indent=0, title=_(" Saving")).grid(**self.default_grid())
         HelpText(self, text=_("Save the processed image.")).grid(**self.default_grid())
 
         CTkLabel(self, text=_("Keybindings"), font=self.heading_font).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)

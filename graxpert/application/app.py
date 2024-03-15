@@ -132,6 +132,7 @@ class GraXpert:
             downscale_factor = 4
 
         try:
+            self.prefs.images_linked_option = False
             self.images["Background"] = AstroImage()
             self.images["Background"].set_from_array(
                 extract_background(
@@ -326,6 +327,7 @@ class GraXpert:
         progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.DENOISE_PROGRESS, {"progress": p}))
 
         try:
+            self.prefs.images_linked_option = True
             ai_model_path = ai_model_path_from_version(denoise_ai_models_dir, self.prefs.denoise_ai_version)
             imarray = denoise(self.images["Original"].img_array, ai_model_path, self.prefs.denoise_strength, progress=progress)
 
@@ -339,7 +341,7 @@ class GraXpert:
             self.images["Processed"].copy_metadata(self.images["Original"])
 
             all_images = [self.images["Original"].img_array, self.images["Processed"].img_array]
-            stretches = stretch_all(all_images, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
+            stretches = stretch_all(all_images, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option))
             self.images["Original"].update_display_from_array(stretches[0], self.prefs.saturation)
             self.images["Processed"].update_display_from_array(stretches[1], self.prefs.saturation)
 
@@ -450,7 +452,7 @@ class GraXpert:
                     all_images.append(img)
                     all_image_arrays.append(img.img_array)
             if len(all_images) > 0:
-                stretches = stretch_all(all_image_arrays, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
+                stretches = stretch_all(all_image_arrays, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option))
             for idx, img in enumerate(all_images):
                 all_images[idx].update_display_from_array(stretches[idx], self.prefs.saturation)
         except Exception as e:

@@ -23,6 +23,7 @@ class Prefs:
     stretch_option: AnyStr = "No Stretch"
     saturation: float = 1.0
     channels_linked_option: bool = False
+    images_linked_option: bool = False
     display_pts: bool = True
     bg_tol_option: float = 1.0
     interpol_type_option: AnyStr = "RBF"

@@ -326,7 +326,8 @@ class GraXpert:
         progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.DENOISE_PROGRESS, {"progress": p}))
 
         try:
-            imarray = denoise(self.images["Original"].img_array, ai_model_path_from_version(denoise_ai_models_dir, self.prefs.denoise_ai_version), progress=progress)
+            ai_model_path = ai_model_path_from_version(denoise_ai_models_dir, self.prefs.denoise_ai_version)
+            imarray = denoise(self.images["Original"].img_array, ai_model_path, self.prefs.denoise_strength, progress=progress)
 
             self.images["Processed"] = AstroImage()
             self.images["Processed"].set_from_array(imarray)

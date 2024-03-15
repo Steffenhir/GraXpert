@@ -165,6 +165,7 @@ smoothing_text = _(
 calculate_text = _("Use the specified interpolation method to calculate a background model " "and subtract it from the picture. This may take a while.")
 
 denoise_text = _("Use GraXpert's denoising AI model to reduce the noise in your image. This may take a while")
+denoise_strength_text = _("Determines strength of denoising.")
 
 saveas_text = _("Choose the bitdepth of the saved pictures and the file format. " "If you are working with a .fits image the fits header will " "be preserved.")
 save_bg_text = _("Save the background model")

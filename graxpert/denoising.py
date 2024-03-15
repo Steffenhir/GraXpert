@@ -5,7 +5,7 @@ import numpy as np
 import onnxruntime as ort
 
 
-def denoise(image, ai_path, window_size=256, stride=128, strength=1.0, progress=None):
+def denoise(image, ai_path, strength, window_size=256, stride=128, progress=None):
 
     input = copy.deepcopy(image)
 

@@ -166,6 +166,7 @@ class GraXpert:
             self.images["Processed"].update_display_from_array(stretches[1], self.prefs.saturation)
             self.images["Background"].update_display_from_array(stretches[2], self.prefs.saturation)
 
+            eventbus.emit(AppEvents.CALCULATE_SUCCESS)
             eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Processed"})
 
         except Exception as e:
@@ -341,6 +342,7 @@ class GraXpert:
             self.images["Original"].update_display_from_array(stretches[0], self.prefs.saturation)
             self.images["Processed"].update_display_from_array(stretches[1], self.prefs.saturation)
 
+            eventbus.emit(AppEvents.DENOISE_SUCCESS)
             eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Processed"})
 
         except Exception as e:

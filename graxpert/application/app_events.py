@@ -66,7 +66,7 @@ class AppEvents(Enum):
     AI_DOWNLOAD_ERROR = auto()
     # bge ai model handling
     BGE_AI_VERSION_CHANGED = auto()
-    # bge ai model handling
+    # denoise ai model handling
     DENOISE_AI_VERSION_CHANGED = auto()
     # advanced settings
     SAMPLE_SIZE_CHANGED = auto()

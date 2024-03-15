@@ -39,7 +39,7 @@ class Prefs:
     bge_ai_version: AnyStr = None
     denoise_ai_version: AnyStr = None
     graxpert_version: AnyStr = graxpert_version
-    denoise_strength: float = 1.0
+    denoise_strength: float = 0.5
 
 
 def app_state_2_prefs(prefs: Prefs, app_state: AppState) -> Prefs:

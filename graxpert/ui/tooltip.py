@@ -52,6 +52,7 @@ class Tooltip:
         self.id = None
         self.tw = None
         eventbus.add_listener(AppEvents.CALCULATE_BEGIN, lambda e: self.hide())
+        eventbus.add_listener(AppEvents.DENOISE_BEGIN, lambda e: self.hide())
 
     def onEnter(self, event=None):
         self.schedule()

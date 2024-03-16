@@ -62,4 +62,4 @@ def denoise(image, ai_path, strength, window_size=256, stride=128, progress=None
     output = np.clip(output, 0, 1)
     output = output[offset : H + offset, offset : W + offset, :]
 
-    return output * strength + input * (strength - 1)
+    return output * strength + input * (1 - strength)

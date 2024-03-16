@@ -66,6 +66,7 @@ class GraXpert:
         eventbus.add_listener(AppEvents.SMOTTHING_CHANGED, self.on_smoothing_changed)
         eventbus.add_listener(AppEvents.CALCULATE_REQUEST, self.on_calculate_request)
         # denoising
+        eventbus.add_listener(AppEvents.DENOISE_STRENGTH_CHANGED, self.on_denoise_strength_changed)
         eventbus.add_listener(AppEvents.DENOISE_REQUEST, self.on_denoise_request)
         # saving
         eventbus.add_listener(AppEvents.SAVE_AS_CHANGED, self.on_save_as_changed)
@@ -313,7 +314,10 @@ class GraXpert:
 
     def on_smoothing_changed(self, event):
         self.prefs.smoothing_option = event["smoothing_option"]
-
+    
+    def on_denoise_strength_changed(self, event):
+        self.prefs.denoise_strength = event["denoise_strength"]
+        
     def on_denoise_request(self, event):
         if self.images["Original"] is None:
             messagebox.showerror("Error", _("Please load your picture first."))

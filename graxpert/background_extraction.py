@@ -17,6 +17,7 @@ from skimage.transform import resize
 from graxpert.mp_logging import get_logging_queue, worker_configurer
 from graxpert.parallel_processing import executor
 from graxpert.radialbasisinterpolation import RadialBasisInterpolation
+from graxpert.ai_model_handling import get_execution_providers_ordered
 
 
 def extract_background(in_imarray, background_points, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, corr_type, ai_path, progress=None):
@@ -61,7 +62,11 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         if progress is not None:
             progress.update(8)
 
-        session = ort.InferenceSession(ai_path, providers=ort.get_available_providers())
+        providers = get_execution_providers_ordered()
+        session = ort.InferenceSession(ai_path, providers=providers)
+
+        logging.info(f"Providers : {providers}")
+        logging.info(f"Used providers : {session.get_providers()}")
 
         background = session.run(None, {"gen_input_image": np.expand_dims(imarray_shrink, axis=0)})[0][0]
 

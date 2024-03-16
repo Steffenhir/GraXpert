@@ -4,6 +4,8 @@ import logging
 import numpy as np
 import onnxruntime as ort
 
+from graxpert.ai_model_handling import get_execution_providers_ordered
+
 
 def denoise(image, ai_path, strength, window_size=256, stride=128, progress=None):
 
@@ -34,7 +36,11 @@ def denoise(image, ai_path, strength, window_size=256, stride=128, progress=None
 
     output = copy.deepcopy(image)
 
-    session = ort.InferenceSession(ai_path, providers=ort.get_available_providers())
+    providers = get_execution_providers_ordered()
+    session = ort.InferenceSession(ai_path, providers=providers)
+
+    logging.info(f"Providers : {providers}")
+    logging.info(f"Used providers : {session.get_providers()}")
 
     for i in range(ith):
         for j in range(itw):

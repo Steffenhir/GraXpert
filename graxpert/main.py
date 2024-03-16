@@ -15,22 +15,18 @@ import sys
 
 from packaging import version
 
-from graxpert.ai_model_handling import list_local_versions, list_remote_versions
+from graxpert.ai_model_handling import bge_ai_models_dir, denoise_ai_models_dir, list_local_versions, list_remote_versions
 from graxpert.mp_logging import configure_logging
+from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name
 from graxpert.version import release as graxpert_release
 from graxpert.version import version as graxpert_version
 
-available_local_versions = []
-available_remote_versions = []
 
-
-def collect_available_version():
-    global available_local_versions
-    global available_remote_versions
+def collect_available_versions(ai_models_dir, bucket_name):
 
     try:
         available_local_versions = sorted(
-            [v["version"] for v in list_local_versions()],
+            [v["version"] for v in list_local_versions(ai_models_dir)],
             key=lambda k: version.parse(k),
             reverse=True,
         )
@@ -39,7 +35,7 @@ def collect_available_version():
         logging.exception(e)
     try:
         available_remote_versions = sorted(
-            [v["version"] for v in list_remote_versions()],
+            [v["version"] for v in list_remote_versions(bucket_name)],
             key=lambda k: version.parse(k),
             reverse=True,
         )
@@ -47,10 +43,18 @@ def collect_available_version():
         available_remote_versions = ""
         logging.exception(e)
 
+    return (available_local_versions, available_remote_versions)
 
-def version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
-    global available_local_versions
-    global available_remote_versions
+
+def bge_version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
+    return version_type(bge_ai_models_dir, bge_bucket_name, arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$"))
+
+
+def version_type(ai_models_dir, bucket_name, arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
+
+    available_versions = collect_available_versions(ai_models_dir, bucket_name)
+    available_local_versions = available_versions[0]
+    available_remote_versions = available_versions[1]
 
     if not pat.match(arg_value):
         raise argparse.ArgumentTypeError("invalid version, expected format: n.n.n")
@@ -66,7 +70,7 @@ def version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
     return arg_value
 
 
-def ui_main(open_with_file = None):
+def ui_main(open_with_file=None):
     import logging
     import tkinter as tk
     from concurrent.futures import ProcessPoolExecutor
@@ -79,8 +83,8 @@ def ui_main(open_with_file = None):
     from customtkinter import CTk
 
     from graxpert.application.app import graxpert
-    from graxpert.application.eventbus import eventbus
     from graxpert.application.app_events import AppEvents
+    from graxpert.application.eventbus import eventbus
     from graxpert.localization import _
     from graxpert.mp_logging import initialize_logging, shutdown_logging
     from graxpert.parallel_processing import executor
@@ -161,35 +165,25 @@ def ui_main(open_with_file = None):
     app.grid(column=0, row=0, sticky=tk.NSEW)
     root.update()
     check_for_new_version()
-    
+
     if open_with_file and len(open_with_file) > 0:
         eventbus.emit(AppEvents.LOAD_IMAGE_REQUEST, {"filename": open_with_file})
     else:
         eventbus.emit(UiEvents.DISPLAY_START_BADGE_REQUEST)
-    
+
     root.mainloop()
 
 
 def main():
     if len(sys.argv) > 1:
-        global available_local_versions
-        global available_remote_versions
 
-        collect_available_version()
+        available_bge_versions = collect_available_versions(bge_ai_models_dir, bge_bucket_name)
+        available_denoise_versions = collect_available_versions(denoise_ai_models_dir, denoise_bucket_name)
 
         parser = argparse.ArgumentParser(description="GraXpert,the astronomical background extraction tool")
+        parser.add_argument("-cli", "--cli", required=False, action="store_true", help="Has to be added when using the command line integration of GraXpert")
         parser.add_argument("filename", type=str, help="Path of the unprocessed image")
-        parser.add_argument(
-            "-ai_version",
-            "--ai_version",
-            nargs="?",
-            required=False,
-            default=None,
-            type=version_type,
-            help='Version of the AI model, default: "latest"; available locally: [{}], available remotely: [{}]'.format(", ".join(available_local_versions), ", ".join(available_remote_versions)),
-        )
-        parser.add_argument("-correction", "--correction", nargs="?", required=False, default=None, choices=["Subtraction", "Division"], type=str, help="Subtraction or Division")
-        parser.add_argument("-smoothing", "--smoothing", nargs="?", required=False, default=None, type=float, help="Strength of smoothing between 0 and 1")
+        parser.add_argument("-output", "--output", nargs="?", required=False, type=str, help="Filename of the processed image")
         parser.add_argument(
             "-preferences_file",
             "--preferences_file",
@@ -199,18 +193,53 @@ def main():
             type=str,
             help="Allows GraXpert commandline to run all extraction methods based on a preferences file that contains background grid points",
         )
-        parser.add_argument("-output", "--output", nargs="?", required=False, type=str, help="Filename of the processed image")
-        parser.add_argument("-bg", "--bg", required=False, action="store_true", help="Also save the background model")
-        parser.add_argument("-cli", "--cli", required=False, action="store_true", help="Has to be added when using the command line integration of GraXpert")
         parser.add_argument("-v", "--version", action="version", version=f"GraXpert version: {graxpert_version} release: {graxpert_release}")
+
+        subparsers = parser.add_subparsers(dest="command")
+        bge_parser = subparsers.add_parser("background-extraction")
+        bge_parser.add_argument(
+            "-ai_version",
+            "--ai_version",
+            nargs="?",
+            required=False,
+            default=None,
+            type=bge_version_type,
+            help='Version of the Background Extraction AI model, default: "latest"; available locally: [{}], available remotely: [{}]'.format(
+                ", ".join(available_bge_versions[0]), ", ".join(available_bge_versions[1])
+            ),
+        )
+        bge_parser.add_argument("-correction", "--correction", nargs="?", required=False, default=None, choices=["Subtraction", "Division"], type=str, help="Subtraction or Division")
+        bge_parser.add_argument("-smoothing", "--smoothing", nargs="?", required=False, default=None, type=float, help="Strength of smoothing between 0 and 1")
+        bge_parser.add_argument("-bg", "--bg", required=False, action="store_true", help="Also save the background model")
+
+        denoise_parser = subparsers.add_parser("denoising")
+        denoise_parser.add_argument(
+            "-ai_version",
+            "--ai_version",
+            nargs="?",
+            required=False,
+            default=None,
+            type=bge_version_type,
+            help='Version of the Denoising AI model, default: "latest"; available locally: [{}], available remotely: [{}]'.format(
+                ", ".join(available_denoise_versions[0]), ", ".join(available_denoise_versions[1])
+            ),
+        )
 
         args = parser.parse_args()
 
-        if args.cli:
-            from graxpert.CommandLineTool import CommandLineTool
+        print(args)
+        if args.cli and args.command == "background-extraction":
+            from graxpert.cmdline_tools import BGECmdlineTool
 
-            logging.info(f"Starting GraXpert CLI, version: {graxpert_version} release: {graxpert_release}")
-            clt = CommandLineTool(args)
+            logging.info(f"Starting GraXpert CLI, Background-Extraction, version: {graxpert_version} release: {graxpert_release}")
+            clt = BGECmdlineTool(args)
+            clt.execute()
+            logging.shutdown()
+        elif args.cli and args.command == "denoising":
+            from graxpert.cmdline_tools import DenoiseCmdlineTool
+
+            logging.info(f"Starting GraXpert CLI, Denoising, version: {graxpert_version} release: {graxpert_release}")
+            clt = DenoiseCmdlineTool(args)
             clt.execute()
             logging.shutdown()
         else:

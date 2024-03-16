@@ -7,17 +7,47 @@ from textwrap import dedent
 import numpy as np
 from appdirs import user_config_dir
 
-from graxpert.ai_model_handling import ai_model_path_from_version, download_version, latest_version, list_local_versions
+from graxpert.ai_model_handling import ai_model_path_from_version, bge_ai_models_dir, denoise_ai_models_dir, download_version, latest_version, list_local_versions
 from graxpert.astroimage import AstroImage
 from graxpert.background_extraction import extract_background
 from graxpert.preferences import Prefs, load_preferences, save_preferences
+from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name
+from graxpert.denoising import denoise
 
 user_preferences_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
 
 
-class CommandLineTool:
+class CmdlineToolBase:
     def __init__(self, args):
         self.args = args
+
+    def get_output_file_ending(self):
+        file_ending = os.path.splitext(self.args.filename)[-1]
+
+        if file_ending.lower() == ".xisf":
+            return ".xisf"
+        else:
+            return ".fits"
+
+    def get_output_file_format(self):
+        output_file_ending = self.get_output_file_ending()
+        if (output_file_ending) == ".xisf":
+            return "32 bit XISF"
+        else:
+            return "32 bit Fits"
+
+    def get_save_path(self):
+        if self.args.output is not None:
+            base_path = os.path.dirname(self.args.filename)
+            output_file_name = self.args.output + self.get_output_file_ending()
+            return os.path.join(base_path, output_file_name)
+        else:
+            return os.path.splitext(self.args.filename)[0] + "_GraXpert" + self.get_output_file_ending()
+
+
+class BGECmdlineTool(CmdlineToolBase):
+    def __init__(self, args):
+        super().__init__(args)
 
     def execute(self):
         astro_Image = AstroImage(do_update_display=False)
@@ -80,7 +110,7 @@ class CommandLineTool:
             logging.info(f"Using stored correction type {preferences.corr_type}.")
 
         if preferences.interpol_type_option == "AI":
-            ai_model_path = ai_model_path_from_version(self.get_ai_version(preferences))
+            ai_model_path = ai_model_path_from_version(bge_ai_models_dir, self.get_ai_version(preferences))
         else:
             ai_model_path = None
 
@@ -140,16 +170,16 @@ class CommandLineTool:
             ai_version = self.args.ai_version
             logging.info(f"Using user-supplied AI version {ai_version}.")
         else:
-            ai_version = prefs.ai_version
+            ai_version = prefs.bge_ai_version
 
         if ai_version is None:
-            ai_version = latest_version()
+            ai_version = latest_version(bge_ai_models_dir, bge_bucket_name)
             logging.info(f"Using AI version {ai_version}. You can overwrite this by providing the argument '-ai_version'")
 
-        if not ai_version in [v["version"] for v in list_local_versions()]:
+        if not ai_version in [v["version"] for v in list_local_versions(bge_ai_models_dir)]:
             try:
                 logging.info(f"AI version {ai_version} not found locally, downloading...")
-                download_version(ai_version)
+                download_version(bge_ai_models_dir, bge_bucket_name, ai_version)
                 logging.info("download successful")
             except Exception as e:
                 logging.exception(e)
@@ -161,30 +191,82 @@ class CommandLineTool:
 
         return ai_version
 
-    def get_output_file_ending(self):
-        file_ending = os.path.splitext(self.args.filename)[-1]
-
-        if file_ending.lower() == ".xisf":
-            return ".xisf"
-        else:
-            return ".fits"
-
-    def get_output_file_format(self):
-        output_file_ending = self.get_output_file_ending()
-        if (output_file_ending) == ".xisf":
-            return "32 bit XISF"
-        else:
-            return "32 bit Fits"
-
-    def get_save_path(self):
-        if self.args.output is not None:
-            base_path = os.path.dirname(self.args.filename)
-            output_file_name = self.args.output + self.get_output_file_ending()
-            return os.path.join(base_path, output_file_name)
-
-        else:
-            return os.path.splitext(self.args.filename)[0] + "_GraXpert" + self.get_output_file_ending()
-
     def get_background_save_path(self):
         save_path = self.get_save_path()
         return os.path.splitext(save_path)[0] + "_background" + self.get_output_file_ending()
+
+
+class DenoiseCmdlineTool(CmdlineToolBase):
+    def __init__(self, args):
+        super().__init__(args)
+
+    def execute(self):
+        astro_Image = AstroImage(do_update_display=False)
+        astro_Image.set_from_file(self.args.filename, None, None)
+
+        processed_Astro_Image = AstroImage(do_update_display=False)
+
+        processed_Astro_Image.fits_header = astro_Image.fits_header
+
+        if self.args.preferences_file is not None:
+            preferences = Prefs()
+            try:
+                preferences_file = os.path.abspath(self.args.preferences_file)
+                if os.path.isfile(preferences_file):
+                    with open(preferences_file, "r") as f:
+                        json_prefs = json.load(f)
+                        if "ai_version" in json_prefs:
+                            preferences.ai_version = json_prefs["ai_version"]
+
+            except Exception as e:
+                logging.exception(e)
+                logging.shutdown()
+                sys.exit(1)
+        else:
+            preferences = Prefs()
+
+        ai_model_path = ai_model_path_from_version(denoise_ai_models_dir, self.get_ai_version(preferences))
+
+        logging.info(
+            dedent(
+                f"""\
+                    Excecuting denoising with the following parameters:
+                    AI model path - {ai_model_path}"""
+            )
+        )
+
+        processed_Astro_Image.set_from_array(
+            denoise(
+                astro_Image.img_array,
+                ai_model_path
+            ))
+        processed_Astro_Image.save(self.get_save_path(), self.get_output_file_format())
+
+    def get_ai_version(self, prefs):
+        user_preferences = load_preferences(user_preferences_filename)
+
+        ai_version = None
+        if self.args.ai_version:
+            ai_version = self.args.ai_version
+            logging.info(f"Using user-supplied AI version {ai_version}.")
+        else:
+            ai_version = prefs.denoise_ai_version
+
+        if ai_version is None:
+            ai_version = latest_version(denoise_ai_models_dir, denoise_bucket_name)
+            logging.info(f"Using AI version {ai_version}. You can overwrite this by providing the argument '-ai_version'")
+
+        if not ai_version in [v["version"] for v in list_local_versions(denoise_ai_models_dir)]:
+            try:
+                logging.info(f"AI version {ai_version} not found locally, downloading...")
+                download_version(denoise_ai_models_dir, denoise_bucket_name, ai_version)
+                logging.info("download successful")
+            except Exception as e:
+                logging.exception(e)
+                logging.shutdown()
+                sys.exit(1)
+
+        user_preferences.ai_version = ai_version
+        save_preferences(user_preferences_filename, user_preferences)
+
+        return ai_version

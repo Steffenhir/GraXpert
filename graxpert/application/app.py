@@ -6,7 +6,7 @@ from tkinter import messagebox
 import numpy as np
 from appdirs import user_config_dir
 
-from graxpert.ai_model_handling import ai_model_path_from_version, download_version, validate_local_version
+from graxpert.ai_model_handling import ai_model_path_from_version, bge_ai_models_dir, denoise_ai_models_dir, download_version, validate_local_version
 from graxpert.app_state import INITIAL_STATE
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
@@ -17,6 +17,7 @@ from graxpert.denoising import denoise
 from graxpert.localization import _
 from graxpert.mp_logging import logfile_name
 from graxpert.preferences import fitsheader_2_app_state, load_preferences, prefs_2_app_state
+from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name
 from graxpert.stretch import StretchParameters, stretch_all
 from graxpert.ui.loadingframe import DynamicProgressThread
 
@@ -78,12 +79,13 @@ class GraXpert:
         eventbus.add_listener(AppEvents.SPLINE_ORDER_CHANGED, self.on_spline_order_changed)
         eventbus.add_listener(AppEvents.CORRECTION_TYPE_CHANGED, self.on_correction_type_changed)
         eventbus.add_listener(AppEvents.LANGUAGE_CHANGED, self.on_language_selected)
-        eventbus.add_listener(AppEvents.AI_VERSION_CHANGED, self.on_ai_version_changed)
+        eventbus.add_listener(AppEvents.BGE_AI_VERSION_CHANGED, self.on_bge_ai_version_changed)
+        eventbus.add_listener(AppEvents.DENOISE_AI_VERSION_CHANGED, self.on_denoise_ai_version_changed)
         eventbus.add_listener(AppEvents.SCALING_CHANGED, self.on_scaling_changed)
 
     # event handling
-    def on_ai_version_changed(self, event):
-        self.prefs.ai_version = event["ai_version"]
+    def on_bge_ai_version_changed(self, event):
+        self.prefs.bge_ai_version = event["bge_ai_version"]
 
     def on_bg_floot_selection_changed(self, event):
         self.prefs.bg_flood_selection_option = event["bg_flood_selection_option"]
@@ -115,7 +117,7 @@ class GraXpert:
             return
 
         if self.prefs.interpol_type_option == "AI":
-            if not self.validate_ai_installation():
+            if not self.validate_bge_ai_installation():
                 return
 
         eventbus.emit(AppEvents.CALCULATE_BEGIN)
@@ -130,6 +132,7 @@ class GraXpert:
             downscale_factor = 4
 
         try:
+            self.prefs.images_linked_option = False
             self.images["Background"] = AstroImage()
             self.images["Background"].set_from_array(
                 extract_background(
@@ -142,7 +145,7 @@ class GraXpert:
                     self.prefs.RBF_kernel,
                     self.prefs.spline_order,
                     self.prefs.corr_type,
-                    ai_model_path_from_version(self.prefs.ai_version),
+                    ai_model_path_from_version(bge_ai_models_dir, self.prefs.bge_ai_version),
                     progress,
                 )
             )
@@ -164,7 +167,7 @@ class GraXpert:
             self.images["Processed"].update_display_from_array(stretches[1], self.prefs.saturation)
             self.images["Background"].update_display_from_array(stretches[2], self.prefs.saturation)
 
-            # self.display_type = "Processed"
+            eventbus.emit(AppEvents.CALCULATE_SUCCESS)
             eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Processed"})
 
         except Exception as e:
@@ -200,6 +203,9 @@ class GraXpert:
         self.cmd.execute()
 
         eventbus.emit(AppEvents.CREATE_GRID_END)
+
+    def on_denoise_ai_version_changed(self, event):
+        self.prefs.denoise_ai_version = event["denoise_ai_version"]
 
     def on_display_pts_changed(self, event):
         self.prefs.display_pts = event["display_pts"]
@@ -313,15 +319,33 @@ class GraXpert:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
 
-        eventbus.emit(AppEvents.CALCULATE_BEGIN)
+        if not self.validate_denoise_ai_installation():
+            return
 
-        progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.CALCULATE_PROGRESS, {"progress": p}))
+        eventbus.emit(AppEvents.DENOISE_BEGIN)
+
+        progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.DENOISE_PROGRESS, {"progress": p}))
 
         try:
-            imarray = np.copy(self.images["Original"].img_array)
+            self.prefs.images_linked_option = True
+            ai_model_path = ai_model_path_from_version(denoise_ai_models_dir, self.prefs.denoise_ai_version)
+            imarray = denoise(self.images["Original"].img_array, ai_model_path, self.prefs.denoise_strength, progress=progress)
 
-            denoise(imarray, ai_model_path_from_version(self.prefs.ai_version), progress=progress)
+            self.images["Processed"] = AstroImage()
+            self.images["Processed"].set_from_array(imarray)
 
+            # Update fits header and metadata
+            background_mean = np.mean(self.images["Original"].img_array)
+            self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean, self.prefs, self.cmd.app_state)
+
+            self.images["Processed"].copy_metadata(self.images["Original"])
+
+            all_images = [self.images["Original"].img_array, self.images["Processed"].img_array]
+            stretches = stretch_all(all_images, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option))
+            self.images["Original"].update_display_from_array(stretches[0], self.prefs.saturation)
+            self.images["Processed"].update_display_from_array(stretches[1], self.prefs.saturation)
+
+            eventbus.emit(AppEvents.DENOISE_SUCCESS)
             eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Processed"})
 
         except Exception as e:
@@ -421,15 +445,16 @@ class GraXpert:
 
         try:
             all_images = []
+            all_image_arrays = []
             stretches = []
             for img in self.images.values():
                 if img is not None:
-                    all_images.append(img.img_array)
+                    all_images.append(img)
+                    all_image_arrays.append(img.img_array)
             if len(all_images) > 0:
-                stretches = stretch_all(all_images, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
-            for idx, img in enumerate(self.images.values()):
-                if img is not None:
-                    img.update_display_from_array(stretches[idx], self.prefs.saturation)
+                stretches = stretch_all(all_image_arrays, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option))
+            for idx, img in enumerate(all_images):
+                all_images[idx].update_display_from_array(stretches[idx], self.prefs.saturation)
         except Exception as e:
             eventbus.emit(AppEvents.STRETCH_IMAGE_ERROR)
             logging.exception(e)
@@ -535,13 +560,13 @@ class GraXpert:
 
         self.mat_affine = np.dot(mat, self.mat_affine)
 
-    def validate_ai_installation(self):
-        if self.prefs.ai_version is None or self.prefs.ai_version == "None":
-            messagebox.showerror("Error", _("No AI-Model selected. Please select one from the Advanced panel on the right."))
+    def validate_bge_ai_installation(self):
+        if self.prefs.bge_ai_version is None or self.prefs.bge_ai_version == "None":
+            messagebox.showerror("Error", _("No Background Extraction AI-Model selected. Please select one from the Advanced panel on the right."))
             return False
 
-        if not validate_local_version(self.prefs.ai_version):
-            if not messagebox.askyesno(_("Install AI-Model?"), _("Selected AI-Model is not installed. Should I download it now?")):
+        if not validate_local_version(bge_ai_models_dir, self.prefs.bge_ai_version):
+            if not messagebox.askyesno(_("Install AI-Model?"), _("Selected Background Extraction AI-Model is not installed. Should I download it now?")):
                 return False
             else:
                 eventbus.emit(AppEvents.AI_DOWNLOAD_BEGIN)
@@ -549,7 +574,25 @@ class GraXpert:
                 def callback(p):
                     eventbus.emit(AppEvents.AI_DOWNLOAD_PROGRESS, {"progress": p})
 
-                download_version(self.prefs.ai_version, progress=callback)
+                download_version(bge_ai_models_dir, bge_bucket_name, self.prefs.bge_ai_version, progress=callback)
+                eventbus.emit(AppEvents.AI_DOWNLOAD_END)
+        return True
+
+    def validate_denoise_ai_installation(self):
+        if self.prefs.denoise_ai_version is None or self.prefs.denoise_ai_version == "None":
+            messagebox.showerror("Error", _("No Denoising AI-Model selected. Please select one from the Advanced panel on the right."))
+            return False
+
+        if not validate_local_version(denoise_ai_models_dir, self.prefs.denoise_ai_version):
+            if not messagebox.askyesno(_("Install AI-Model?"), _("Selected Denoising AI-Model is not installed. Should I download it now?")):
+                return False
+            else:
+                eventbus.emit(AppEvents.AI_DOWNLOAD_BEGIN)
+
+                def callback(p):
+                    eventbus.emit(AppEvents.AI_DOWNLOAD_PROGRESS, {"progress": p})
+
+                download_version(denoise_ai_models_dir, denoise_bucket_name, self.prefs.denoise_ai_version, progress=callback)
                 eventbus.emit(AppEvents.AI_DOWNLOAD_END)
         return True
 

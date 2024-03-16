@@ -251,6 +251,11 @@ class ExtractionMenu(CollapsibleMenuFrame):
 class DenoiseMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, title=_("Denoising"), show=False, number=4, **kwargs)
+        
+        self.denoise_strength = tk.DoubleVar()
+        self.denoise_strength.set(graxpert.prefs.denoise_strength)
+        self.denoise_strength.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_STRENGTH_CHANGED, {"denoise_strength": self.denoise_strength.get()}))
+        
         self.create_children()
         self.setup_layout()
         self.place_children()
@@ -268,14 +273,18 @@ class DenoiseMenu(CollapsibleMenuFrame):
             command=lambda: eventbus.emit(AppEvents.DENOISE_REQUEST),
         )
         self.tt_load = tooltip.Tooltip(self.denoise_button, text=tooltip.denoise_text)
+        
+        self.denoise_strength_slider = ValueSlider(self.sub_frame, width=default_label_width, variable_name=_("Denoise Strength"), variable=self.denoise_strength, min_value=0.0, max_value=1.0, precision=2)
+        tooltip.Tooltip(self.denoise_strength_slider, text=tooltip.bg_tol_text)
 
     def setup_layout(self):
         super().setup_layout()
 
     def place_children(self):
         super().place_children()
-
-        self.denoise_button.grid(column=1, row=0, pady=pady, sticky=tk.EW)
+        
+        self.denoise_strength_slider.grid(column=1, row=0, pady=pady, sticky=tk.EW)
+        self.denoise_button.grid(column=1, row=1, pady=pady, sticky=tk.EW)
 
     def toggle(self):
         super().toggle()

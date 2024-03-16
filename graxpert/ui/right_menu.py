@@ -6,12 +6,13 @@ from customtkinter import CTkFont, CTkImage, CTkLabel, CTkTextbox
 from packaging import version
 from PIL import Image
 
-from graxpert.ai_model_handling import list_local_versions, list_remote_versions
+from graxpert.ai_model_handling import bge_ai_models_dir, denoise_ai_models_dir, list_local_versions, list_remote_versions
 from graxpert.application.app import graxpert
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 from graxpert.localization import _, lang
 from graxpert.resource_utils import resource_path
+from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name
 from graxpert.ui.widgets import GraXpertOptionMenu, GraXpertScrollableFrame, ProcessingStep, ValueSlider, padx, pady
 
 
@@ -126,21 +127,37 @@ class AdvancedFrame(RightFrameBase):
         self.scaling.set(graxpert.prefs.scaling)
         self.scaling.trace_add("write", self.on_scaling_change)
 
-        # ai model
-        remote_versions = list_remote_versions()
-        local_versions = list_local_versions()
-        self.ai_options = set([])
-        self.ai_options.update([rv["version"] for rv in remote_versions])
-        self.ai_options.update([lv["version"] for lv in local_versions])
-        self.ai_options = sorted(self.ai_options, key=lambda k: version.parse(k), reverse=True)
+        # bge ai model
+        bge_remote_versions = list_remote_versions(bge_bucket_name)
+        bge_local_versions = list_local_versions(bge_ai_models_dir)
+        self.bge_ai_options = set([])
+        self.bge_ai_options.update([rv["version"] for rv in bge_remote_versions])
+        self.bge_ai_options.update([lv["version"] for lv in bge_local_versions])
+        self.bge_ai_options = sorted(self.bge_ai_options, key=lambda k: version.parse(k), reverse=True)
 
-        self.ai_version = tk.StringVar(master)
-        self.ai_version.set("None")  # default value
-        if graxpert.prefs.ai_version is not None:
-            self.ai_version.set(graxpert.prefs.ai_version)
+        self.bge_ai_version = tk.StringVar(master)
+        self.bge_ai_version.set("None")  # default value
+        if graxpert.prefs.bge_ai_version is not None:
+            self.bge_ai_version.set(graxpert.prefs.bge_ai_version)
         else:
-            self.ai_options.insert(0, "None")
-        self.ai_version.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.AI_VERSION_CHANGED, {"ai_version": self.ai_version.get()}))
+            self.bge_ai_options.insert(0, "None")
+        self.bge_ai_version.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.BGE_AI_VERSION_CHANGED, {"bge_ai_version": self.bge_ai_version.get()}))
+
+        # denoise ai model
+        denoise_remote_versions = list_remote_versions(denoise_bucket_name)
+        denoise_local_versions = list_local_versions(denoise_ai_models_dir)
+        self.denoise_ai_options = set([])
+        self.denoise_ai_options.update([rv["version"] for rv in denoise_remote_versions])
+        self.denoise_ai_options.update([lv["version"] for lv in denoise_local_versions])
+        self.denoise_ai_options = sorted(self.denoise_ai_options, key=lambda k: version.parse(k), reverse=True)
+
+        self.denoise_ai_version = tk.StringVar(master)
+        self.denoise_ai_version.set("None")  # default value
+        if graxpert.prefs.denoise_ai_version is not None:
+            self.denoise_ai_version.set(graxpert.prefs.denoise_ai_version)
+        else:
+            self.denoise_ai_options.insert(0, "None")
+        self.denoise_ai_version.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_AI_VERSION_CHANGED, {"denoise_ai_version": self.denoise_ai_version.get()}))
 
         self.create_and_place_children()
         self.setup_layout()
@@ -181,9 +198,13 @@ class AdvancedFrame(RightFrameBase):
 
         ValueSlider(self, variable=self.scaling, variable_name=_("Scaling"), min_value=1, max_value=2, precision=1).grid(**self.default_grid())
 
-        # ai model
-        CTkLabel(self, text=_("AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
-        GraXpertOptionMenu(self, variable=self.ai_version, values=self.ai_options).grid(**self.default_grid())
+        # bge ai model
+        CTkLabel(self, text=_("Background Extraction AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
+        GraXpertOptionMenu(self, variable=self.bge_ai_version, values=self.bge_ai_options).grid(**self.default_grid())
+
+        # denoise ai model
+        CTkLabel(self, text=_("Denoising AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
+        GraXpertOptionMenu(self, variable=self.denoise_ai_version, values=self.denoise_ai_options).grid(**self.default_grid())
 
     def setup_layout(self):
         self.columnconfigure(0, weight=1)

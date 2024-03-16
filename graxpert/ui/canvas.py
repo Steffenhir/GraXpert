@@ -20,10 +20,11 @@ class Canvas(CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
-        self.display_options = ["Original", "Processed", "Background"]
+        self.display_options = []
         self.display_type = StringVar()
-        self.display_type.set(self.display_options[0])
+        self.display_type.set(None)
         self.display_type.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DISPLAY_TYPE_CHANGED, {"display_type": self.display_type.get()}))
+        self.display_menu = None
 
         self.startx = 0
         self.starty = 0
@@ -41,7 +42,6 @@ class Canvas(CTkFrame):
     # widget setup
     def create_children(self):
         self.canvas = CTkCanvas(self, background="black", bd=0, highlightthickness=0)
-        self.display_menu = CTkOptionMenu(self, variable=self.display_type, values=self.display_options)
         self.help_button = CTkButton(
             self.canvas,
             text=_("H\nE\nL\nP"),
@@ -65,7 +65,6 @@ class Canvas(CTkFrame):
 
     def place_children(self):
         self.canvas.grid(column=0, row=1, sticky=tk.NSEW)
-        self.display_menu.grid(column=0, row=0, sticky=tk.N)
         self.help_button.grid(column=0, row=0, sticky=tk.SE)
         self.advanced_button.grid(column=0, row=1, sticky=tk.NE)
         self.static_loading_frame.grid_forget()
@@ -99,7 +98,13 @@ class Canvas(CTkFrame):
         eventbus.add_listener(AppEvents.CALCULATE_BEGIN, self.on_calculate_begin)
         eventbus.add_listener(AppEvents.CALCULATE_PROGRESS, self.on_calculate_progress)
         eventbus.add_listener(AppEvents.CALCULATE_END, self.on_calculate_end)
+        eventbus.add_listener(AppEvents.CALCULATE_SUCCESS, self.on_calculate_success)
         eventbus.add_listener(AppEvents.CALCULATE_ERROR, self.on_calculate_end)
+        eventbus.add_listener(AppEvents.DENOISE_BEGIN, self.on_denoise_begin)
+        eventbus.add_listener(AppEvents.DENOISE_PROGRESS, self.on_denoise_progress)
+        eventbus.add_listener(AppEvents.DENOISE_END, self.on_denoise_end)
+        eventbus.add_listener(AppEvents.DENOISE_SUCCESS, self.on_denoise_success)
+        eventbus.add_listener(AppEvents.DENOISE_ERROR, self.on_denoise_end)
         eventbus.add_listener(AppEvents.SAVE_BEGIN, self.on_save_begin)
         eventbus.add_listener(AppEvents.SAVE_END, self.on_save_end)
         eventbus.add_listener(AppEvents.SAVE_ERROR, self.on_save_end)
@@ -151,8 +156,40 @@ class Canvas(CTkFrame):
 
     def on_calculate_progress(self, event=None):
         self.dynamic_progress_frame.update_progress(event["progress"])
+    
+    def on_calculate_success(self, event=None):
+        if not "Processed" in self.display_options:
+            self.display_options.append("Processed")
+            self.display_menu.grid_forget()
+            self.display_menu = CTkOptionMenu(self, variable=self.display_type, values=self.display_options)
+            self.display_menu.grid(column=0, row=0, sticky=tk.N)
+        if not "Background" in self.display_options:
+            self.display_menu._values.append("Background")
+            self.display_menu.grid_forget()
+            self.display_menu = CTkOptionMenu(self, variable=self.display_type, values=self.display_options)
+            self.display_menu.grid(column=0, row=0, sticky=tk.N)
 
     def on_calculate_end(self, event=None):
+        self.dynamic_progress_frame.text.set("")
+        self.dynamic_progress_frame.variable.set(0.0)
+        self.show_progress_frame(False)
+        self.redraw_image()
+
+    def on_denoise_begin(self, event=None):
+        self.dynamic_progress_frame.text.set(_("Denoising"))
+        self.show_progress_frame(True)
+
+    def on_denoise_progress(self, event=None):
+        self.dynamic_progress_frame.update_progress(event["progress"])
+    
+    def on_denoise_success(self, event=None):
+        if not "Processed" in self.display_options:
+            self.display_options.append("Processed")
+            self.display_menu.grid_forget()
+            self.display_menu = CTkOptionMenu(self, variable=self.display_type, values=self.display_options)
+            self.display_menu.grid(column=0, row=0, sticky=tk.N)
+
+    def on_denoise_end(self, event=None):
         self.dynamic_progress_frame.text.set("")
         self.dynamic_progress_frame.variable.set(0.0)
         self.show_progress_frame(False)
@@ -182,13 +219,19 @@ class Canvas(CTkFrame):
         self.show_loading_frame(True)
 
     def on_load_image_end(self, event=None):
+
+        if self.display_menu is not None:
+            self.display_menu.grid_forget()
+        self.display_options = ["Original"]
+        self.display_type.set(self.display_options[0])
+        self.display_menu = CTkOptionMenu(self, variable=self.display_type, values=self.display_options)
+        self.display_menu.grid(column=0, row=0, sticky=tk.N)
+
         width = graxpert.images["Original"].img_display.width
         height = graxpert.images["Original"].img_display.height
 
         self.zoom_fit(width, height)
         self.redraw_image()
-
-        self.display_type.set("Original")
 
         self.show_loading_frame(False)
 

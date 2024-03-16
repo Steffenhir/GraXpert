@@ -41,12 +41,15 @@ class AppEvents(Enum):
     CALCULATE_BEGIN = auto()
     CALCULATE_PROGRESS = auto()
     CALCULATE_END = auto()
+    CALCULATE_SUCCESS = auto()
     CALCULATE_ERROR = auto()
     # denoising
+    DENOISE_STRENGTH_CHANGED = auto()
     DENOISE_REQUEST = auto()
     DENOISE_BEGIN = auto()
     DENOISE_PROGRESS = auto()
     DENOISE_END = auto()
+    DENOISE_SUCCESS = auto()
     DENOISE_ERROR = auto()
     # saving
     SAVE_AS_CHANGED = auto()
@@ -57,11 +60,14 @@ class AppEvents(Enum):
     SAVE_END = auto()
     SAVE_ERROR = auto()
     # ai model handling
-    AI_VERSION_CHANGED = auto()
     AI_DOWNLOAD_BEGIN = auto()
     AI_DOWNLOAD_PROGRESS = auto()
     AI_DOWNLOAD_END = auto()
     AI_DOWNLOAD_ERROR = auto()
+    # bge ai model handling
+    BGE_AI_VERSION_CHANGED = auto()
+    # denoise ai model handling
+    DENOISE_AI_VERSION_CHANGED = auto()
     # advanced settings
     SAMPLE_SIZE_CHANGED = auto()
     SAMPLE_COLOR_CHANGED = auto()

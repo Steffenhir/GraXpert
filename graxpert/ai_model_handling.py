@@ -3,25 +3,43 @@ import os
 import re
 import shutil
 import zipfile
-from queue import Empty, Queue
-from threading import Thread
 
 from appdirs import user_data_dir
 from minio import Minio
 from packaging import version
+import onnxruntime as ort
 
-from graxpert.loadingframe import DynamicProgressThread
-from graxpert.s3_secrets import (bucket_name, endpoint, ro_access_key,
-                                 ro_secret_key)
+try:
+    from graxpert.s3_secrets import endpoint, ro_access_key, ro_secret_key
+
+    client = Minio(endpoint, ro_access_key, ro_secret_key)
+except Exception as e:
+    logging.exception(e)
+    client = None
+
+from graxpert.ui.loadingframe import DynamicProgressThread
 
 ai_models_dir = os.path.join(user_data_dir(appname="GraXpert"), "ai-models")
-os.makedirs(ai_models_dir, exist_ok=True)
+bge_ai_models_dir = os.path.join(user_data_dir(appname="GraXpert"), "bge-ai-models")
 
-client = Minio(endpoint, ro_access_key, ro_secret_key)
+# old ai-models folder exists, rename to 'bge-ai-models'
+if os.path.exists(ai_models_dir):
+    logging.warning(f"Older 'ai_models_dir' {ai_models_dir} exists. Renaming to {bge_ai_models_dir} due to introduction of new denoising models in GraXpert 3.")
+    try:
+        os.rename(ai_models_dir, bge_ai_models_dir)
+    except Exception as e:
+        logging.error(f"Renaming {ai_models_dir} to {bge_ai_models_dir} failed. {bge_ai_models_dir} will be newly created. Consider deleting obsolete {ai_models_dir}.")
+
+os.makedirs(bge_ai_models_dir, exist_ok=True)
+
+denoise_ai_models_dir = os.path.join(user_data_dir(appname="GraXpert"), "denoise-ai-models")
+os.makedirs(denoise_ai_models_dir, exist_ok=True)
 
 
 # ui operations
-def list_remote_versions():
+def list_remote_versions(bucket_name):
+    if client is None:
+        return []
     try:
         objects = client.list_objects(bucket_name)
         versions = []
@@ -40,30 +58,27 @@ def list_remote_versions():
 
     except Exception as e:
         logging.exception(e)
-        return None
+    finally:
+        return versions
 
 
-def list_local_versions():
+def list_local_versions(ai_models_dir):
     try:
-        model_dirs = [
-            {"path": os.path.join(ai_models_dir, f), "version": f}
-            for f in os.listdir(ai_models_dir)
-            if re.search(r"\d\.\d\.\d", f)
-        ]  # match semantic version
+        model_dirs = [{"path": os.path.join(ai_models_dir, f), "version": f} for f in os.listdir(ai_models_dir) if re.search(r"\d\.\d\.\d", f)]  # match semantic version
         return model_dirs
     except Exception as e:
         logging.exception(e)
         return None
 
 
-def latest_version():
+def latest_version(ai_models_dir, bucket_name):
     try:
-        remote_versions = list_remote_versions()
+        remote_versions = list_remote_versions(bucket_name)
     except Exception as e:
         remote_versions = []
         logging.exception(e)
     try:
-        local_versions = list_local_versions()
+        local_versions = list_local_versions(ai_models_dir)
     except Exception as e:
         local_versions = []
         logging.exception(e)
@@ -74,36 +89,27 @@ def latest_version():
     return ai_options[0]
 
 
-def ai_model_path_from_version(local_version):
-    return os.path.join(ai_models_dir, local_version, "bg_model")
+def ai_model_path_from_version(ai_models_dir, local_version):
+    if local_version is None:
+        return None
+
+    return os.path.join(ai_models_dir, local_version, "model.onnx")
 
 
-def compute_orphaned_local_versions():
-    remote_versions = list_remote_versions()
+def compute_orphaned_local_versions(ai_models_dir):
+    remote_versions = list_remote_versions(ai_models_dir)
 
     if remote_versions is None:
-        logging.warning(
-            "Could not fetch remote versions. Thus, aborting cleaning of local versions in {}. Consider manual cleaning".format(
-                ai_models_dir
-            )
-        )
+        logging.warning("Could not fetch remote versions. Thus, aborting cleaning of local versions in {}. Consider manual cleaning".format(ai_models_dir))
         return
 
     local_versions = list_local_versions()
 
     if local_versions is None:
-        logging.warning(
-            "Could not read local versions in {}. Thus, aborting cleaning. Consider manual cleaning".format(
-                ai_models_dir
-            )
-        )
+        logging.warning("Could not read local versions in {}. Thus, aborting cleaning. Consider manual cleaning".format(ai_models_dir))
         return
 
-    orphaned_local_versions = [
-        {"path": lv["path"], "version": lv["version"]}
-        for lv in local_versions
-        if lv["version"] not in [rv["version"] for rv in remote_versions]
-    ]
+    orphaned_local_versions = [{"path": lv["path"], "version": lv["version"]} for lv in local_versions if lv["version"] not in [rv["version"] for rv in remote_versions]]
 
     return orphaned_local_versions
 
@@ -116,33 +122,24 @@ def cleanup_orphaned_local_versions(orphaned_local_versions):
             logging.exception(e)
 
 
-def download_version(remote_version, progress=None):
+def download_version(ai_models_dir, bucket_name, remote_version, progress=None):
     try:
-        remote_versions = list_remote_versions()
+        remote_versions = list_remote_versions(bucket_name)
         for r in remote_versions:
             if remote_version == r["version"]:
                 remote_version = r
                 break
 
-        ai_model_dir = os.path.join(
-            ai_models_dir, "{}".format(remote_version["version"])
-        )
+        ai_model_dir = os.path.join(ai_models_dir, "{}".format(remote_version["version"]))
         os.makedirs(ai_model_dir, exist_ok=True)
 
-        ai_model_file = os.path.join(
-            ai_model_dir, "{}.zip".format(remote_version["version"])
-        )
+        ai_model_file = os.path.join(ai_model_dir, "model.onnx")
         client.fget_object(
             remote_version["bucket"],
             remote_version["object"],
             ai_model_file,
             progress=DynamicProgressThread(callback=progress),
         )
-
-        with zipfile.ZipFile(ai_model_file, "r") as zip_ref:
-            zip_ref.extractall(ai_model_dir)
-
-        os.remove(ai_model_file)
     except Exception as e:
         # try to delete (rollback) ai_model_dir in case of errors
         logging.exception(e)
@@ -152,5 +149,12 @@ def download_version(remote_version, progress=None):
             logging.exception(e2)
 
 
-def validate_local_version(local_version):
-    return os.path.isdir(os.path.join(ai_models_dir, local_version, "bg_model"))
+def validate_local_version(ai_models_dir, local_version):
+    return os.path.isfile(os.path.join(ai_models_dir, local_version, "model.onnx"))
+
+
+def get_execution_providers_ordered():
+    supported_providers = ["DmlExecutionProvider", "CoreMLExecutionProvider", "CUDAExecutionProvider",
+                           "CPUExecutionProvider"]
+
+    return [provider for provider in supported_providers if provider in ort.get_available_providers()]

@@ -17,13 +17,20 @@ class StreamToLogger(object):
         self.logger = logger
         self.log_level = log_level
         self.linebuf = ""
+        self.line_complete = False
 
     def write(self, buf):
-        for line in buf.rstrip().splitlines():
-            self.logger.log(self.log_level, line.rstrip())
+        self.linebuf += buf
+        if self.linebuf.count("\n") > 0:
+            self.line_complete = True
+            self.flush()
 
     def flush(self):
-        pass
+        if self.line_complete:
+            for s in self.linebuf.splitlines():
+                self.logger.log(self.log_level, s.rstrip())
+            self.linebuf = ""
+            self.line_complete = False
 
 
 # cf. https://docs.python.org/3/howto/logging-cookbook.html#using-concurrent-futures-processpoolexecutor
@@ -43,12 +50,8 @@ def configure_logging():
     os.makedirs(os.path.dirname(logfile_name), exist_ok=True)
     root = logging.getLogger()
     root.setLevel(logging.INFO)
-    h = logging.handlers.RotatingFileHandler(
-        logfile_name, "a", maxBytes=1000000, backupCount=5, encoding="utf-8"
-    )
-    f = logging.Formatter(
-        "%(asctime)s %(processName)-10s %(name)s %(levelname)-8s %(message)s"
-    )
+    h = logging.handlers.RotatingFileHandler(logfile_name, "a", maxBytes=1000000, backupCount=5, encoding="utf-8")
+    f = logging.Formatter("%(asctime)s %(processName)-10s %(name)s %(levelname)-8s %(message)s")
     h.setFormatter(f)
     root.handlers = []
     root.addHandler(h)
@@ -84,9 +87,7 @@ def logger_thread(queue):
 
 
 def initialize_logging():
-    logging_thread = threading.Thread(
-        target=logger_thread, args=(get_logging_queue(),)
-    )
+    logging_thread = threading.Thread(target=logger_thread, args=(get_logging_queue(),))
     logging_thread.start()
     return logging_thread
 

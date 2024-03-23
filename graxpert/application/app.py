@@ -135,8 +135,6 @@ class GraXpert:
             self.prefs.images_linked_option = False
             
             img_array_to_be_processed = np.copy(self.images.get("Original").img_array)
-            if (self.images.get("Denoised") is not None):
-                img_array_to_be_processed = np.copy(self.images.get("Denoised").img_array)
                 
             background = AstroImage()
             background.set_from_array(
@@ -377,7 +375,13 @@ class GraXpert:
         eventbus.emit(AppEvents.SAVE_BEGIN)
 
         try:
-            self.images.get("Gradient-Corrected").save(dir, self.prefs.saveas_option)
+            if (self.images.get("Denoised") is not None):
+                self.images.get("Denoised").save(dir, self.prefs.saveas_option)
+            elif (self.images.get("Gradient-Corrected") is not None):          
+                self.images.get("Gradient-Corrected").save(dir, self.prefs.saveas_option)
+            else:
+                self.images.get("Original").save(dir, self.prefs.saveas_option)
+                
         except Exception as e:
             logging.exception(e)
             eventbus.emit(AppEvents.SAVE_ERROR)
@@ -421,10 +425,13 @@ class GraXpert:
         eventbus.emit(AppEvents.SAVE_BEGIN)
 
         try:
-            if self.images.get("Gradient-Corrected") is None:
-                self.images.get("Original").save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
-            else:
+            if (self.images.get("Denoised") is not None):
+                self.images.get("Denoised").save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
+            elif (self.images.get("Gradient-Corrected") is not None):
                 self.images.get("Gradient-Corrected").save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
+            else:
+                self.images.get("Original").save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
+                                                                     
         except Exception as e:
             eventbus.emit(AppEvents.SAVE_ERROR)
             logging.exception(e)

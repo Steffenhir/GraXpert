@@ -6,6 +6,8 @@ from cx_Freeze import Executable, setup
 
 from graxpert.version import release, version
 
+sys.setrecursionlimit(15_000)
+
 astropy_path = os.path.dirname(os.path.abspath(astropy.__file__))
 
 directory_table = [("ProgramMenuFolder", "TARGETDIR", "."), ("GraXpert", "ProgramMenuFolder", "GraXpert")]

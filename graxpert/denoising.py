@@ -4,10 +4,17 @@ import logging
 import numpy as np
 import onnxruntime as ort
 
+from graxpert.ai_model_handling import get_execution_providers_ordered
+
 
 def denoise(image, ai_path, strength, window_size=256, stride=128, progress=None):
 
     input = copy.deepcopy(image)
+    num_colors = image.shape[-1]
+    
+    if num_colors == 1:
+        image = np.array([image[:, :, 0], image[:, :, 0], image[:, :, 0]])
+        image = np.moveaxis(image, 0, -1)
 
     H, W, _ = image.shape
     offset = int((window_size - stride) / 2)
@@ -34,7 +41,11 @@ def denoise(image, ai_path, strength, window_size=256, stride=128, progress=None
 
     output = copy.deepcopy(image)
 
-    session = ort.InferenceSession(ai_path, providers=ort.get_available_providers())
+    providers = get_execution_providers_ordered()
+    session = ort.InferenceSession(ai_path, providers=providers)
+
+    logging.info(f"Providers : {providers}")
+    logging.info(f"Used providers : {session.get_providers()}")
 
     for i in range(ith):
         for j in range(itw):
@@ -61,5 +72,10 @@ def denoise(image, ai_path, strength, window_size=256, stride=128, progress=None
 
     output = np.clip(output, 0, 1)
     output = output[offset : H + offset, offset : W + offset, :]
+    output = output * strength + input * (1 - strength)
+    
+    if num_colors == 1:
+        output = np.array([output[:, :, 0]])
+        output = np.moveaxis(output, 0, -1)
 
-    return output * strength + input * (strength - 1)
+    return output

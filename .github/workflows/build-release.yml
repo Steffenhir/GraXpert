@@ -134,7 +134,9 @@ jobs:
           echo "endpoint = \"$ai_s3_endpoint\"" >> ./graxpert/s3_secrets.py && \
           echo "ro_access_key = \"$ai_s3_access_key\"" >> ./graxpert/s3_secrets.py && \
           echo "ro_secret_key = \"$ai_s3_secret_key\"" >> ./graxpert/s3_secrets.py && \
-          echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py
+          echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py && \
+          echo "bge_bucket_name = \"$ai_s3_bge_bucket_name\"" >> ./graxpert/s3_secrets.py && \
+          echo "denoise_bucket_name = \"$ai_s3_denoise_bucket_name\"" >> ./graxpert/s3_secrets.py
       # github actions overwrites brew's python. Force it to reassert itself, by running in a separate step.
       - name: unbreak python in github actions
         run: |

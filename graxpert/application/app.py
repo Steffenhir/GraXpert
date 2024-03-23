@@ -126,8 +126,6 @@ class GraXpert:
 
         progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.CALCULATE_PROGRESS, {"progress": p}))
 
-        imarray = np.copy(self.images.get("Original").img_array)
-
         downscale_factor = 1
 
         if self.prefs.interpol_type_option == "Kriging" or self.prefs.interpol_type_option == "RBF":
@@ -135,10 +133,15 @@ class GraXpert:
 
         try:
             self.prefs.images_linked_option = False
+            
+            img_array_to_be_processed = np.copy(self.images.get("Original").img_array)
+            if (self.images.get("Denoised") is not None):
+                img_array_to_be_processed = np.copy(self.images.get("Denoised").img_array)
+                
             background = AstroImage()
             background.set_from_array(
                 extract_background(
-                    imarray,
+                    img_array_to_be_processed,
                     np.array(background_points),
                     self.prefs.interpol_type_option,
                     self.prefs.smoothing_option,
@@ -153,7 +156,7 @@ class GraXpert:
             )
 
             gradient_corrected = AstroImage()
-            gradient_corrected.set_from_array(imarray)
+            gradient_corrected.set_from_array(img_array_to_be_processed)
 
             # Update fits header and metadata
             background_mean = np.mean(background.img_array)
@@ -328,9 +331,13 @@ class GraXpert:
         progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.DENOISE_PROGRESS, {"progress": p}))
 
         try:
+            img_array_to_be_processed = np.copy(self.images.get("Original").img_array)
+            if (self.images.get("Gradient-Corrected") is not None):
+                img_array_to_be_processed = np.copy(self.images.get("Gradient-Corrected").img_array)
+            
             self.prefs.images_linked_option = True
             ai_model_path = ai_model_path_from_version(denoise_ai_models_dir, self.prefs.denoise_ai_version)
-            imarray = denoise(self.images.get("Original").img_array, ai_model_path, self.prefs.denoise_strength, progress=progress)
+            imarray = denoise(img_array_to_be_processed, ai_model_path, self.prefs.denoise_strength, progress=progress)
 
             denoised = AstroImage()
             denoised.set_from_array(imarray)

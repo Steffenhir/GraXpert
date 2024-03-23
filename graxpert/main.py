@@ -224,7 +224,20 @@ def main():
                 ", ".join(available_denoise_versions[0]), ", ".join(available_denoise_versions[1])
             ),
         )
+        denoise_parser.add_argument(
+            "-strength",
+            "--denoise_strength",
+            nargs="?",
+            required=False,
+            default=1.0,
+            type=float,
+            help='Strength of the desired denoising effect, default: "1.0"',
+        )
 
+        # assume "background-extraction" as default sub-command
+        if not "background-extraction" in sys.argv and not "denoising" in sys.argv:
+            sys.argv.append("background-extraction")
+        
         args = parser.parse_args()
 
         print(args)

@@ -10,6 +10,7 @@ from graxpert.ui_scaling import get_scaling_factor
 
 default_button_width = 200
 default_label_width = 200
+default_option_menu_height = 28
 
 padx = 5 * get_scaling_factor()
 pady = 5 * get_scaling_factor()

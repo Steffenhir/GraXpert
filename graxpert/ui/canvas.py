@@ -14,6 +14,7 @@ from graxpert.localization import _
 from graxpert.resource_utils import resource_path
 from graxpert.ui.loadingframe import DynamicProgressFrame, LoadingFrame
 from graxpert.ui.ui_events import UiEvents
+from graxpert.ui.widgets import default_option_menu_height
 
 
 class Canvas(CTkFrame):
@@ -41,6 +42,7 @@ class Canvas(CTkFrame):
 
     # widget setup
     def create_children(self):
+        self.topbar = CTkFrame(self, height=default_option_menu_height)
         self.canvas = CTkCanvas(self, background="black", bd=0, highlightthickness=0)
         self.help_button = CTkButton(
             self.canvas,
@@ -64,6 +66,7 @@ class Canvas(CTkFrame):
         self.canvas.rowconfigure(1, weight=1)
 
     def place_children(self):
+        self.topbar.grid(column=0, row=0, sticky=tk.NSEW)
         self.canvas.grid(column=0, row=1, sticky=tk.NSEW)
         self.help_button.grid(column=0, row=0, sticky=tk.SE)
         self.advanced_button.grid(column=0, row=1, sticky=tk.NE)

@@ -210,7 +210,7 @@ class Canvas(CTkFrame):
         self.show_loading_frame(False)
 
     def on_display_start_badge_request(self, event=None):
-        self.start_badge = ImageTk.PhotoImage(file=resource_path("img/graXpert_Startbadge_Ariel.png"))
+        self.start_badge = ImageTk.PhotoImage(file=resource_path("img/graXpert_Startbadge_Umbriel.png"))
         self.canvas.create_image(self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2, anchor=tk.CENTER, image=self.start_badge, tags="start_badge")
         self.canvas.after(5000, lambda: self.canvas.delete("start_badge"))
 

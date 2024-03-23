@@ -97,11 +97,14 @@ def calculate_mtf_stretch_parameters(stretch_params, channel):
 def stretch(data, stretch_params: StretchParameters):
     return stretch_all([data], stretch_params)[0]
 
-def stretch_all(datas, stretch_params: StretchParameters):
+def stretch_all(datas, stretch_params: StretchParameters, reference_img_array=None):
     
     if not stretch_params.do_stretch:
         datas = [data.clip(min=0, max=1) for data in datas]
         return datas
+    
+    if reference_img_array is None:
+        reference_img_array = datas[0]
     
     futures = []
     shms = []
@@ -112,11 +115,11 @@ def stretch_all(datas, stretch_params: StretchParameters):
     common_mtf_stretch_params_per_channel = []
     if stretch_params.images_linked:
         if stretch_params.channels_linked:
-            mtf_stretch_params_for_all_channel = calculate_mtf_stretch_parameters(stretch_params, datas[0])
-            common_mtf_stretch_params_per_channel = [mtf_stretch_params_for_all_channel] * datas[0].shape[-1]
+            mtf_stretch_params_for_all_channel = calculate_mtf_stretch_parameters(stretch_params, reference_img_array)
+            common_mtf_stretch_params_per_channel = [mtf_stretch_params_for_all_channel] * reference_img_array.shape[-1]
         else:
             for c in range(datas[0].shape[-1]):
-                common_mtf_stretch_params_per_channel.append(calculate_mtf_stretch_parameters(stretch_params, datas[0][:,:,c]))
+                common_mtf_stretch_params_per_channel.append(calculate_mtf_stretch_parameters(stretch_params, reference_img_array[:,:,c]))
              
     
     for data in datas:

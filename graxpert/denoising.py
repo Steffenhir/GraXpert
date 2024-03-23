@@ -10,6 +10,11 @@ from graxpert.ai_model_handling import get_execution_providers_ordered
 def denoise(image, ai_path, strength, window_size=256, stride=128, progress=None):
 
     input = copy.deepcopy(image)
+    num_colors = image.shape[-1]
+    
+    if num_colors == 1:
+        image = np.array([image[:, :, 0], image[:, :, 0], image[:, :, 0]])
+        image = np.moveaxis(image, 0, -1)
 
     H, W, _ = image.shape
     offset = int((window_size - stride) / 2)
@@ -67,5 +72,10 @@ def denoise(image, ai_path, strength, window_size=256, stride=128, progress=None
 
     output = np.clip(output, 0, 1)
     output = output[offset : H + offset, offset : W + offset, :]
+    output = output * strength + input * (1 - strength)
+    
+    if num_colors == 1:
+        output = np.array([output[:, :, 0]])
+        output = np.moveaxis(output, 0, -1)
 
-    return output * strength + input * (1 - strength)
+    return output

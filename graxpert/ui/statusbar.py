@@ -36,22 +36,22 @@ class StatusBar(CTkFrame):
     # event handling
     def on_load_image_end(self, event):
         self.label_image_info.configure(
-            text=f'{graxpert.data_type} : {graxpert.images["Original"].img_display.width} x {graxpert.images["Original"].img_display.height} {graxpert.images["Original"].img_display.mode}'
+            text=f'{graxpert.data_type} : {graxpert.images.get("Original").img_display.width} x {graxpert.images.get("Original").img_display.height} {graxpert.images.get("Original").img_display.mode}'
         )
 
     def on_mouse_move(self, event):
-        if graxpert.images[graxpert.display_type] is None:
+        if graxpert.images.get(graxpert.display_type) is None:
             return
 
         image_point = graxpert.to_image_point(event["mouse_event"].x, event["mouse_event"].y)
         if len(image_point) != 0:
             text = "x=" + f"{image_point[0]:.2f}" + ",y=" + f"{image_point[1]:.2f}  "
-            if graxpert.images[graxpert.display_type].img_array.shape[2] == 3:
-                R, G, B = graxpert.images[graxpert.display_type].get_local_median(image_point)
+            if graxpert.images.get(graxpert.display_type).img_array.shape[2] == 3:
+                R, G, B = graxpert.images.get(graxpert.display_type).get_local_median(image_point)
                 text = text + "RGB = (" + f"{R:.4f}," + f"{G:.4f}," + f"{B:.4f})"
 
-            if graxpert.images[graxpert.display_type].img_array.shape[2] == 1:
-                L = graxpert.images[graxpert.display_type].get_local_median(image_point)
+            if graxpert.images.get(graxpert.display_type).img_array.shape[2] == 1:
+                L = graxpert.images.get(graxpert.display_type).get_local_median(image_point)
                 text = text + "L= " + f"{L:.4f}"
 
             self.label_image_pixel.configure(text=text)

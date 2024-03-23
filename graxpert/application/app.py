@@ -11,6 +11,7 @@ from graxpert.app_state import INITIAL_STATE
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 from graxpert.astroimage import AstroImage
+from graxpert.AstroImageRepository import AstroImageRepository
 from graxpert.background_extraction import extract_background
 from graxpert.commands import INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, SEL_POINTS_HANDLER, Command
 from graxpert.denoising import denoise
@@ -34,7 +35,7 @@ class GraXpert:
         self.filename = ""
         self.data_type = ""
 
-        self.images = {"Original": None, "Background": None, "Processed": None}
+        self.images = AstroImageRepository()
         self.display_type = "Original"
 
         self.mat_affine = np.eye(3)
@@ -98,7 +99,7 @@ class GraXpert:
         self.prefs.bg_tol_option = event["bg_tol_option"]
 
     def on_calculate_request(self, event=None):
-        if self.images["Original"] is None:
+        if self.images.get("Original") is None:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
 
@@ -125,7 +126,7 @@ class GraXpert:
 
         progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.CALCULATE_PROGRESS, {"progress": p}))
 
-        imarray = np.copy(self.images["Original"].img_array)
+        imarray = np.copy(self.images.get("Original").img_array)
 
         downscale_factor = 1
 
@@ -134,8 +135,8 @@ class GraXpert:
 
         try:
             self.prefs.images_linked_option = False
-            self.images["Background"] = AstroImage()
-            self.images["Background"].set_from_array(
+            background = AstroImage()
+            background.set_from_array(
                 extract_background(
                     imarray,
                     np.array(background_points),
@@ -151,25 +152,24 @@ class GraXpert:
                 )
             )
 
-            self.images["Processed"] = AstroImage()
-            self.images["Processed"].set_from_array(imarray)
+            gradient_corrected = AstroImage()
+            gradient_corrected.set_from_array(imarray)
 
             # Update fits header and metadata
-            background_mean = np.mean(self.images["Background"].img_array)
-            self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean, self.prefs, self.cmd.app_state)
-            self.images["Background"].update_fits_header(self.images["Original"].fits_header, background_mean, self.prefs, self.cmd.app_state)
+            background_mean = np.mean(background.img_array)
+            gradient_corrected.update_fits_header(self.images.get("Original").fits_header, background_mean, self.prefs, self.cmd.app_state)
+            gradient_corrected.update_fits_header(self.images.get("Original").fits_header, background_mean, self.prefs, self.cmd.app_state)
 
-            self.images["Processed"].copy_metadata(self.images["Original"])
-            self.images["Background"].copy_metadata(self.images["Original"])
+            gradient_corrected.copy_metadata(self.images.get("Original"))
+            background.copy_metadata(self.images.get("Original"))
 
-            all_images = [self.images["Original"].img_array, self.images["Processed"].img_array, self.images["Background"].img_array]
-            stretches = stretch_all(all_images, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
-            self.images["Original"].update_display_from_array(stretches[0], self.prefs.saturation)
-            self.images["Processed"].update_display_from_array(stretches[1], self.prefs.saturation)
-            self.images["Background"].update_display_from_array(stretches[2], self.prefs.saturation)
+            self.images.set("Gradient-Corrected", gradient_corrected)
+            self.images.set("Background", background)
+            
+            self.images.stretch_all(StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option), self.prefs.saturation)
 
             eventbus.emit(AppEvents.CALCULATE_SUCCESS)
-            eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Processed"})
+            eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Gradient-Corrected"})
 
         except Exception as e:
             logging.exception(e)
@@ -184,9 +184,7 @@ class GraXpert:
 
         eventbus.emit(AppEvents.CHANGE_SATURATION_BEGIN)
 
-        for img in self.images.values():
-            if img is not None:
-                img.update_saturation(self.prefs.saturation)
+        self.images.update_saturation(self.prefs.saturation)
 
         eventbus.emit(AppEvents.CHANGE_SATURATION_END)
 
@@ -194,13 +192,13 @@ class GraXpert:
         self.prefs.corr_type = event["corr_type"]
 
     def on_create_grid_request(self, event=None):
-        if self.images["Original"] is None:
+        if self.images.get("Original") is None:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
 
         eventbus.emit(AppEvents.CREATE_GRID_BEGIN)
 
-        self.cmd = Command(SEL_POINTS_HANDLER, self.cmd, data=self.images["Original"].img_array, num_pts=self.prefs.bg_pts_option, tol=self.prefs.bg_tol_option, sample_size=self.prefs.sample_size)
+        self.cmd = Command(SEL_POINTS_HANDLER, self.cmd, data=self.images.get("Original").img_array, num_pts=self.prefs.bg_pts_option, tol=self.prefs.bg_tol_option, sample_size=self.prefs.sample_size)
         self.cmd.execute()
 
         eventbus.emit(AppEvents.CREATE_GRID_END)
@@ -243,15 +241,14 @@ class GraXpert:
         self.filename = os.path.splitext(os.path.basename(filename))[0]
 
         self.data_type = os.path.splitext(filename)[1]
-        self.images["Original"] = image
-        self.images["Processed"] = None
-        self.images["Background"] = None
+        self.images.reset()
+        self.images.set("Original", image)
         self.prefs.working_dir = os.path.dirname(filename)
 
         os.chdir(os.path.dirname(filename))
 
-        width = self.images["Original"].img_display.width
-        height = self.images["Original"].img_display.height
+        width = self.images.get("Original").img_display.width
+        height = self.images.get("Original").img_display.height
 
         if self.prefs.width != width or self.prefs.height != height:
             self.reset_backgroundpts()
@@ -259,7 +256,7 @@ class GraXpert:
         self.prefs.width = width
         self.prefs.height = height
 
-        tmp_state = fitsheader_2_app_state(self, self.cmd.app_state, self.images["Original"].fits_header)
+        tmp_state = fitsheader_2_app_state(self, self.cmd.app_state, self.images.get("Original").fits_header)
         self.cmd: Command = Command(INIT_HANDLER, background_points=tmp_state.background_points)
         self.cmd.execute()
 
@@ -319,7 +316,7 @@ class GraXpert:
         self.prefs.denoise_strength = event["denoise_strength"]
         
     def on_denoise_request(self, event):
-        if self.images["Original"] is None:
+        if self.images.get("Original") is None:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
 
@@ -333,24 +330,23 @@ class GraXpert:
         try:
             self.prefs.images_linked_option = True
             ai_model_path = ai_model_path_from_version(denoise_ai_models_dir, self.prefs.denoise_ai_version)
-            imarray = denoise(self.images["Original"].img_array, ai_model_path, self.prefs.denoise_strength, progress=progress)
+            imarray = denoise(self.images.get("Original").img_array, ai_model_path, self.prefs.denoise_strength, progress=progress)
 
-            self.images["Processed"] = AstroImage()
-            self.images["Processed"].set_from_array(imarray)
+            denoised = AstroImage()
+            denoised.set_from_array(imarray)
 
             # Update fits header and metadata
-            background_mean = np.mean(self.images["Original"].img_array)
-            self.images["Processed"].update_fits_header(self.images["Original"].fits_header, background_mean, self.prefs, self.cmd.app_state)
+            background_mean = np.mean(self.images.get("Original").img_array)
+            denoised.update_fits_header(self.images.get("Original").fits_header, background_mean, self.prefs, self.cmd.app_state)
 
-            self.images["Processed"].copy_metadata(self.images["Original"])
-
-            all_images = [self.images["Original"].img_array, self.images["Processed"].img_array]
-            stretches = stretch_all(all_images, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option))
-            self.images["Original"].update_display_from_array(stretches[0], self.prefs.saturation)
-            self.images["Processed"].update_display_from_array(stretches[1], self.prefs.saturation)
+            denoised.copy_metadata(self.images.get("Original"))
+            
+            self.images.set("Denoised", denoised)
+            
+            self.images.stretch_all(StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option), self.prefs.saturation)
 
             eventbus.emit(AppEvents.DENOISE_SUCCESS)
-            eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Processed"})
+            eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Denoised"})
 
         except Exception as e:
             logging.exception(e)
@@ -374,7 +370,7 @@ class GraXpert:
         eventbus.emit(AppEvents.SAVE_BEGIN)
 
         try:
-            self.images["Processed"].save(dir, self.prefs.saveas_option)
+            self.images.get("Gradient-Corrected").save(dir, self.prefs.saveas_option)
         except Exception as e:
             logging.exception(e)
             eventbus.emit(AppEvents.SAVE_ERROR)
@@ -396,7 +392,7 @@ class GraXpert:
         eventbus.emit(AppEvents.SAVE_BEGIN)
 
         try:
-            self.images["Background"].save(dir, self.prefs.saveas_option)
+            self.images.get("Background").save(dir, self.prefs.saveas_option)
         except Exception as e:
             logging.exception(e)
             eventbus.emit(AppEvents.SAVE_ERROR)
@@ -418,10 +414,10 @@ class GraXpert:
         eventbus.emit(AppEvents.SAVE_BEGIN)
 
         try:
-            if self.images["Processed"] is None:
-                self.images["Original"].save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
+            if self.images.get("Gradient-Corrected") is None:
+                self.images.get("Original").save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
             else:
-                self.images["Processed"].save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
+                self.images.get("Gradient-Corrected").save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
         except Exception as e:
             eventbus.emit(AppEvents.SAVE_ERROR)
             logging.exception(e)
@@ -448,17 +444,7 @@ class GraXpert:
         eventbus.emit(AppEvents.STRETCH_IMAGE_BEGIN)
 
         try:
-            all_images = []
-            all_image_arrays = []
-            stretches = []
-            for img in self.images.values():
-                if img is not None:
-                    all_images.append(img)
-                    all_image_arrays.append(img.img_array)
-            if len(all_images) > 0:
-                stretches = stretch_all(all_image_arrays, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option))
-            for idx, img in enumerate(all_images):
-                all_images[idx].update_display_from_array(stretches[idx], self.prefs.saturation)
+            self.images.stretch_all(StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option), self.prefs.saturation)
         except Exception as e:
             eventbus.emit(AppEvents.STRETCH_IMAGE_ERROR)
             logging.exception(e)
@@ -522,14 +508,14 @@ class GraXpert:
         return np.dot(self.mat_affine, (x, y, 1.0))
 
     def to_image_point(self, x, y):
-        if self.images[self.display_type] is None:
+        if self.images.get(self.display_type) is None:
             return []
 
         mat_inv = np.linalg.inv(self.mat_affine)
         image_point = np.dot(mat_inv, (x, y, 1.0))
 
-        width = self.images[self.display_type].width
-        height = self.images[self.display_type].height
+        width = self.images.get(self.display_type).width
+        height = self.images.get(self.display_type).height
 
         if image_point[0] < 0 or image_point[1] < 0 or image_point[0] > width or image_point[1] > height:
             return []
@@ -537,14 +523,14 @@ class GraXpert:
         return image_point
 
     def to_image_point_pinned(self, x, y):
-        if self.images[self.display_type] is None:
+        if self.images.get(self.display_type) is None:
             return []
 
         mat_inv = np.linalg.inv(self.mat_affine)
         image_point = np.dot(mat_inv, (x, y, 1.0))
 
-        width = self.images[self.display_type].width
-        height = self.images[self.display_type].height
+        width = self.images.get(self.display_type).width
+        height = self.images.get(self.display_type).height
 
         if image_point[0] < 0:
             image_point[0] = 0

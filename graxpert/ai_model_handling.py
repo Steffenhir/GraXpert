@@ -46,7 +46,7 @@ def list_remote_versions(bucket_name):
 
         for o in objects:
             tags = client.get_object_tags(o.bucket_name, o.object_name)
-            if "ai-version" in tags:
+            if tags is not None and "ai-version" in tags:
                 versions.append(
                     {
                         "bucket": o.bucket_name,
@@ -134,12 +134,21 @@ def download_version(ai_models_dir, bucket_name, remote_version, progress=None):
         os.makedirs(ai_model_dir, exist_ok=True)
 
         ai_model_file = os.path.join(ai_model_dir, "model.onnx")
+        ai_model_zip = os.path.join(ai_model_dir, "model.zip")
         client.fget_object(
             remote_version["bucket"],
             remote_version["object"],
-            ai_model_file,
+            ai_model_zip,
             progress=DynamicProgressThread(callback=progress),
         )
+
+        with zipfile.ZipFile(ai_model_zip, "r") as zip_ref:
+            zip_ref.extractall(ai_model_dir)
+        
+        if not os.path.isfile(ai_model_file):
+            raise ValueError(f"Could not find ai 'model.onnx' file after extracting {ai_model_zip}")
+        os.remove(ai_model_zip)
+        
     except Exception as e:
         # try to delete (rollback) ai_model_dir in case of errors
         logging.exception(e)

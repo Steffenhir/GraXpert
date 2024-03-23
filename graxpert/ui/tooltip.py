@@ -51,8 +51,11 @@ class Tooltip:
         self.pad = pad
         self.id = None
         self.tw = None
-        eventbus.add_listener(AppEvents.CALCULATE_BEGIN, lambda e: self.hide())
-        eventbus.add_listener(AppEvents.DENOISE_BEGIN, lambda e: self.hide())
+        self.enable_tt = True
+        eventbus.add_listener(AppEvents.CALCULATE_REQUEST, lambda e: self.disable())
+        eventbus.add_listener(AppEvents.DENOISE_REQUEST, lambda e: self.disable())
+        eventbus.add_listener(AppEvents.CALCULATE_END, lambda e: self.enable())
+        eventbus.add_listener(AppEvents.DENOISE_END, lambda e: self.enable())
 
     def onEnter(self, event=None):
         self.schedule()
@@ -72,6 +75,10 @@ class Tooltip:
             self.widget.after_cancel(id_)
 
     def show(self):
+
+        if not self.enable_tt:
+            return
+
         def tip_pos_calculator(widget, label, *, tip_delta=(10, 5), pad=(5, 3, 5, 3)):
             w = widget
 
@@ -137,6 +144,13 @@ class Tooltip:
         if tw:
             tw.destroy()
         self.tw = None
+    
+    def enable(self):
+        self.enable_tt = True
+    
+    def disable(self):
+        self.enable_tt = False
+        self.hide()
 
 
 load_text = _("Load your image you would like to correct. \n" "\n" "Supported formats: .tiff, .fits, .png, .jpg \n" "Supported bitdepths: 16 bit integer, 32 bit float")

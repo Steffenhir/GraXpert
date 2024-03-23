@@ -238,7 +238,8 @@ class DenoiseCmdlineTool(CmdlineToolBase):
         processed_Astro_Image.set_from_array(
             denoise(
                 astro_Image.img_array,
-                ai_model_path
+                ai_model_path,
+                self.args.denoise_strength
             ))
         processed_Astro_Image.save(self.get_save_path(), self.get_output_file_format())
 

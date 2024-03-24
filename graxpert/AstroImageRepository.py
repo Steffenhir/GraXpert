@@ -19,7 +19,7 @@ class AstroImageRepository:
                 all_image_arrays.append(value.img_array)
                 
         if self.get("Gradient-Corrected") is not None and self.get("Denoised") is not None:   
-            stretches = stretch_all(all_image_arrays, stretch_params, reference_img_array=self.get("Gradient-Corrected"))
+            stretches = stretch_all(all_image_arrays, stretch_params, reference_img_array=self.get("Gradient-Corrected").img_array)
         else:
             stretches = stretch_all(all_image_arrays, stretch_params)
         

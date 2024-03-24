@@ -199,6 +199,7 @@ class BGECmdlineTool(CmdlineToolBase):
 class DenoiseCmdlineTool(CmdlineToolBase):
     def __init__(self, args):
         super().__init__(args)
+        self.args = args
 
     def execute(self):
         astro_Image = AstroImage(do_update_display=False)
@@ -217,6 +218,8 @@ class DenoiseCmdlineTool(CmdlineToolBase):
                         json_prefs = json.load(f)
                         if "ai_version" in json_prefs:
                             preferences.ai_version = json_prefs["ai_version"]
+                        if "denoise_strength" in json_prefs:
+                            preferences.denoise_strength = json_prefs["denoise_strength"]
 
             except Exception as e:
                 logging.exception(e)
@@ -224,6 +227,12 @@ class DenoiseCmdlineTool(CmdlineToolBase):
                 sys.exit(1)
         else:
             preferences = Prefs()
+        
+        if self.args.denoise_strength is not None:
+            preferences.denoise_strength = self.args.denoise_strength
+            logging.info(f"Using user-supplied denoise strength value {preferences.denoise_strength}.")
+        else:
+            logging.info(f"Using stored denoise strength value {preferences.denoise_strength}.")
 
         ai_model_path = ai_model_path_from_version(denoise_ai_models_dir, self.get_ai_version(preferences))
 
@@ -231,7 +240,8 @@ class DenoiseCmdlineTool(CmdlineToolBase):
             dedent(
                 f"""\
                     Excecuting denoising with the following parameters:
-                    AI model path - {ai_model_path}"""
+                    AI model path - {ai_model_path}
+                    denoise strength - {preferences.denoise_strength}"""
             )
         )
 
@@ -239,7 +249,7 @@ class DenoiseCmdlineTool(CmdlineToolBase):
             denoise(
                 astro_Image.img_array,
                 ai_model_path,
-                self.args.denoise_strength
+                preferences.denoise_strength
             ))
         processed_Astro_Image.save(self.get_save_path(), self.get_output_file_format())
 

@@ -229,21 +229,21 @@ def main():
             "--denoise_strength",
             nargs="?",
             required=False,
-            default=1.0,
+            default=None,
             type=float,
             help='Strength of the desired denoising effect, default: "1.0"',
         )
+        
+        args, extras = parser.parse_known_args()
 
         # assume "background-extraction" as default sub-command
-        if not "background-extraction" in sys.argv and not "denoising" in sys.argv:
-            sys.argv.append("background-extraction")
+        if args.cli is not None and args.command is None:
+            args.command = "background-extraction"
         
-        args = parser.parse_args()
-
-        print(args)
         if args.cli and args.command == "background-extraction":
             from graxpert.cmdline_tools import BGECmdlineTool
 
+            args = bge_parser.parse_args(extras, args)
             logging.info(f"Starting GraXpert CLI, Background-Extraction, version: {graxpert_version} release: {graxpert_release}")
             clt = BGECmdlineTool(args)
             clt.execute()
@@ -251,6 +251,7 @@ def main():
         elif args.cli and args.command == "denoising":
             from graxpert.cmdline_tools import DenoiseCmdlineTool
 
+            args = denoise_parser.parse_args(extras, args)
             logging.info(f"Starting GraXpert CLI, Denoising, version: {graxpert_version} release: {graxpert_release}")
             clt = DenoiseCmdlineTool(args)
             clt.execute()

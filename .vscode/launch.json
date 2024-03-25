@@ -3,10 +3,10 @@
     "configurations": [
         {
             "name": "Run GraXpert",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "graxpert.main",
-            "justMyCode": true
+            "justMyCode": true,
         }
     ]
 }

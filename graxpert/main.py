@@ -180,8 +180,17 @@ def main():
         available_bge_versions = collect_available_versions(bge_ai_models_dir, bge_bucket_name)
         available_denoise_versions = collect_available_versions(denoise_ai_models_dir, denoise_bucket_name)
 
-        parser = argparse.ArgumentParser(description="GraXpert,the astronomical background extraction tool")
+        parser = argparse.ArgumentParser(add_help=False)
         parser.add_argument("-cli", "--cli", required=False, action="store_true", help="Has to be added when using the command line integration of GraXpert")
+        parser.add_argument(
+            "-c",
+            "--command",
+            required=False,
+            default="background-extraction",
+            choices=["background-extraction", "denoising"],
+            type=str,
+            help="Choose the image operation to execute: Background Extraction or Denoising",
+        )
         parser.add_argument("filename", type=str, help="Path of the unprocessed image")
         parser.add_argument("-output", "--output", nargs="?", required=False, type=str, help="Filename of the processed image")
         parser.add_argument(
@@ -195,8 +204,7 @@ def main():
         )
         parser.add_argument("-v", "--version", action="version", version=f"GraXpert version: {graxpert_version} release: {graxpert_release}")
 
-        subparsers = parser.add_subparsers(dest="command")
-        bge_parser = subparsers.add_parser("background-extraction")
+        bge_parser = argparse.ArgumentParser("GraXpert Background Extraction", parents=[parser], description="GraXpert, the astronomical background extraction tool")
         bge_parser.add_argument(
             "-ai_version",
             "--ai_version",
@@ -212,7 +220,7 @@ def main():
         bge_parser.add_argument("-smoothing", "--smoothing", nargs="?", required=False, default=None, type=float, help="Strength of smoothing between 0 and 1")
         bge_parser.add_argument("-bg", "--bg", required=False, action="store_true", help="Also save the background model")
 
-        denoise_parser = subparsers.add_parser("denoising")
+        denoise_parser = argparse.ArgumentParser("GraXpert Denoising", parents=[parser], description="GraXpert, the astronomical denoising tool")
         denoise_parser.add_argument(
             "-ai_version",
             "--ai_version",
@@ -229,18 +237,25 @@ def main():
             "--denoise_strength",
             nargs="?",
             required=False,
-            default=1.0,
+            default=None,
             type=float,
             help='Strength of the desired denoising effect, default: "1.0"',
         )
 
-        # assume "background-extraction" as default sub-command
-        if not "background-extraction" in sys.argv and not "denoising" in sys.argv:
-            sys.argv.append("background-extraction")
-        
-        args = parser.parse_args()
+        if "-h" in sys.argv or "--help" in sys.argv:
+            if "denoising" in sys.argv:
+                denoise_parser.print_help()
+            else:
+                bge_parser.print_help()
+            sys.exit(0)
 
-        print(args)
+        args, extras = parser.parse_known_args()
+
+        if args.command == "background-extraction":
+            args = bge_parser.parse_args()
+        else:
+            args = denoise_parser.parse_args()
+
         if args.cli and args.command == "background-extraction":
             from graxpert.cmdline_tools import BGECmdlineTool
 

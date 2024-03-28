@@ -1,13 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import copy_metadata
 
 
 block_cipher = None
 
 
+datas = []
+datas += [('./img/*', './img/'), ('./graxpert-dark-blue.json', './')]
+datas += copy_metadata('xisf')
+
+
 a = Analysis(['./graxpert/main.py'],
     pathex=[],
     binaries=[],
-    datas=[('./img/*', './img/'), ('./graxpert-dark-blue.json', './')],
+    datas=datas,
     hiddenimports=['PIL._tkinter_finder', 'tkinter'],
     hookspath=['./releng'],
     hooksconfig={},

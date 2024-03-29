@@ -106,24 +106,30 @@ class CropMenu(CollapsibleMenuFrame):
         self.place_children()
 
         eventbus.add_listener(UiEvents.SHOW_MENU_REQUEST, lambda e: self.hide() if not e == "CROP" else None)
+        eventbus.add_listener(UiEvents.SHOW_MENU_REQUEST, lambda e: eventbus.emit(UiEvents.TURN_OFF_CROP_MODE) if not e == "CROP" else None)
 
     def create_children(self):
         super().create_children()
-        self.cropmode_button = GraXpertButton(self.sub_frame, text=_("Crop mode on/off"), command=lambda: eventbus.emit(UiEvents.TOGGLE_CROP_REQUEST))
-        self.cropapply_button = GraXpertButton(self.sub_frame, text=_("Apply crop"), command=lambda: eventbus.emit(UiEvents.APPLY_CROP_REQUEST))
+        self.cropapply_button = GraXpertButton(self.sub_frame, 
+                                               text=_("Apply crop"), 
+                                               fg_color=ThemeManager.theme["Accent.CTkButton"]["fg_color"],
+                                               hover_color=ThemeManager.theme["Accent.CTkButton"]["hover_color"],
+                                               command=lambda: eventbus.emit(UiEvents.APPLY_CROP_REQUEST))
 
     def setup_layout(self):
         super().setup_layout()
 
     def place_children(self):
         super().place_children()
-        self.cropmode_button.grid(column=1, row=0, pady=pady, sticky=tk.NSEW)
-        self.cropapply_button.grid(column=1, row=1, pady=pady, sticky=tk.NSEW)
+        self.cropapply_button.grid(column=1, row=0, pady=pady, sticky=tk.NSEW)
 
     def toggle(self):
         super().toggle()
         if self.show:
             eventbus.emit(UiEvents.SHOW_MENU_REQUEST, "CROP")
+            eventbus.emit(UiEvents.TURN_ON_CROP_MODE)
+        else:
+            eventbus.emit(UiEvents.TURN_OFF_CROP_MODE)
 
 
 class ExtractionMenu(CollapsibleMenuFrame):

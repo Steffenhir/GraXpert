@@ -7,7 +7,8 @@ class UiEvents(Enum):
     # menu requests
     SHOW_MENU_REQUEST = auto()
     # crop
-    TOGGLE_CROP_REQUEST = auto()
+    TURN_ON_CROP_MODE = auto()
+    TURN_OFF_CROP_MODE = auto()
     APPLY_CROP_REQUEST = auto()
     # right sidebar requests
     HELP_FRAME_TOGGLED = auto()

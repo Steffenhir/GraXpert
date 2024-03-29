@@ -486,8 +486,8 @@ class Canvas(CTkFrame):
         self.update()
 
     def zoom_fit(self, image_width, image_height):
-        canvas_width = self.winfo_width()
-        canvas_height = self.winfo_height()
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
 
         if (image_width * image_height <= 0) or (canvas_width * canvas_height <= 0):
             return

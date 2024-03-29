@@ -159,6 +159,11 @@ class AdvancedFrame(RightFrameBase):
             self.denoise_ai_options.insert(0, "None")
         self.denoise_ai_version.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_AI_VERSION_CHANGED, {"denoise_ai_version": self.denoise_ai_version.get()}))
 
+        # ai settings
+        self.ai_batch_size = tk.IntVar()
+        self.ai_batch_size.set(graxpert.prefs.ai_batch_size)
+        self.ai_batch_size.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.AI_BATCH_SIZE_CHANGED, {"ai_batch_size": self.ai_batch_size.get()}))
+
         self.create_and_place_children()
         self.setup_layout()
 
@@ -205,6 +210,9 @@ class AdvancedFrame(RightFrameBase):
         # denoise ai model
         CTkLabel(self, text=_("Denoising AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
         GraXpertOptionMenu(self, variable=self.denoise_ai_version, values=self.denoise_ai_options).grid(**self.default_grid())
+
+        # ai settings
+        ValueSlider(self, variable=self.ai_batch_size, variable_name=_("AI Batch Size"), min_value=1, max_value=50, precision=0).grid(**self.default_grid())
 
     def setup_layout(self):
         self.columnconfigure(0, weight=1)

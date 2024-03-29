@@ -76,3 +76,4 @@ class AppEvents(Enum):
     CORRECTION_TYPE_CHANGED = auto()
     LANGUAGE_CHANGED = auto()
     SCALING_CHANGED = auto()
+    AI_BATCH_SIZE_CHANGED = auto()

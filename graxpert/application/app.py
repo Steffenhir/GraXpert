@@ -84,8 +84,12 @@ class GraXpert:
         eventbus.add_listener(AppEvents.BGE_AI_VERSION_CHANGED, self.on_bge_ai_version_changed)
         eventbus.add_listener(AppEvents.DENOISE_AI_VERSION_CHANGED, self.on_denoise_ai_version_changed)
         eventbus.add_listener(AppEvents.SCALING_CHANGED, self.on_scaling_changed)
+        eventbus.add_listener(AppEvents.AI_BATCH_SIZE_CHANGED, self.on_ai_batch_size_changed)
 
     # event handling
+    def on_ai_batch_size_changed(self, event):
+        self.prefs.ai_batch_size = event["ai_batch_size"]
+
     def on_bge_ai_version_changed(self, event):
         self.prefs.bge_ai_version = event["bge_ai_version"]
 
@@ -133,9 +137,9 @@ class GraXpert:
 
         try:
             self.prefs.images_linked_option = False
-            
+
             img_array_to_be_processed = np.copy(self.images.get("Original").img_array)
-                
+
             background = AstroImage()
             background.set_from_array(
                 extract_background(
@@ -166,7 +170,7 @@ class GraXpert:
 
             self.images.set("Gradient-Corrected", gradient_corrected)
             self.images.set("Background", background)
-            
+
             self.images.stretch_all(StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option), self.prefs.saturation)
 
             eventbus.emit(AppEvents.CALCULATE_SUCCESS)
@@ -312,10 +316,10 @@ class GraXpert:
 
     def on_smoothing_changed(self, event):
         self.prefs.smoothing_option = event["smoothing_option"]
-    
+
     def on_denoise_strength_changed(self, event):
         self.prefs.denoise_strength = event["denoise_strength"]
-        
+
     def on_denoise_request(self, event):
         if self.images.get("Original") is None:
             messagebox.showerror("Error", _("Please load your picture first."))
@@ -330,12 +334,12 @@ class GraXpert:
 
         try:
             img_array_to_be_processed = np.copy(self.images.get("Original").img_array)
-            if (self.images.get("Gradient-Corrected") is not None):
+            if self.images.get("Gradient-Corrected") is not None:
                 img_array_to_be_processed = np.copy(self.images.get("Gradient-Corrected").img_array)
-            
+
             self.prefs.images_linked_option = True
             ai_model_path = ai_model_path_from_version(denoise_ai_models_dir, self.prefs.denoise_ai_version)
-            imarray = denoise(img_array_to_be_processed, ai_model_path, self.prefs.denoise_strength, progress=progress)
+            imarray = denoise(img_array_to_be_processed, ai_model_path, self.prefs.denoise_strength, batch_size=self.prefs.ai_batch_size, progress=progress)
 
             denoised = AstroImage()
             denoised.set_from_array(imarray)
@@ -345,9 +349,9 @@ class GraXpert:
             denoised.update_fits_header(self.images.get("Original").fits_header, background_mean, self.prefs, self.cmd.app_state)
 
             denoised.copy_metadata(self.images.get("Original"))
-            
+
             self.images.set("Denoised", denoised)
-            
+
             self.images.stretch_all(StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option), self.prefs.saturation)
 
             eventbus.emit(AppEvents.DENOISE_SUCCESS)
@@ -375,13 +379,13 @@ class GraXpert:
         eventbus.emit(AppEvents.SAVE_BEGIN)
 
         try:
-            if (self.images.get("Denoised") is not None):
+            if self.images.get("Denoised") is not None:
                 self.images.get("Denoised").save(dir, self.prefs.saveas_option)
-            elif (self.images.get("Gradient-Corrected") is not None):          
+            elif self.images.get("Gradient-Corrected") is not None:
                 self.images.get("Gradient-Corrected").save(dir, self.prefs.saveas_option)
             else:
                 self.images.get("Original").save(dir, self.prefs.saveas_option)
-                
+
         except Exception as e:
             logging.exception(e)
             eventbus.emit(AppEvents.SAVE_ERROR)
@@ -425,13 +429,13 @@ class GraXpert:
         eventbus.emit(AppEvents.SAVE_BEGIN)
 
         try:
-            if (self.images.get("Denoised") is not None):
+            if self.images.get("Denoised") is not None:
                 self.images.get("Denoised").save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
-            elif (self.images.get("Gradient-Corrected") is not None):
+            elif self.images.get("Gradient-Corrected") is not None:
                 self.images.get("Gradient-Corrected").save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
             else:
                 self.images.get("Original").save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
-                                                                     
+
         except Exception as e:
             eventbus.emit(AppEvents.SAVE_ERROR)
             logging.exception(e)

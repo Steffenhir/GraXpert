@@ -241,6 +241,15 @@ def main():
             type=float,
             help='Strength of the desired denoising effect, default: "1.0"',
         )
+        denoise_parser.add_argument(
+            "-batch_size",
+            "--ai_batch_size",
+            nargs="?",
+            required=False,
+            default=None,
+            type=int,
+            help='Number of image tiles which Graxpert will denoise in parallel. Be careful: increasing this value might result in out-of-memory errors. Valid Range: 1..50, default: "3"',
+        )
 
         if "-h" in sys.argv or "--help" in sys.argv:
             if "denoising" in sys.argv:

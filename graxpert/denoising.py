@@ -8,7 +8,7 @@ import onnxruntime as ort
 from graxpert.ai_model_handling import get_execution_providers_ordered
 
 
-def denoise(image, ai_path, strength, batch_size=5, window_size=256, stride=128, progress=None):
+def denoise(image, ai_path, strength, batch_size=3, window_size=256, stride=128, progress=None):
 
     logging.info("Starting denoising")
 

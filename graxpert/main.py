@@ -183,7 +183,7 @@ def main():
         parser = argparse.ArgumentParser(add_help=False)
         parser.add_argument("-cli", "--cli", required=False, action="store_true", help="Has to be added when using the command line integration of GraXpert")
         parser.add_argument(
-            "-c",
+            "-cmd",
             "--command",
             required=False,
             default="background-extraction",

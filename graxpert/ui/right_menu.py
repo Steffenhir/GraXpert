@@ -1,4 +1,5 @@
 import tkinter as tk
+import webbrowser
 from tkinter import messagebox
 
 import customtkinter as ctk
@@ -82,6 +83,32 @@ class HelpFrame(RightFrameBase):
         HelpText(self, rows=2, text=_("Right click on sample point: Delete sample point")).grid(**self.default_grid())
         HelpText(self, text=_("Mouse wheel: Zoom")).grid(**self.default_grid())
         HelpText(self, rows=3, text=_("Ctrl+Z/Y: Undo/Redo sample point")).grid(**self.default_grid())
+
+        CTkLabel(self, text=_("Licenses"), font=self.heading_font).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
+
+        def callback(url):
+            webbrowser.open_new(url)
+
+        row = self.nrow()
+        HelpText(self, text=_("GraXpert is licensed under GPL-3:")).grid(column=0, row=row, padx=padx, pady=pady, sticky=tk.W)
+        url_link_1 = "https://raw.githubusercontent.com/Steffenhir/GraXpert/main/License.md"
+        url_label_1 = CTkLabel(self, text="<Link>", text_color="dodger blue")
+        url_label_1.grid(column=0, row=row, padx=padx, sticky=tk.E)
+        url_label_1.bind("<Button-1>", lambda e: callback(url_link_1))
+
+        row = self.nrow()
+        HelpText(self, rows=2, text=_("Background Extraction AI models are licensed under CC BY-NC-SA:")).grid(column=0, row=row, padx=padx, pady=pady, sticky=tk.W)
+        url_link_2 = "https://raw.githubusercontent.com/Steffenhir/GraXpert/main/licenses/BGE-Model-LICENSE.html"
+        url_label_2 = CTkLabel(self, text="<Link>", text_color="dodger blue")
+        url_label_2.grid(column=0, row=row, padx=padx, sticky=tk.E)
+        url_label_2.bind("<Button-1>", lambda e: callback(url_link_2))
+
+        row = self.nrow()
+        HelpText(self, rows=2, text=_("Denoising AI models are licensed under CC BY-NC-SA:")).grid(column=0, row=row, padx=padx, pady=pady, sticky=tk.W)
+        url_link_3 = "https://raw.githubusercontent.com/Steffenhir/GraXpert/main/licenses/Denoise-Model-LICENSE.html"
+        url_label_3 = CTkLabel(self, text="<Link>", text_color="dodger blue")
+        url_label_3.grid(column=0, row=row, padx=padx, sticky=tk.E)
+        url_label_3.bind("<Button-1>", lambda e: callback(url_link_3))
 
     def setup_layout(self):
         self.columnconfigure(0, weight=1)

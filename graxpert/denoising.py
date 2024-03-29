@@ -56,6 +56,7 @@ def denoise(image, ai_path, strength, batch_size=5, window_size=256, stride=128,
     for b in range(0, ith * itw + batch_size, batch_size):
 
         input_tiles = []
+        input_tile_copies = []
         for t_idx in range(0, batch_size):
 
             index = b + t_idx
@@ -70,6 +71,7 @@ def denoise(image, ai_path, strength, batch_size=5, window_size=256, stride=128,
 
             tile = image[x : x + window_size, y : y + window_size, :]
             tile = (tile - median) / mad * 0.04
+            input_tile_copies.append(np.copy(tile))
             tile = np.clip(tile, -1.0, 1.0)
 
             input_tiles.append(tile)
@@ -78,7 +80,6 @@ def denoise(image, ai_path, strength, batch_size=5, window_size=256, stride=128,
             continue
         
         input_tiles = np.array(input_tiles)
-        input_tile_copies = np.copy(input_tiles)
 
         output_tiles = []
         session_result = session.run(None, {"gen_input_image": input_tiles})[0]

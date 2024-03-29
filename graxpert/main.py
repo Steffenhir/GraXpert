@@ -183,7 +183,7 @@ def main():
         parser = argparse.ArgumentParser(add_help=False)
         parser.add_argument("-cli", "--cli", required=False, action="store_true", help="Has to be added when using the command line integration of GraXpert")
         parser.add_argument(
-            "-c",
+            "-cmd",
             "--command",
             required=False,
             default="background-extraction",
@@ -240,6 +240,15 @@ def main():
             default=None,
             type=float,
             help='Strength of the desired denoising effect, default: "1.0"',
+        )
+        denoise_parser.add_argument(
+            "-batch_size",
+            "--ai_batch_size",
+            nargs="?",
+            required=False,
+            default=None,
+            type=int,
+            help='Number of image tiles which Graxpert will denoise in parallel. Be careful: increasing this value might result in out-of-memory errors. Valid Range: 1..50, default: "3"',
         )
 
         if "-h" in sys.argv or "--help" in sys.argv:

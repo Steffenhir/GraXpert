@@ -220,6 +220,8 @@ class DenoiseCmdlineTool(CmdlineToolBase):
                             preferences.ai_version = json_prefs["ai_version"]
                         if "denoise_strength" in json_prefs:
                             preferences.denoise_strength = json_prefs["denoise_strength"]
+                        if "ai_batch_size" in json_prefs:
+                            preferences.ai_batch_size = json_prefs["ai_batch_size"]
 
             except Exception as e:
                 logging.exception(e)
@@ -233,6 +235,12 @@ class DenoiseCmdlineTool(CmdlineToolBase):
             logging.info(f"Using user-supplied denoise strength value {preferences.denoise_strength}.")
         else:
             logging.info(f"Using stored denoise strength value {preferences.denoise_strength}.")
+        
+        if self.args.ai_batch_size is not None:
+            preferences.ai_batch_size = self.args.ai_batch_size
+            logging.info(f"Using user-supplied batch size value {preferences.ai_batch_size}.")
+        else:
+            logging.info(f"Using stored batch size value {preferences.ai_batch_size}.")
 
         ai_model_path = ai_model_path_from_version(denoise_ai_models_dir, self.get_ai_version(preferences))
 
@@ -249,7 +257,8 @@ class DenoiseCmdlineTool(CmdlineToolBase):
             denoise(
                 astro_Image.img_array,
                 ai_model_path,
-                preferences.denoise_strength
+                preferences.denoise_strength,
+                batch_size=preferences.ai_batch_size
             ))
         processed_Astro_Image.save(self.get_save_path(), self.get_output_file_format())
 

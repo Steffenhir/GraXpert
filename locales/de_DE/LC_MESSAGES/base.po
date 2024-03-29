@@ -358,3 +358,21 @@ msgstr "KI-Modell wird heruntergeladen"
 
 msgid "An error occured during background calculation. Please see the log at {}."
 msgstr "Während der Berechnung ist ein Fehler aufgetreten. Bitte schauen Sie sich die Logdatei bei dem Verzeichnis {} an."
+
+msgid "Loading"
+msgstr "Laden"
+
+msgid "Channels linked"
+msgstr "Kanäle verknüpft"
+
+msgid "Denoising"
+msgstr "Entrauschen"
+
+msgid "Denoise Strength"
+msgstr "Entrauschungsstärke"
+
+msgid "Denoise Image"
+msgstr "Bild entrauschen"
+
+msgid "Saving"
+msgstr "Speichern"

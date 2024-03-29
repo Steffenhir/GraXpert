@@ -11,9 +11,9 @@ from graxpert.ui.ui_events import UiEvents
 from graxpert.ui.widgets import CollapsibleMenuFrame, GraXpertButton, GraXpertCheckbox, GraXpertOptionMenu, GraXpertScrollableFrame, ProcessingStep, ValueSlider, default_label_width, padx, pady
 
 
-class LoadMenu(CollapsibleMenuFrame):
+class StretchMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Loading"), show=True, number=1, **kwargs)
+        super().__init__(parent, title=_("Stretching"), show=False, number=1, **kwargs)
 
         # stretch options
         self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "30% Bg, 2 sigma"]
@@ -32,21 +32,11 @@ class LoadMenu(CollapsibleMenuFrame):
         self.create_children()
         self.setup_layout()
         self.place_children()
-
-        eventbus.add_listener(UiEvents.SHOW_MENU_REQUEST, lambda e: self.hide() if not e == "LOAD" else None)
+        
+        eventbus.add_listener(AppEvents.LOAD_IMAGE_END, lambda e: self.show_menu())
 
     def create_children(self):
         super().create_children()
-
-        # image loading
-        self.load_image_button = GraXpertButton(
-            self.sub_frame,
-            text=_("Load Image"),
-            fg_color=ThemeManager.theme["Accent.CTkButton"]["fg_color"],
-            hover_color=ThemeManager.theme["Accent.CTkButton"]["hover_color"],
-            command=self.menu_open_clicked,
-        )
-        self.tt_load = tooltip.Tooltip(self.load_image_button, text=tooltip.load_text)
 
         # stretch options
         self.stretch_options_title = ProcessingStep(self.sub_frame, number=0, indent=2, title=_(" Stretch Options"))
@@ -80,14 +70,58 @@ class LoadMenu(CollapsibleMenuFrame):
             row += 1
             return row
 
-        # image loading
-        self.load_image_button.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
-
         # stretch options
         self.stretch_options_title.grid(column=0, row=next_row(), columnspan=2, pady=pady, sticky=tk.EW)
         self.stretch_menu.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
         self.saturation_slider.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
         self.channels_linked_switch.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
+
+    def show_menu(self):
+        if not self.show:
+            self.show = True
+            self.place_sub_frame(self.show)
+            self.sub_frame.update()
+            eventbus.emit(UiEvents.SHOW_MENU_REQUEST, "STRETCH")
+
+
+class LoadMenu(CollapsibleMenuFrame):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, title=_("Loading"), show=True, number=2, **kwargs)
+
+        self.create_children()
+        self.setup_layout()
+        self.place_children()
+
+        eventbus.add_listener(UiEvents.SHOW_MENU_REQUEST, lambda e: self.hide() if not e == "LOAD" else None)
+
+    def create_children(self):
+        super().create_children()
+
+        # image loading
+        self.load_image_button = GraXpertButton(
+            self.sub_frame,
+            text=_("Load Image"),
+            fg_color=ThemeManager.theme["Accent.CTkButton"]["fg_color"],
+            hover_color=ThemeManager.theme["Accent.CTkButton"]["hover_color"],
+            command=self.menu_open_clicked,
+        )
+        self.tt_load = tooltip.Tooltip(self.load_image_button, text=tooltip.load_text)
+
+    def setup_layout(self):
+        super().setup_layout()
+
+    def place_children(self):
+        super().place_children()
+
+        row = -1
+
+        def next_row():
+            nonlocal row
+            row += 1
+            return row
+
+        # image loading
+        self.load_image_button.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
 
     def toggle(self):
         super().toggle()
@@ -100,7 +134,7 @@ class LoadMenu(CollapsibleMenuFrame):
 
 class CropMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Crop"), show=False, number=2, **kwargs)
+        super().__init__(parent, title=_("Crop"), show=False, number=3, **kwargs)
         self.create_children()
         self.setup_layout()
         self.place_children()
@@ -110,11 +144,13 @@ class CropMenu(CollapsibleMenuFrame):
 
     def create_children(self):
         super().create_children()
-        self.cropapply_button = GraXpertButton(self.sub_frame, 
-                                               text=_("Apply crop"), 
-                                               fg_color=ThemeManager.theme["Accent.CTkButton"]["fg_color"],
-                                               hover_color=ThemeManager.theme["Accent.CTkButton"]["hover_color"],
-                                               command=lambda: eventbus.emit(UiEvents.APPLY_CROP_REQUEST))
+        self.cropapply_button = GraXpertButton(
+            self.sub_frame,
+            text=_("Apply crop"),
+            fg_color=ThemeManager.theme["Accent.CTkButton"]["fg_color"],
+            hover_color=ThemeManager.theme["Accent.CTkButton"]["hover_color"],
+            command=lambda: eventbus.emit(UiEvents.APPLY_CROP_REQUEST),
+        )
 
     def setup_layout(self):
         super().setup_layout()
@@ -134,7 +170,7 @@ class CropMenu(CollapsibleMenuFrame):
 
 class ExtractionMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Background Extraction"), show=False, number=3, **kwargs)
+        super().__init__(parent, title=_("Background Extraction"), show=False, number=4, **kwargs)
 
         # method selection
         self.interpol_options = ["RBF", "Splines", "Kriging", "AI"]
@@ -256,12 +292,12 @@ class ExtractionMenu(CollapsibleMenuFrame):
 
 class DenoiseMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Denoising"), show=False, number=4, **kwargs)
-        
+        super().__init__(parent, title=_("Denoising"), show=False, number=5, **kwargs)
+
         self.denoise_strength = tk.DoubleVar()
         self.denoise_strength.set(graxpert.prefs.denoise_strength)
         self.denoise_strength.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_STRENGTH_CHANGED, {"denoise_strength": self.denoise_strength.get()}))
-        
+
         self.create_children()
         self.setup_layout()
         self.place_children()
@@ -279,8 +315,10 @@ class DenoiseMenu(CollapsibleMenuFrame):
             command=lambda: eventbus.emit(AppEvents.DENOISE_REQUEST),
         )
         self.tt_load = tooltip.Tooltip(self.denoise_button, text=tooltip.denoise_text)
-        
-        self.denoise_strength_slider = ValueSlider(self.sub_frame, width=default_label_width, variable_name=_("Denoise Strength"), variable=self.denoise_strength, min_value=0.0, max_value=1.0, precision=2)
+
+        self.denoise_strength_slider = ValueSlider(
+            self.sub_frame, width=default_label_width, variable_name=_("Denoise Strength"), variable=self.denoise_strength, min_value=0.0, max_value=1.0, precision=2
+        )
         tooltip.Tooltip(self.denoise_strength_slider, text=tooltip.bg_tol_text)
 
     def setup_layout(self):
@@ -288,7 +326,7 @@ class DenoiseMenu(CollapsibleMenuFrame):
 
     def place_children(self):
         super().place_children()
-        
+
         self.denoise_strength_slider.grid(column=1, row=0, pady=pady, sticky=tk.EW)
         self.denoise_button.grid(column=1, row=1, pady=pady, sticky=tk.EW)
 
@@ -300,7 +338,7 @@ class DenoiseMenu(CollapsibleMenuFrame):
 
 class SaveMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Saving"), show=False, number=5, **kwargs)
+        super().__init__(parent, title=_("Saving"), show=False, number=6, **kwargs)
 
         # saving
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits", "16 bit XISF", "32 bit XISF"]
@@ -366,6 +404,7 @@ class LeftMenu(GraXpertScrollableFrame):
         self.place_children()
 
     def create_children(self):
+        self.stretch_menu = StretchMenu(self, fg_color="transparent")
         self.load_menu = LoadMenu(self, fg_color="transparent")
         self.crop_menu = CropMenu(self, fg_color="transparent")
         self.extraction_menu = ExtractionMenu(self, fg_color="transparent")
@@ -385,6 +424,7 @@ class LeftMenu(GraXpertScrollableFrame):
             row += 1
             return row
 
+        self.stretch_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)
         self.load_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)
         self.crop_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)
         self.extraction_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)

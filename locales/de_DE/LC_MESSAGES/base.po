@@ -294,6 +294,12 @@ msgstr "Speichere das Hintergrundmodell"
 msgid "Save the processed picture"
 msgstr "Speichere das bearbeitete Bild"
 
+msgid "Use GraXpert's denoising AI model to reduce the noise in your image. This may take a while"
+msgstr "Wendet GraXpert's AI zum Entrauschen des Bildes an. Das kann eine Weile dauern."
+
+msgid "Determines strength of denoising."
+msgstr "Gibt an, wie stark entrauscht werden soll."
+
 msgid "Save the stretched and processed picture. The color saturation is not changed."
 msgstr "Speichere das gestretchte und bearbeitete Bild. Die Farbsättigung wird dabei nicht verändert."
 

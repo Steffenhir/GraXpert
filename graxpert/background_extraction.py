@@ -39,6 +39,10 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         # Shrink and pad to avoid artifacts on borders
         padding = 8
         imarray_shrink = cv2.resize(imarray, dsize=(256 - 2 * padding, 256 - 2 * padding), interpolation=cv2.INTER_LINEAR)
+        
+        if len(imarray_shrink.shape) == 2:
+            imarray_shrink = np.expand_dims(imarray_shrink, -1)
+        
         imarray_shrink = np.pad(imarray_shrink, ((padding, padding), (padding, padding), (0, 0)), mode="edge")
 
         median = []
@@ -104,6 +108,9 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         sigma = 3.0
         background = cv2.GaussianBlur(background, ksize=gaussian_kernel(sigma), sigmaX=sigma, sigmaY=sigma)
         background = cv2.resize(background, dsize=(in_imarray.shape[1], in_imarray.shape[0]), interpolation=cv2.INTER_LINEAR)
+        
+        if len(background.shape) == 2:
+            background = np.expand_dims(background, -1)
 
         if progress is not None:
             progress.update(8)

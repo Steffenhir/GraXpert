@@ -185,6 +185,9 @@ class GraXpert:
             eventbus.emit(AppEvents.CALCULATE_END)
 
     def on_change_saturation_request(self, event):
+        if self.images.get("Original") is None:
+            return
+        
         self.prefs.saturation = event["saturation"]
 
         eventbus.emit(AppEvents.CHANGE_SATURATION_BEGIN)

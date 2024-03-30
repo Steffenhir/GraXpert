@@ -33,7 +33,7 @@ class ApplicationFrame(CTkFrame):
         self.canvas = Canvas(self)
         self.help_frame = HelpFrame(self, fg_color="transparent", width=300)
         self.advanced_frame = AdvancedFrame(self, fg_color="transparent", width=300)
-        self.statusbar_frame = StatusBar(self)
+        self.statusbar_frame = StatusBar(self, fg_color="transparent")
 
     def setup_layout(self):
         self.columnconfigure(0, weight=0)

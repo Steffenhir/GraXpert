@@ -11,82 +11,9 @@ from graxpert.ui.ui_events import UiEvents
 from graxpert.ui.widgets import CollapsibleMenuFrame, GraXpertButton, GraXpertCheckbox, GraXpertOptionMenu, GraXpertScrollableFrame, ProcessingStep, ValueSlider, default_label_width, padx, pady
 
 
-class StretchMenu(CollapsibleMenuFrame):
-    def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Stretching"), show=False, number=1, **kwargs)
-
-        # stretch options
-        self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "30% Bg, 2 sigma"]
-        self.stretch_option_current = StringVar()
-        self.stretch_option_current.set(graxpert.prefs.stretch_option)
-        self.stretch_option_current.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.STRETCH_OPTION_CHANGED, {"stretch_option": self.stretch_option_current.get()}))
-
-        self.saturation = tk.DoubleVar()
-        self.saturation.set(graxpert.prefs.saturation)
-        self.saturation.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.CHANGE_SATURATION_REQUEST, {"saturation": self.saturation.get()}))
-
-        self.channels_linked = tk.BooleanVar()
-        self.channels_linked.set(graxpert.prefs.channels_linked_option)
-        self.channels_linked.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.CHANNELS_LINKED_CHANGED, {"channels_linked": self.channels_linked.get()}))
-
-        self.create_children()
-        self.setup_layout()
-        self.place_children()
-        
-        eventbus.add_listener(AppEvents.LOAD_IMAGE_END, lambda e: self.show_menu())
-
-    def create_children(self):
-        super().create_children()
-
-        # stretch options
-        self.stretch_options_title = ProcessingStep(self.sub_frame, number=0, indent=2, title=_(" Stretch Options"))
-        self.stretch_menu = GraXpertOptionMenu(
-            self.sub_frame,
-            variable=self.stretch_option_current,
-            values=self.stretch_options,
-        )
-        tooltip.Tooltip(self.stretch_menu, text=tooltip.stretch_text)
-        self.saturation_slider = ValueSlider(
-            self.sub_frame,
-            width=default_label_width,
-            variable_name=_("Saturation"),
-            variable=self.saturation,
-            min_value=0,
-            max_value=3,
-            precision=1,
-        )
-        self.channels_linked_switch = GraXpertCheckbox(self.sub_frame, width=default_label_width, text=_("Channels linked"), variable=self.channels_linked)
-
-    def setup_layout(self):
-        super().setup_layout()
-
-    def place_children(self):
-        super().place_children()
-
-        row = -1
-
-        def next_row():
-            nonlocal row
-            row += 1
-            return row
-
-        # stretch options
-        self.stretch_options_title.grid(column=0, row=next_row(), columnspan=2, pady=pady, sticky=tk.EW)
-        self.stretch_menu.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
-        self.saturation_slider.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
-        self.channels_linked_switch.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
-
-    def show_menu(self):
-        if not self.show:
-            self.show = True
-            self.place_sub_frame(self.show)
-            self.sub_frame.update()
-            eventbus.emit(UiEvents.SHOW_MENU_REQUEST, "STRETCH")
-
-
 class LoadMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Loading"), show=True, number=2, **kwargs)
+        super().__init__(parent, title=_("Loading"), show=True, number=1, **kwargs)
 
         self.create_children()
         self.setup_layout()
@@ -134,7 +61,7 @@ class LoadMenu(CollapsibleMenuFrame):
 
 class CropMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Crop"), show=False, number=3, **kwargs)
+        super().__init__(parent, title=_("Crop"), show=False, number=2, **kwargs)
         self.create_children()
         self.setup_layout()
         self.place_children()
@@ -170,7 +97,7 @@ class CropMenu(CollapsibleMenuFrame):
 
 class ExtractionMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Background Extraction"), show=False, number=4, **kwargs)
+        super().__init__(parent, title=_("Background Extraction"), show=False, number=3, **kwargs)
 
         # method selection
         self.interpol_options = ["RBF", "Splines", "Kriging", "AI"]
@@ -292,7 +219,7 @@ class ExtractionMenu(CollapsibleMenuFrame):
 
 class DenoiseMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Denoising"), show=False, number=5, **kwargs)
+        super().__init__(parent, title=_("Denoising"), show=False, number=4, **kwargs)
 
         self.denoise_strength = tk.DoubleVar()
         self.denoise_strength.set(graxpert.prefs.denoise_strength)
@@ -338,7 +265,7 @@ class DenoiseMenu(CollapsibleMenuFrame):
 
 class SaveMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Saving"), show=False, number=6, **kwargs)
+        super().__init__(parent, title=_("Saving"), show=False, number=5, **kwargs)
 
         # saving
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits", "16 bit XISF", "32 bit XISF"]
@@ -404,7 +331,6 @@ class LeftMenu(GraXpertScrollableFrame):
         self.place_children()
 
     def create_children(self):
-        self.stretch_menu = StretchMenu(self, fg_color="transparent")
         self.load_menu = LoadMenu(self, fg_color="transparent")
         self.crop_menu = CropMenu(self, fg_color="transparent")
         self.extraction_menu = ExtractionMenu(self, fg_color="transparent")
@@ -424,7 +350,6 @@ class LeftMenu(GraXpertScrollableFrame):
             row += 1
             return row
 
-        self.stretch_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)
         self.load_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)
         self.crop_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)
         self.extraction_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)

@@ -441,7 +441,7 @@ class Canvas(CTkFrame):
 
         affine_inv = (mat_inv[0, 0], mat_inv[0, 1], mat_inv[0, 2], mat_inv[1, 0], mat_inv[1, 1], mat_inv[1, 2])
 
-        dst = pil_image.transform((canvas_width, canvas_height), Image.AFFINE, affine_inv, Image.BILINEAR)
+        dst = pil_image.transform((canvas_width, canvas_height), Image.AFFINE, affine_inv, Image.NEAREST)
 
         im = ImageTk.PhotoImage(image=dst)
 

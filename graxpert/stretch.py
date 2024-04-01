@@ -49,9 +49,67 @@ class StretchParameters:
         elif stretch_option == "30% Bg, 2 sigma":
             self.bg = 0.3
             self.sigma = 2.0
-            
 
-def stretch_channel(shm_name, c, stretch_params, mtf_stretch_params, shape, dtype, logging_queue, logging_configurer):
+    
+
+def stretch(data, stretch_params: StretchParameters):
+    mtf_stretch_param = calculate_mtf_stretch_parameters_for_image(stretch_params, data)
+    return stretch_all([data], [mtf_stretch_param])[0]
+
+
+def stretch_all(datas, mtf_stretch_params: list[MTFStretchParameters]):
+    
+    futures = []
+    shms = []
+    copies = []
+    result = []
+    logging_queue = get_logging_queue()             
+    
+    for data, mtf_stretch_param in zip(datas, mtf_stretch_params):
+        shm = shared_memory.SharedMemory(create=True, size=data.nbytes)
+        copy = np.ndarray(data.shape, dtype=data.dtype, buffer=shm.buf)
+        np.copyto(copy, data)
+        shms.append(shm)
+        copies.append(copy)
+        
+        for c in range(copy.shape[-1]):
+            futures.insert(c, executor.submit(stretch_channel, shm.name, c, mtf_stretch_param[c], copy.shape, copy.dtype, logging_queue, worker_configurer))
+    wait(futures)
+
+    for copy in copies:
+        copy = np.copy(copy)
+        result.append(copy)
+    
+    for shm in shms:
+        shm.close()
+        shm.unlink()
+    
+    return result
+
+
+def calculate_mtf_stretch_parameters_for_image(stretch_params, image):
+    if stretch_params.channels_linked:
+        mtf_stretch_param = calculate_mtf_stretch_parameters_for_channel(stretch_params, image)
+        return [mtf_stretch_param] * image.shape[-1]
+    
+    else:
+        return [calculate_mtf_stretch_parameters_for_channel(stretch_params, image[:,:,i]) for i in range(image.shape[-1])]
+
+def calculate_mtf_stretch_parameters_for_channel(stretch_params, channel):
+    channel = channel.flatten()[::4]
+    
+    indx_clip = np.logical_and(channel < 1.0, channel > 0.0)
+    median = np.median(channel[indx_clip])
+    mad = np.median(np.abs(channel[indx_clip]-median))
+    
+    shadow_clipping = np.clip(median - stretch_params.sigma*mad, 0, 1.0)
+    highlight_clipping = 1.0
+    midtone = MTF((median-shadow_clipping)/(highlight_clipping - shadow_clipping), stretch_params.bg)
+    
+    return MTFStretchParameters(midtone, shadow_clipping)
+
+
+def stretch_channel(shm_name, c, mtf_stretch_params, shape, dtype, logging_queue, logging_configurer):
 
     logging_configurer(logging_queue)
     logging.info("stretch.stretch_channel started")
@@ -61,9 +119,6 @@ def stretch_channel(shm_name, c, stretch_params, mtf_stretch_params, shape, dtyp
     channel = channels[:,:,c]
     
     try:
-        if not mtf_stretch_params:
-            mtf_stretch_params = calculate_mtf_stretch_parameters(stretch_params, channel)
-
         channel[channel <= mtf_stretch_params.shadow_clipping] = 0.0
         channel[channel >= mtf_stretch_params.highlight_clipping] = 1.0
 
@@ -79,77 +134,6 @@ def stretch_channel(shm_name, c, stretch_params, mtf_stretch_params, shape, dtyp
         existing_shm.close()
     
     logging.info("stretch.stretch_channel finished")
-    
-def calculate_mtf_stretch_parameters(stretch_params, channel):
-    channel = channel.flatten()
-    
-    indx_clip = np.logical_and(channel < 1.0, channel > 0.0)
-    median = np.median(channel[indx_clip])
-    mad = np.median(np.abs(channel[indx_clip]-median))
-    
-    shadow_clipping = np.clip(median - stretch_params.sigma*mad, 0, 1.0)
-    highlight_clipping = 1.0
-    midtone = MTF((median-shadow_clipping)/(highlight_clipping - shadow_clipping), stretch_params.bg)
-    
-    return MTFStretchParameters(midtone, shadow_clipping)
-    
-
-def stretch(data, stretch_params: StretchParameters):
-    return stretch_all([data], stretch_params)[0]
-
-def stretch_all(datas, stretch_params: StretchParameters, reference_img_array=None):
-    
-    if not stretch_params.do_stretch:
-        datas = [data.clip(min=0, max=1) for data in datas]
-        return datas
-    
-    if reference_img_array is None:
-        reference_img_array = datas[0]
-    
-    futures = []
-    shms = []
-    copies = []
-    result = []
-    logging_queue = get_logging_queue()
-    
-    common_mtf_stretch_params_per_channel = []
-    if stretch_params.images_linked:
-        if stretch_params.channels_linked:
-            mtf_stretch_params_for_all_channel = calculate_mtf_stretch_parameters(stretch_params, reference_img_array)
-            common_mtf_stretch_params_per_channel = [mtf_stretch_params_for_all_channel] * reference_img_array.shape[-1]
-        else:
-            for c in range(datas[0].shape[-1]):
-                common_mtf_stretch_params_per_channel.append(calculate_mtf_stretch_parameters(stretch_params, reference_img_array[:,:,c]))
-             
-    
-    for data in datas:
-        shm = shared_memory.SharedMemory(create=True, size=data.nbytes)
-        copy = np.ndarray(data.shape, dtype=data.dtype, buffer=shm.buf)
-        np.copyto(copy, data)
-        shms.append(shm)
-        copies.append(copy)
-        
-        mtf_stretch_params = [None] * data.shape[-1]
-        
-        if stretch_params.images_linked:
-            mtf_stretch_params = common_mtf_stretch_params_per_channel
-        elif stretch_params.channels_linked:
-            mtf_stretch_params = calculate_mtf_stretch_parameters(stretch_params, copy)
-            mtf_stretch_params = [mtf_stretch_params] * data.shape[-1]
-        
-        for c in range(copy.shape[-1]):
-            futures.insert(c, executor.submit(stretch_channel, shm.name, c, stretch_params, mtf_stretch_params[c], copy.shape, copy.dtype, logging_queue, worker_configurer))
-    wait(futures)
-
-    for copy in copies:
-        copy = np.copy(copy)
-        result.append(copy)
-    
-    for shm in shms:
-        shm.close()
-        shm.unlink()
-    
-    return result
     
 
 def MTF(data, midtone):

@@ -118,7 +118,10 @@ class AstroImage:
         return
 
     def stretch(self, stretch_params: StretchParameters):
-        return np.clip(stretch(self.img_array, stretch_params), 0.0, 1.0)
+        if stretch_params.do_stretch:
+            return np.clip(stretch(self.img_array, stretch_params), 0.0, 1.0)
+        else:
+            return np.clip(self.img_array, 0.0, 1.0)
 
     def crop(self, startx, endx, starty, endy):
         self.img_array = self.img_array[starty:endy, startx:endx, :]

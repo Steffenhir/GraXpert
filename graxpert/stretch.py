@@ -53,6 +53,9 @@ class StretchParameters:
     
 
 def stretch(data, stretch_params: StretchParameters):
+    if not stretch_params.do_stretch:
+        return data
+    
     mtf_stretch_param = calculate_mtf_stretch_parameters_for_image(stretch_params, data)
     return stretch_all([data], [mtf_stretch_param])[0]
 

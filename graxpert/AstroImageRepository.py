@@ -16,30 +16,39 @@ class AstroImageRepository:
         if self.get("Original") is None:
             return
         
-        all_image_arrays = []
-        all_mtf_stretch_params = []
+        stretches = []
         
-        all_image_arrays.append(self.get("Original").img_array)
-        all_mtf_stretch_params.append(calculate_mtf_stretch_parameters_for_image(stretch_params, self.get("Original").img_array))
-        
-        if self.get("Gradient-Corrected") is not None and self.get("Background") is not None:
-            all_image_arrays.append(self.get("Gradient-Corrected").img_array)
-            all_mtf_stretch_params.append(calculate_mtf_stretch_parameters_for_image(stretch_params, self.get("Gradient-Corrected").img_array))
+        if not stretch_params.do_stretch:
+            for key, image in self.images.items():
+                if image is not None:
+                    stretches.append(image.img_array)
+                    
+        else:
+    
+            all_image_arrays = []
+            all_mtf_stretch_params = []
             
-            all_image_arrays.append(self.get("Background").img_array)
-            all_mtf_stretch_params.append(all_mtf_stretch_params[0])
+            all_image_arrays.append(self.get("Original").img_array)
+            all_mtf_stretch_params.append(calculate_mtf_stretch_parameters_for_image(stretch_params, self.get("Original").img_array))
             
-        
-        if self.get("Denoised") is not None and self.get("Gradient-Corrected") is None:
-            all_image_arrays.append(self.get("Denoised").img_array)
-            all_mtf_stretch_params.append(all_mtf_stretch_params[0])
+            if self.get("Gradient-Corrected") is not None and self.get("Background") is not None:
+                all_image_arrays.append(self.get("Gradient-Corrected").img_array)
+                all_mtf_stretch_params.append(calculate_mtf_stretch_parameters_for_image(stretch_params, self.get("Gradient-Corrected").img_array))
+                
+                all_image_arrays.append(self.get("Background").img_array)
+                all_mtf_stretch_params.append(all_mtf_stretch_params[0])
+                
             
-        elif self.get("Denoised") is not None and self.get("Gradient-Corrected") is not None:
-            all_image_arrays.append(self.get("Denoised").img_array)
-            all_mtf_stretch_params.append(all_mtf_stretch_params[1])
+            if self.get("Denoised") is not None and self.get("Gradient-Corrected") is None:
+                all_image_arrays.append(self.get("Denoised").img_array)
+                all_mtf_stretch_params.append(all_mtf_stretch_params[0])
+                
+            elif self.get("Denoised") is not None and self.get("Gradient-Corrected") is not None:
+                all_image_arrays.append(self.get("Denoised").img_array)
+                all_mtf_stretch_params.append(all_mtf_stretch_params[1])
+                
             
-         
-        stretches = stretch_all(all_image_arrays, all_mtf_stretch_params)
+            stretches = stretch_all(all_image_arrays, all_mtf_stretch_params)
         
 
         i = 0

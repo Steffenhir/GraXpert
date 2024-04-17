@@ -6,15 +6,21 @@ import numpy as np
 import onnxruntime as ort
 
 from graxpert.ai_model_handling import get_execution_providers_ordered
-
+from graxpert.application.eventbus import eventbus
+from graxpert.application.app_events import AppEvents
+from graxpert.ui.ui_events import UiEvents
 
 def denoise(image, ai_path, strength, batch_size=3, window_size=256, stride=128, progress=None):
 
     logging.info("Starting denoising")
 
     input = copy.deepcopy(image)
-    num_colors = image.shape[-1]
 
+    global cached_denoised_image
+    if cached_denoised_image is not None:
+        return blend_images(input, cached_denoised_image, strength)
+    
+    num_colors = image.shape[-1]
     if num_colors == 1:
         image = np.array([image[:, :, 0], image[:, :, 0], image[:, :, 0]])
         image = np.moveaxis(image, 0, -1)
@@ -112,14 +118,28 @@ def denoise(image, ai_path, strength, batch_size=3, window_size=256, stride=128,
                 logging.info(f"Progress: {p}%")
             last_progress = p
 
-    output = np.clip(output, 0, 1)
     output = output[offset : H + offset, offset : W + offset, :]
-    output = output * strength + input * (1 - strength)
-    
+
     if num_colors == 1:
         output = np.array([output[:, :, 0]])
         output = np.moveaxis(output, 0, -1)
 
+    cached_denoised_image = output
+    output = blend_images(input, output, strength)
+
     logging.info("Finished denoising")
 
     return output
+
+def blend_images(original_image, denoised_image, strength):
+    blend = denoised_image * strength + original_image * (1-strength)
+    return np.clip(blend, 0, 1)
+
+def reset_cached_denoised_image(event):
+    global cached_denoised_image
+    cached_denoised_image = None
+
+cached_denoised_image = None
+eventbus.add_listener(AppEvents.LOAD_IMAGE_REQUEST, reset_cached_denoised_image)
+eventbus.add_listener(AppEvents.CALCULATE_REQUEST, reset_cached_denoised_image)
+eventbus.add_listener(UiEvents.APPLY_CROP_REQUEST, reset_cached_denoised_image)

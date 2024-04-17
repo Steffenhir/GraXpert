@@ -71,7 +71,7 @@ class DynamicProgressFrame(CTkFrame):
 
     def update_progress(self, progress):
         self.variable.set(progress)  # * 100
-        logging.info("Progress: {}%".format(int(self.variable.get())))
+        logging.info("Progress: {}%".format(int(self.variable.get() * 100)))
         self.pb.update()
 
 
@@ -107,7 +107,7 @@ class DynamicProgressThread(Thread):
 
     def update(self, size):
         if not isinstance(size, int):
-            raise ValueError("{} type can not be displayed. " "Please change it to Int.".format(type(size)))
+            raise ValueError(f"{type(size)} type can not be displayed. Please change it to Int.")
 
         self.current_progress += size
         self.update_queue.put((self.current_progress, self.total))

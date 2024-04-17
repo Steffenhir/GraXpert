@@ -5,9 +5,10 @@ class EventBus:
 
     def add_listener(self, event_name, listener):
         if not self.listeners.get(event_name, None):
-            self.listeners[event_name] = {listener}
+            self.listeners[event_name] = [listener]
         else:
-            self.listeners[event_name].add(listener)
+            if not listener in self.listeners[event_name]:
+                self.listeners[event_name].insert(0, listener)
 
     def remove_listener(self, event_name, listener):
         self.listeners[event_name].remove(listener)

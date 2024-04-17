@@ -33,7 +33,7 @@ class ApplicationFrame(CTkFrame):
         self.canvas = Canvas(self)
         self.help_frame = HelpFrame(self, fg_color="transparent", width=300)
         self.advanced_frame = AdvancedFrame(self, fg_color="transparent", width=300)
-        self.statusbar_frame = StatusBar(self)
+        self.statusbar_frame = StatusBar(self, fg_color="transparent")
 
     def setup_layout(self):
         self.columnconfigure(0, weight=0)
@@ -57,6 +57,8 @@ class ApplicationFrame(CTkFrame):
         self.master.bind("<Command-l>", lambda e: eventbus.emit(AppEvents.OPEN_FILE_DIALOG_REQUEST))
         self.master.bind("<Control-c>", lambda e: eventbus.emit(AppEvents.CALCULATE_REQUEST))
         self.master.bind("<Command-c>", lambda e: eventbus.emit(AppEvents.CALCULATE_REQUEST))
+        self.master.bind("<Control-d>", lambda e: eventbus.emit(AppEvents.DENOISE_REQUEST))
+        self.master.bind("<Command-d>", lambda e: eventbus.emit(AppEvents.DENOISE_REQUEST))
         self.master.bind("<Control-s>", lambda e: eventbus.emit(AppEvents.SAVE_REQUEST))
         self.master.bind("<Command-s>", lambda e: eventbus.emit(AppEvents.SAVE_REQUEST))
         self.master.bind("<Control-z>", self.undo)  # undo

@@ -1,4 +1,5 @@
 import tkinter as tk
+import webbrowser
 from tkinter import messagebox
 
 import customtkinter as ctk
@@ -6,13 +7,14 @@ from customtkinter import CTkFont, CTkImage, CTkLabel, CTkTextbox
 from packaging import version
 from PIL import Image
 
-from graxpert.ai_model_handling import list_local_versions, list_remote_versions
+from graxpert.ai_model_handling import bge_ai_models_dir, denoise_ai_models_dir, list_local_versions, list_remote_versions
 from graxpert.application.app import graxpert
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 from graxpert.localization import _, lang
 from graxpert.resource_utils import resource_path
-from graxpert.ui.widgets import ExtractionStep, GraXpertOptionMenu, GraXpertScrollableFrame, ValueSlider, padx, pady
+from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name
+from graxpert.ui.widgets import GraXpertOptionMenu, GraXpertScrollableFrame, ProcessingStep, ValueSlider, padx, pady
 
 
 class HelpText(CTkTextbox):
@@ -54,23 +56,23 @@ class HelpFrame(RightFrameBase):
         CTkLabel(self, image=logo, text="").grid(column=0, row=self.nrow(), padx=padx, pady=pady, sticky=tk.NSEW)
         CTkLabel(self, text=_("Instructions"), font=self.heading_font).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
 
-        ExtractionStep(self, number=1, title=_(" Loading")).grid(**self.default_grid())
+        ProcessingStep(self, number=1, indent=0, title=_(" Loading")).grid(**self.default_grid())
         HelpText(self, text=_("Load your image.")).grid(**self.default_grid())
 
-        ExtractionStep(self, number=2, title=_(" Stretch Options")).grid(**self.default_grid())
+        ProcessingStep(self, number=2, indent=0, title=_(" Stretch Options")).grid(**self.default_grid())
         HelpText(self, rows=2, text=_("Stretch your image if necessary to reveal gradients.")).grid(**self.default_grid())
 
-        ExtractionStep(self, number=3, title=_(" Sample Selection")).grid(**self.default_grid())
+        ProcessingStep(self, number=3, indent=0, title=_(" Sample Selection")).grid(**self.default_grid())
         HelpText(
             self,
             rows=5,
             text=_("Select background points\n  a) manually with left click\n  b) automatically via grid (grid selection)" "\nYou can remove already set points by right clicking on them."),
         ).grid(**self.default_grid())
 
-        ExtractionStep(self, number=4, title=_(" Calculation")).grid(**self.default_grid())
+        ProcessingStep(self, number=4, indent=0, title=_(" Calculation")).grid(**self.default_grid())
         HelpText(self, rows=2, text=_("Click on Calculate Background to get the processed image.")).grid(**self.default_grid())
 
-        ExtractionStep(self, number=5, title=_(" Saving")).grid(**self.default_grid())
+        ProcessingStep(self, number=5, indent=0, title=_(" Saving")).grid(**self.default_grid())
         HelpText(self, text=_("Save the processed image.")).grid(**self.default_grid())
 
         CTkLabel(self, text=_("Keybindings"), font=self.heading_font).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
@@ -81,6 +83,32 @@ class HelpFrame(RightFrameBase):
         HelpText(self, rows=2, text=_("Right click on sample point: Delete sample point")).grid(**self.default_grid())
         HelpText(self, text=_("Mouse wheel: Zoom")).grid(**self.default_grid())
         HelpText(self, rows=3, text=_("Ctrl+Z/Y: Undo/Redo sample point")).grid(**self.default_grid())
+
+        CTkLabel(self, text=_("Licenses"), font=self.heading_font).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
+
+        def callback(url):
+            webbrowser.open_new(url)
+
+        row = self.nrow()
+        HelpText(self, text=_("GraXpert is licensed under GPL-3:")).grid(column=0, row=row, padx=padx, pady=pady, sticky=tk.W)
+        url_link_1 = "https://raw.githubusercontent.com/Steffenhir/GraXpert/main/License.md"
+        url_label_1 = CTkLabel(self, text="<Link>", text_color="dodger blue")
+        url_label_1.grid(column=0, row=row, padx=padx, sticky=tk.E)
+        url_label_1.bind("<Button-1>", lambda e: callback(url_link_1))
+
+        row = self.nrow()
+        HelpText(self, rows=2, text=_("Background Extraction AI models are licensed under CC BY-NC-SA:")).grid(column=0, row=row, padx=padx, pady=pady, sticky=tk.W)
+        url_link_2 = "https://raw.githubusercontent.com/Steffenhir/GraXpert/main/licenses/BGE-Model-LICENSE.html"
+        url_label_2 = CTkLabel(self, text="<Link>", text_color="dodger blue")
+        url_label_2.grid(column=0, row=row, padx=padx, sticky=tk.E)
+        url_label_2.bind("<Button-1>", lambda e: callback(url_link_2))
+
+        row = self.nrow()
+        HelpText(self, rows=2, text=_("Denoising AI models are licensed under CC BY-NC-SA:")).grid(column=0, row=row, padx=padx, pady=pady, sticky=tk.W)
+        url_link_3 = "https://raw.githubusercontent.com/Steffenhir/GraXpert/main/licenses/Denoise-Model-LICENSE.html"
+        url_label_3 = CTkLabel(self, text="<Link>", text_color="dodger blue")
+        url_label_3.grid(column=0, row=row, padx=padx, sticky=tk.E)
+        url_label_3.bind("<Button-1>", lambda e: callback(url_link_3))
 
     def setup_layout(self):
         self.columnconfigure(0, weight=1)
@@ -126,21 +154,42 @@ class AdvancedFrame(RightFrameBase):
         self.scaling.set(graxpert.prefs.scaling)
         self.scaling.trace_add("write", self.on_scaling_change)
 
-        # ai model
-        remote_versions = list_remote_versions()
-        local_versions = list_local_versions()
-        self.ai_options = set([])
-        self.ai_options.update([rv["version"] for rv in remote_versions])
-        self.ai_options.update([lv["version"] for lv in local_versions])
-        self.ai_options = sorted(self.ai_options, key=lambda k: version.parse(k), reverse=True)
+        # bge ai model
+        bge_remote_versions = list_remote_versions(bge_bucket_name)
+        bge_local_versions = list_local_versions(bge_ai_models_dir)
+        self.bge_ai_options = set([])
+        self.bge_ai_options.update([rv["version"] for rv in bge_remote_versions])
+        self.bge_ai_options.update([lv["version"] for lv in bge_local_versions])
+        self.bge_ai_options = sorted(self.bge_ai_options, key=lambda k: version.parse(k), reverse=True)
 
-        self.ai_version = tk.StringVar(master)
-        self.ai_version.set("None")  # default value
-        if graxpert.prefs.ai_version is not None:
-            self.ai_version.set(graxpert.prefs.ai_version)
+        self.bge_ai_version = tk.StringVar(master)
+        self.bge_ai_version.set("None")  # default value
+        if graxpert.prefs.bge_ai_version is not None:
+            self.bge_ai_version.set(graxpert.prefs.bge_ai_version)
         else:
-            self.ai_options.insert(0, "None")
-        self.ai_version.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.AI_VERSION_CHANGED, {"ai_version": self.ai_version.get()}))
+            self.bge_ai_options.insert(0, "None")
+        self.bge_ai_version.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.BGE_AI_VERSION_CHANGED, {"bge_ai_version": self.bge_ai_version.get()}))
+
+        # denoise ai model
+        denoise_remote_versions = list_remote_versions(denoise_bucket_name)
+        denoise_local_versions = list_local_versions(denoise_ai_models_dir)
+        self.denoise_ai_options = set([])
+        self.denoise_ai_options.update([rv["version"] for rv in denoise_remote_versions])
+        self.denoise_ai_options.update([lv["version"] for lv in denoise_local_versions])
+        self.denoise_ai_options = sorted(self.denoise_ai_options, key=lambda k: version.parse(k), reverse=True)
+
+        self.denoise_ai_version = tk.StringVar(master)
+        self.denoise_ai_version.set("None")  # default value
+        if graxpert.prefs.denoise_ai_version is not None:
+            self.denoise_ai_version.set(graxpert.prefs.denoise_ai_version)
+        else:
+            self.denoise_ai_options.insert(0, "None")
+        self.denoise_ai_version.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_AI_VERSION_CHANGED, {"denoise_ai_version": self.denoise_ai_version.get()}))
+
+        # ai settings
+        self.ai_batch_size = tk.IntVar()
+        self.ai_batch_size.set(graxpert.prefs.ai_batch_size)
+        self.ai_batch_size.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.AI_BATCH_SIZE_CHANGED, {"ai_batch_size": self.ai_batch_size.get()}))
 
         self.create_and_place_children()
         self.setup_layout()
@@ -181,9 +230,16 @@ class AdvancedFrame(RightFrameBase):
 
         ValueSlider(self, variable=self.scaling, variable_name=_("Scaling"), min_value=1, max_value=2, precision=1).grid(**self.default_grid())
 
-        # ai model
-        CTkLabel(self, text=_("AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
-        GraXpertOptionMenu(self, variable=self.ai_version, values=self.ai_options).grid(**self.default_grid())
+        # bge ai model
+        CTkLabel(self, text=_("Background Extraction AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
+        GraXpertOptionMenu(self, variable=self.bge_ai_version, values=self.bge_ai_options).grid(**self.default_grid())
+
+        # denoise ai model
+        CTkLabel(self, text=_("Denoising AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
+        GraXpertOptionMenu(self, variable=self.denoise_ai_version, values=self.denoise_ai_options).grid(**self.default_grid())
+
+        # ai settings
+        ValueSlider(self, variable=self.ai_batch_size, variable_name=_("AI Batch Size"), min_value=1, max_value=50, precision=0).grid(**self.default_grid())
 
     def setup_layout(self):
         self.columnconfigure(0, weight=1)

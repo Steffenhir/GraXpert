@@ -1,6 +1,7 @@
 import tkinter as tk
+from tkinter import ttk
 
-from customtkinter import CTkButton, CTkCheckBox, CTkEntry, CTkFrame, CTkImage, CTkLabel, CTkOptionMenu, CTkScrollableFrame, CTkSlider, DoubleVar, StringVar, ThemeManager
+from customtkinter import CTkButton, CTkCheckBox, CTkEntry, CTkFont, CTkFrame, CTkImage, CTkLabel, CTkOptionMenu, CTkScrollableFrame, CTkSlider, DoubleVar, StringVar, ThemeManager
 from PIL import Image
 
 from graxpert.localization import _
@@ -9,9 +10,15 @@ from graxpert.ui_scaling import get_scaling_factor
 
 default_button_width = 200
 default_label_width = 200
+default_option_menu_height = 28
 
 padx = 5 * get_scaling_factor()
 pady = 5 * get_scaling_factor()
+
+
+def gfx_image(number, indent=1):
+    img = Image.open(resource_path(f"img/gfx_numbers.png")).crop((number * 100, indent * 100, number * 100 + 100, indent * 100 + 100))
+    return img
 
 
 class GraXpertButton(CTkButton):
@@ -57,10 +64,12 @@ class GraXpertScrollableFrame(CTkScrollableFrame):
                         self._parent_canvas.yview_scroll(1, "units")
 
 
-class ExtractionStep(CTkFrame):
-    def __init__(self, parent, number=0, title="", **kwargs):
+class ProcessingStep(CTkFrame):
+    def __init__(self, parent, number=0, indent=2, title="", **kwargs):
         super().__init__(parent, **kwargs)
+        self.bold = CTkFont(weight="bold")
         self.number = number
+        self.indent = indent
         self.title = title
         self.create_children()
         self.setup_layout()
@@ -68,11 +77,11 @@ class ExtractionStep(CTkFrame):
 
     def create_children(self):
         num_pic = CTkImage(
-            light_image=Image.open(resource_path(f"img/gfx_number_{self.number}.png")),
-            dark_image=Image.open(resource_path(f"img/gfx_number_{self.number}.png")),
+            light_image=gfx_image(self.number, self.indent),
+            dark_image=gfx_image(self.number, self.indent),
             size=(20, 20),
         )
-        self.title = GraXpertLabel(self, text=self.title, image=num_pic, anchor=tk.W, compound=tk.LEFT)
+        self.title = GraXpertLabel(self, text=self.title, image=num_pic, font=self.bold, anchor=tk.W, compound=tk.LEFT)
 
     def setup_layout(self):
         self.columnconfigure(0, weight=0)
@@ -228,25 +237,36 @@ class ValueSlider(CTkFrame):
 
 
 class CollapsibleMenuFrame(CTkFrame):
-    def __init__(self, parent, title="", show=True, **kwargs):
+    def __init__(self, parent, title="", number=0, show=True, **kwargs):
         super().__init__(parent, **kwargs)
-
+        self.bold = CTkFont(weight="bold")
+        self.number = number
         self.title = title
         self.show = show
 
     def create_children(self):
-        self.title_label = GraXpertLabel(
+        num_pic = CTkImage(
+            light_image=gfx_image(self.number, 0),
+            dark_image=gfx_image(self.number, 0),
+            size=(20, 20),
+        )
+        self.number_label = GraXpertLabel(
             self,
-            width=default_button_width + padx,
-            text=self.title,
+            width=20 + padx,
+            text="",
+            image=num_pic,
             pady=pady,
         )
+        self.title_label = GraXpertLabel(self, width=default_button_width + padx, text=self.title, pady=pady, font=self.bold)
         self.toggle_button = GraXpertButton(self, width=25, text="+", command=self.toggle)
+        self.separator = CTkFrame(self, height=2, fg_color=ThemeManager.theme["CTkButton"]["fg_color"])
 
         self.sub_frame = CTkFrame(self, fg_color="transparent")
 
     def setup_layout(self):
-        self.columnconfigure(0, weight=1)
+        self.columnconfigure(0, weight=0)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=0)
         self.rowconfigure(0, weight=1)
 
         self.sub_frame.columnconfigure(0, minsize=padx, weight=0)
@@ -254,13 +274,15 @@ class CollapsibleMenuFrame(CTkFrame):
         self.sub_frame.rowconfigure(0, weight=0)
 
     def place_children(self):
-        self.title_label.grid(column=0, row=0, pady=pady, sticky=tk.W)
-        self.toggle_button.grid(column=0, row=0, pady=pady, sticky=tk.E)
+        self.number_label.grid(column=0, row=0, pady=pady, sticky=tk.W)
+        self.title_label.grid(column=1, row=0, pady=pady, sticky=tk.EW)
+        self.toggle_button.grid(column=3, row=0, pady=pady, sticky=tk.E)
+        self.separator.grid(column=0, row=1, columnspan=3, sticky=tk.EW)
         self.place_sub_frame(self.show)
 
     def place_sub_frame(self, show):
         if show:
-            self.sub_frame.grid(column=0, row=1, sticky=tk.NS)
+            self.sub_frame.grid(column=0, row=2, columnspan=3, sticky=tk.NS)
             self.toggle_button.configure(text="-")
         else:
             self.sub_frame.grid_forget()
@@ -270,3 +292,7 @@ class CollapsibleMenuFrame(CTkFrame):
         self.show = not self.show
         self.place_sub_frame(self.show)
         self.sub_frame.update()
+
+    def hide(self, event=None):
+        if self.show:
+            self.toggle()

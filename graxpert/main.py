@@ -49,6 +49,9 @@ def collect_available_versions(ai_models_dir, bucket_name):
 def bge_version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
     return version_type(bge_ai_models_dir, bge_bucket_name, arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$"))
 
+def denoise_version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
+    return version_type(denoise_ai_models_dir, denoise_bucket_name, arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$"))
+
 
 def version_type(ai_models_dir, bucket_name, arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
 
@@ -227,7 +230,7 @@ def main():
             nargs="?",
             required=False,
             default=None,
-            type=bge_version_type,
+            type=denoise_version_type,
             help='Version of the Denoising AI model, default: "latest"; available locally: [{}], available remotely: [{}]'.format(
                 ", ".join(available_denoise_versions[0]), ", ".join(available_denoise_versions[1])
             ),
@@ -239,7 +242,7 @@ def main():
             required=False,
             default=None,
             type=float,
-            help='Strength of the desired denoising effect, default: "1.0"',
+            help='Strength of the desired denoising effect, default: "0.5"',
         )
         denoise_parser.add_argument(
             "-batch_size",
@@ -248,7 +251,7 @@ def main():
             required=False,
             default=None,
             type=int,
-            help='Number of image tiles which Graxpert will denoise in parallel. Be careful: increasing this value might result in out-of-memory errors. Valid Range: 1..50, default: "3"',
+            help='Number of image tiles which Graxpert will denoise in parallel. Be careful: increasing this value might result in out-of-memory errors. Valid Range: 1..32, default: "4"',
         )
 
         if "-h" in sys.argv or "--help" in sys.argv:

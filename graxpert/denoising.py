@@ -6,20 +6,31 @@ import numpy as np
 import onnxruntime as ort
 
 from graxpert.ai_model_handling import get_execution_providers_ordered
-from graxpert.application.eventbus import eventbus
 from graxpert.application.app_events import AppEvents
+from graxpert.application.eventbus import eventbus
 from graxpert.ui.ui_events import UiEvents
 
-def denoise(image, ai_path, strength, batch_size=3, window_size=256, stride=128, progress=None):
+
+def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128, progress=None):
 
     logging.info("Starting denoising")
+
+    if batch_size < 1:
+        logging.info(f"mapping batch_size of {batch_size} to 1")
+        batch_size = 1
+    elif batch_size > 32:
+        logging.info(f"mapping batch_size of {batch_size} to 32")
+        batch_size = 32
+    elif not (batch_size & (batch_size - 1) == 0):  # check if batch_size is power of two
+        logging.info(f"mapping batch_size of {batch_size} to {2 ** (batch_size).bit_length() // 2}")
+        batch_size = 2 ** (batch_size).bit_length() // 2  # map batch_size to power of two
 
     input = copy.deepcopy(image)
 
     global cached_denoised_image
     if cached_denoised_image is not None:
         return blend_images(input, cached_denoised_image, strength)
-    
+
     num_colors = image.shape[-1]
     if num_colors == 1:
         image = np.array([image[:, :, 0], image[:, :, 0], image[:, :, 0]])
@@ -51,9 +62,7 @@ def denoise(image, ai_path, strength, batch_size=3, window_size=256, stride=128,
     output = copy.deepcopy(image)
 
     providers = get_execution_providers_ordered()
-    ort_options = ort.SessionOptions()
-    ort_options.execution_mode = ort.ExecutionMode.ORT_PARALLEL
-    session = ort.InferenceSession(ai_path, providers=providers, sess_options=ort_options)
+    session = ort.InferenceSession(ai_path, providers=providers)
 
     logging.info(f"Available inference providers : {providers}")
     logging.info(f"Used inference providers : {session.get_providers()}")
@@ -84,7 +93,7 @@ def denoise(image, ai_path, strength, batch_size=3, window_size=256, stride=128,
 
         if not input_tiles:
             continue
-        
+
         input_tiles = np.array(input_tiles)
 
         output_tiles = []
@@ -131,13 +140,16 @@ def denoise(image, ai_path, strength, batch_size=3, window_size=256, stride=128,
 
     return output
 
+
 def blend_images(original_image, denoised_image, strength):
-    blend = denoised_image * strength + original_image * (1-strength)
+    blend = denoised_image * strength + original_image * (1 - strength)
     return np.clip(blend, 0, 1)
+
 
 def reset_cached_denoised_image(event):
     global cached_denoised_image
     cached_denoised_image = None
+
 
 cached_denoised_image = None
 eventbus.add_listener(AppEvents.LOAD_IMAGE_REQUEST, reset_cached_denoised_image)

@@ -250,12 +250,12 @@ class DenoiseMenu(CollapsibleMenuFrame):
         self.denoise_strength_slider = ValueSlider(
             self.sub_frame, width=default_label_width, variable_name=_("Denoise Strength"), variable=self.denoise_strength, min_value=0.0, max_value=1.0, precision=2
         )
-        tooltip.Tooltip(self.denoise_strength_slider, text=tooltip.bg_tol_text)
+        tooltip.Tooltip(self.denoise_strength_slider, text=tooltip.denoise_strength_text)
         
         self.denoise_threshold_slider = ValueSlider(
             self.sub_frame, width=default_label_width, variable_name=_("Denoise Threshold"), variable=self.denoise_threshold, min_value=0.1, max_value=10.0, precision=1
         )
-        tooltip.Tooltip(self.denoise_threshold_slider, text=tooltip.bg_tol_text)
+        tooltip.Tooltip(self.denoise_threshold_slider, text=tooltip.denoise_threshold_text)
 
     def setup_layout(self):
         super().setup_layout()

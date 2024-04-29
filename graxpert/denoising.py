@@ -70,7 +70,7 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
     if "1.0.0" in ai_path or "1.1.0" in ai_path:
         model_threshold = 1.0
     else:
-        model_threshold = 100.0
+        model_threshold = 10.0
 
     last_progress = 0
     for b in range(0, ith * itw + batch_size, batch_size):

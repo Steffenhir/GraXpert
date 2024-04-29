@@ -45,6 +45,7 @@ class AppEvents(Enum):
     CALCULATE_ERROR = auto()
     # denoising
     DENOISE_STRENGTH_CHANGED = auto()
+    DENOISE_THRESHOLD_CHANGED = auto()
     DENOISE_REQUEST = auto()
     DENOISE_BEGIN = auto()
     DENOISE_PROGRESS = auto()

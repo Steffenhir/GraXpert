@@ -40,6 +40,7 @@ class Prefs:
     denoise_ai_version: AnyStr = None
     graxpert_version: AnyStr = graxpert_version
     denoise_strength: float = 0.5
+    denoise_threshold: float = 10.0
     ai_batch_size: int = 4
 
 

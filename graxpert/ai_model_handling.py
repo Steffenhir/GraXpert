@@ -28,7 +28,7 @@ if os.path.exists(ai_models_dir):
     try:
         os.rename(ai_models_dir, bge_ai_models_dir)
     except Exception as e:
-        logging.error(f"Renaming {ai_models_dir} to {bge_ai_models_dir} failed. {bge_ai_models_dir} will be newly created. Consider deleting obsolete {ai_models_dir}.")
+        logging.error(f"Renaming {ai_models_dir} to {bge_ai_models_dir} failed. {bge_ai_models_dir} will be newly created. Consider deleting obsolete {ai_models_dir} manually.")
 
 os.makedirs(bge_ai_models_dir, exist_ok=True)
 
@@ -64,7 +64,11 @@ def list_remote_versions(bucket_name):
 
 def list_local_versions(ai_models_dir):
     try:
-        model_dirs = [{"path": os.path.join(ai_models_dir, f), "version": f} for f in os.listdir(ai_models_dir) if re.search(r"\d\.\d\.\d", f)]  # match semantic version
+        model_dirs = [
+            {"path": os.path.join(ai_models_dir, f), "version": f}
+            for f in os.listdir(ai_models_dir)
+            if re.search(r"\d\.\d\.\d", f) and len(os.listdir(os.path.join(ai_models_dir, f))) > 0  # match semantic version
+        ]
         return model_dirs
     except Exception as e:
         logging.exception(e)
@@ -122,11 +126,11 @@ def cleanup_orphaned_local_versions(orphaned_local_versions):
             logging.exception(e)
 
 
-def download_version(ai_models_dir, bucket_name, remote_version, progress=None):
+def download_version(ai_models_dir, bucket_name, target_version, progress=None):
     try:
         remote_versions = list_remote_versions(bucket_name)
         for r in remote_versions:
-            if remote_version == r["version"]:
+            if target_version == r["version"]:
                 remote_version = r
                 break
 
@@ -144,11 +148,11 @@ def download_version(ai_models_dir, bucket_name, remote_version, progress=None):
 
         with zipfile.ZipFile(ai_model_zip, "r") as zip_ref:
             zip_ref.extractall(ai_model_dir)
-        
+
         if not os.path.isfile(ai_model_file):
             raise ValueError(f"Could not find ai 'model.onnx' file after extracting {ai_model_zip}")
         os.remove(ai_model_zip)
-        
+
     except Exception as e:
         # try to delete (rollback) ai_model_dir in case of errors
         logging.exception(e)
@@ -163,7 +167,6 @@ def validate_local_version(ai_models_dir, local_version):
 
 
 def get_execution_providers_ordered():
-    supported_providers = ["DmlExecutionProvider", "CoreMLExecutionProvider", "CUDAExecutionProvider",
-                           "CPUExecutionProvider"]
+    supported_providers = ["DmlExecutionProvider", "CoreMLExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider"]
 
     return [provider for provider in supported_providers if provider in ort.get_available_providers()]

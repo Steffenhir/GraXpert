@@ -119,7 +119,8 @@ class Canvas(CTkFrame):
         eventbus.add_listener(AppEvents.DISPLAY_TYPE_CHANGED, self.redraw_image)
         eventbus.add_listener(UiEvents.RESET_ZOOM_REQUEST, self.reset_zoom)
         eventbus.add_listener(UiEvents.DISPLAY_START_BADGE_REQUEST, self.on_display_start_badge_request)
-        eventbus.add_listener(UiEvents.TOGGLE_CROP_REQUEST, self.on_toggle_crop_request)
+        eventbus.add_listener(UiEvents.TURN_ON_CROP_MODE, self.on_turn_on_crop_mode)
+        eventbus.add_listener(UiEvents.TURN_OFF_CROP_MODE, self.on_turn_off_crop_mode)
         eventbus.add_listener(UiEvents.APPLY_CROP_REQUEST, self.on_apply_crop_request)
 
     # event handling
@@ -142,9 +143,13 @@ class Canvas(CTkFrame):
             return
 
         graxpert.images.crop_all(self.startx, self.endx, self.starty, self.endy)
+        
+        self.startx = 0
+        self.starty = 0
+        self.endx = graxpert.images.get("Original").width
+        self.endy = graxpert.images.get("Original").height
 
         eventbus.emit(AppEvents.RESET_POITS_REQUEST)
-        self.crop_mode = False
         self.zoom_fit(graxpert.images.get(self.display_type.get()).width, graxpert.images.get(self.display_type.get()).height)
 
         self.redraw_points()
@@ -395,8 +400,11 @@ class Canvas(CTkFrame):
 
     def on_stretch_image_error(self, event=None):
         self.show_loading_frame(False)
-
-    def on_toggle_crop_request(self, event=None):
+        
+    def on_turn_on_crop_mode(self, event=None):
+        if self.crop_mode:
+            return
+        
         if graxpert.images.get("Original") is None:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
@@ -405,13 +413,22 @@ class Canvas(CTkFrame):
         self.starty = 0
         self.endx = graxpert.images.get("Original").width
         self.endy = graxpert.images.get("Original").height
-
-        if self.crop_mode:
-            self.crop_mode = False
-        else:
-            self.crop_mode = True
-
+        
+        self.crop_mode = True
         self.redraw_points()
+        
+    def on_turn_off_crop_mode(self, event=None):
+        if not self.crop_mode:
+            return
+        
+        self.startx = 0
+        self.starty = 0
+        self.endx = graxpert.images.get("Original").width
+        self.endy = graxpert.images.get("Original").height
+        
+        self.crop_mode = False
+        self.redraw_points()
+
 
     # widget logic
     def draw_image(self, pil_image, tags=None):
@@ -424,7 +441,7 @@ class Canvas(CTkFrame):
 
         affine_inv = (mat_inv[0, 0], mat_inv[0, 1], mat_inv[0, 2], mat_inv[1, 0], mat_inv[1, 1], mat_inv[1, 2])
 
-        dst = pil_image.transform((canvas_width, canvas_height), Image.AFFINE, affine_inv, Image.BILINEAR)
+        dst = pil_image.transform((canvas_width, canvas_height), Image.AFFINE, affine_inv, Image.NEAREST)
 
         im = ImageTk.PhotoImage(image=dst)
 
@@ -486,8 +503,8 @@ class Canvas(CTkFrame):
         self.update()
 
     def zoom_fit(self, image_width, image_height):
-        canvas_width = self.winfo_width()
-        canvas_height = self.winfo_height()
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
 
         if (image_width * image_height <= 0) or (canvas_width * canvas_height <= 0):
             return

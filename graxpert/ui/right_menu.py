@@ -1,4 +1,5 @@
 import tkinter as tk
+import webbrowser
 from tkinter import messagebox
 
 import customtkinter as ctk
@@ -83,6 +84,32 @@ class HelpFrame(RightFrameBase):
         HelpText(self, text=_("Mouse wheel: Zoom")).grid(**self.default_grid())
         HelpText(self, rows=3, text=_("Ctrl+Z/Y: Undo/Redo sample point")).grid(**self.default_grid())
 
+        CTkLabel(self, text=_("Licenses"), font=self.heading_font).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
+
+        def callback(url):
+            webbrowser.open_new(url)
+
+        row = self.nrow()
+        HelpText(self, text=_("GraXpert is licensed under GPL-3:")).grid(column=0, row=row, padx=padx, pady=pady, sticky=tk.W)
+        url_link_1 = "https://raw.githubusercontent.com/Steffenhir/GraXpert/main/License.md"
+        url_label_1 = CTkLabel(self, text="<Link>", text_color="dodger blue")
+        url_label_1.grid(column=0, row=row, padx=padx, sticky=tk.E)
+        url_label_1.bind("<Button-1>", lambda e: callback(url_link_1))
+
+        row = self.nrow()
+        HelpText(self, rows=2, text=_("Background Extraction AI models are licensed under CC BY-NC-SA:")).grid(column=0, row=row, padx=padx, pady=pady, sticky=tk.W)
+        url_link_2 = "https://raw.githubusercontent.com/Steffenhir/GraXpert/main/licenses/BGE-Model-LICENSE.html"
+        url_label_2 = CTkLabel(self, text="<Link>", text_color="dodger blue")
+        url_label_2.grid(column=0, row=row, padx=padx, sticky=tk.E)
+        url_label_2.bind("<Button-1>", lambda e: callback(url_link_2))
+
+        row = self.nrow()
+        HelpText(self, rows=2, text=_("Denoising AI models are licensed under CC BY-NC-SA:")).grid(column=0, row=row, padx=padx, pady=pady, sticky=tk.W)
+        url_link_3 = "https://raw.githubusercontent.com/Steffenhir/GraXpert/main/licenses/Denoise-Model-LICENSE.html"
+        url_label_3 = CTkLabel(self, text="<Link>", text_color="dodger blue")
+        url_label_3.grid(column=0, row=row, padx=padx, sticky=tk.E)
+        url_label_3.bind("<Button-1>", lambda e: callback(url_link_3))
+
     def setup_layout(self):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -160,6 +187,7 @@ class AdvancedFrame(RightFrameBase):
         self.denoise_ai_version.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_AI_VERSION_CHANGED, {"denoise_ai_version": self.denoise_ai_version.get()}))
 
         # ai settings
+        self.ai_batch_size_options = ["1","2","4","8","16","32"]
         self.ai_batch_size = tk.IntVar()
         self.ai_batch_size.set(graxpert.prefs.ai_batch_size)
         self.ai_batch_size.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.AI_BATCH_SIZE_CHANGED, {"ai_batch_size": self.ai_batch_size.get()}))
@@ -212,7 +240,8 @@ class AdvancedFrame(RightFrameBase):
         GraXpertOptionMenu(self, variable=self.denoise_ai_version, values=self.denoise_ai_options).grid(**self.default_grid())
 
         # ai settings
-        ValueSlider(self, variable=self.ai_batch_size, variable_name=_("AI Batch Size"), min_value=1, max_value=50, precision=0).grid(**self.default_grid())
+        CTkLabel(self, text=_("AI inference batch size"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
+        GraXpertOptionMenu(self, variable=self.ai_batch_size, values=self.ai_batch_size_options).grid(**self.default_grid())
 
     def setup_layout(self):
         self.columnconfigure(0, weight=1)

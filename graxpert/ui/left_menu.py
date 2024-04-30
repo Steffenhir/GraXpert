@@ -15,20 +15,6 @@ class LoadMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, title=_("Loading"), show=True, number=1, **kwargs)
 
-        # stretch options
-        self.stretch_options = ["No Stretch", "10% Bg, 3 sigma", "15% Bg, 3 sigma", "20% Bg, 3 sigma", "30% Bg, 2 sigma"]
-        self.stretch_option_current = StringVar()
-        self.stretch_option_current.set(graxpert.prefs.stretch_option)
-        self.stretch_option_current.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.STRETCH_OPTION_CHANGED, {"stretch_option": self.stretch_option_current.get()}))
-
-        self.saturation = tk.DoubleVar()
-        self.saturation.set(graxpert.prefs.saturation)
-        self.saturation.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.CHANGE_SATURATION_REQUEST, {"saturation": self.saturation.get()}))
-
-        self.channels_linked = tk.BooleanVar()
-        self.channels_linked.set(graxpert.prefs.channels_linked_option)
-        self.channels_linked.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.CHANNELS_LINKED_CHANGED, {"channels_linked": self.channels_linked.get()}))
-
         self.create_children()
         self.setup_layout()
         self.place_children()
@@ -48,25 +34,6 @@ class LoadMenu(CollapsibleMenuFrame):
         )
         self.tt_load = tooltip.Tooltip(self.load_image_button, text=tooltip.load_text)
 
-        # stretch options
-        self.stretch_options_title = ProcessingStep(self.sub_frame, number=0, indent=2, title=_(" Stretch Options"))
-        self.stretch_menu = GraXpertOptionMenu(
-            self.sub_frame,
-            variable=self.stretch_option_current,
-            values=self.stretch_options,
-        )
-        tooltip.Tooltip(self.stretch_menu, text=tooltip.stretch_text)
-        self.saturation_slider = ValueSlider(
-            self.sub_frame,
-            width=default_label_width,
-            variable_name=_("Saturation"),
-            variable=self.saturation,
-            min_value=0,
-            max_value=3,
-            precision=1,
-        )
-        self.channels_linked_switch = GraXpertCheckbox(self.sub_frame, width=default_label_width, text=_("Channels linked"), variable=self.channels_linked)
-
     def setup_layout(self):
         super().setup_layout()
 
@@ -82,12 +49,6 @@ class LoadMenu(CollapsibleMenuFrame):
 
         # image loading
         self.load_image_button.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
-
-        # stretch options
-        self.stretch_options_title.grid(column=0, row=next_row(), columnspan=2, pady=pady, sticky=tk.EW)
-        self.stretch_menu.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
-        self.saturation_slider.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
-        self.channels_linked_switch.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
 
     def toggle(self):
         super().toggle()
@@ -106,24 +67,32 @@ class CropMenu(CollapsibleMenuFrame):
         self.place_children()
 
         eventbus.add_listener(UiEvents.SHOW_MENU_REQUEST, lambda e: self.hide() if not e == "CROP" else None)
+        eventbus.add_listener(UiEvents.SHOW_MENU_REQUEST, lambda e: eventbus.emit(UiEvents.TURN_OFF_CROP_MODE) if not e == "CROP" else None)
 
     def create_children(self):
         super().create_children()
-        self.cropmode_button = GraXpertButton(self.sub_frame, text=_("Crop mode on/off"), command=lambda: eventbus.emit(UiEvents.TOGGLE_CROP_REQUEST))
-        self.cropapply_button = GraXpertButton(self.sub_frame, text=_("Apply crop"), command=lambda: eventbus.emit(UiEvents.APPLY_CROP_REQUEST))
+        self.cropapply_button = GraXpertButton(
+            self.sub_frame,
+            text=_("Apply crop"),
+            fg_color=ThemeManager.theme["Accent.CTkButton"]["fg_color"],
+            hover_color=ThemeManager.theme["Accent.CTkButton"]["hover_color"],
+            command=lambda: eventbus.emit(UiEvents.APPLY_CROP_REQUEST),
+        )
 
     def setup_layout(self):
         super().setup_layout()
 
     def place_children(self):
         super().place_children()
-        self.cropmode_button.grid(column=1, row=0, pady=pady, sticky=tk.NSEW)
-        self.cropapply_button.grid(column=1, row=1, pady=pady, sticky=tk.NSEW)
+        self.cropapply_button.grid(column=1, row=0, pady=pady, sticky=tk.NSEW)
 
     def toggle(self):
         super().toggle()
         if self.show:
             eventbus.emit(UiEvents.SHOW_MENU_REQUEST, "CROP")
+            eventbus.emit(UiEvents.TURN_ON_CROP_MODE)
+        else:
+            eventbus.emit(UiEvents.TURN_OFF_CROP_MODE)
 
 
 class ExtractionMenu(CollapsibleMenuFrame):
@@ -251,11 +220,15 @@ class ExtractionMenu(CollapsibleMenuFrame):
 class DenoiseMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, title=_("Denoising"), show=False, number=4, **kwargs)
-        
+
         self.denoise_strength = tk.DoubleVar()
         self.denoise_strength.set(graxpert.prefs.denoise_strength)
         self.denoise_strength.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_STRENGTH_CHANGED, {"denoise_strength": self.denoise_strength.get()}))
         
+        self.denoise_threshold = tk.DoubleVar()
+        self.denoise_threshold.set(graxpert.prefs.denoise_threshold)
+        self.denoise_threshold.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_THRESHOLD_CHANGED, {"denoise_threshold": self.denoise_threshold.get()}))
+
         self.create_children()
         self.setup_layout()
         self.place_children()
@@ -273,18 +246,26 @@ class DenoiseMenu(CollapsibleMenuFrame):
             command=lambda: eventbus.emit(AppEvents.DENOISE_REQUEST),
         )
         self.tt_load = tooltip.Tooltip(self.denoise_button, text=tooltip.denoise_text)
+
+        self.denoise_strength_slider = ValueSlider(
+            self.sub_frame, width=default_label_width, variable_name=_("Denoise Strength"), variable=self.denoise_strength, min_value=0.0, max_value=1.0, precision=2
+        )
+        tooltip.Tooltip(self.denoise_strength_slider, text=tooltip.denoise_strength_text)
         
-        self.denoise_strength_slider = ValueSlider(self.sub_frame, width=default_label_width, variable_name=_("Denoise Strength"), variable=self.denoise_strength, min_value=0.0, max_value=1.0, precision=2)
-        tooltip.Tooltip(self.denoise_strength_slider, text=tooltip.bg_tol_text)
+        self.denoise_threshold_slider = ValueSlider(
+            self.sub_frame, width=default_label_width, variable_name=_("Denoise Threshold"), variable=self.denoise_threshold, min_value=0.1, max_value=10.0, precision=1
+        )
+        tooltip.Tooltip(self.denoise_threshold_slider, text=tooltip.denoise_threshold_text)
 
     def setup_layout(self):
         super().setup_layout()
 
     def place_children(self):
         super().place_children()
-        
+
         self.denoise_strength_slider.grid(column=1, row=0, pady=pady, sticky=tk.EW)
-        self.denoise_button.grid(column=1, row=1, pady=pady, sticky=tk.EW)
+        self.denoise_threshold_slider.grid(column=1, row=1, pady=pady, sticky=tk.EW)
+        self.denoise_button.grid(column=1, row=2, pady=pady, sticky=tk.EW)
 
     def toggle(self):
         super().toggle()

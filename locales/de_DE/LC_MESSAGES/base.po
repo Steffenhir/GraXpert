@@ -294,6 +294,12 @@ msgstr "Speichere das Hintergrundmodell"
 msgid "Save the processed picture"
 msgstr "Speichere das bearbeitete Bild"
 
+msgid "Use GraXpert's denoising AI model to reduce the noise in your image. This may take a while"
+msgstr "Wendet GraXpert's AI zum Entrauschen des Bildes an. Das kann eine Weile dauern."
+
+msgid "Determines strength of denoising."
+msgstr "Gibt an, wie stark entrauscht werden soll."
+
 msgid "Save the stretched and processed picture. The color saturation is not changed."
 msgstr "Speichere das gestretchte und bearbeitete Bild. Die Farbsättigung wird dabei nicht verändert."
 
@@ -358,3 +364,21 @@ msgstr "KI-Modell wird heruntergeladen"
 
 msgid "An error occured during background calculation. Please see the log at {}."
 msgstr "Während der Berechnung ist ein Fehler aufgetreten. Bitte schauen Sie sich die Logdatei bei dem Verzeichnis {} an."
+
+msgid "Loading"
+msgstr "Laden"
+
+msgid "Channels linked"
+msgstr "Kanäle verknüpft"
+
+msgid "Denoising"
+msgstr "Entrauschen"
+
+msgid "Denoise Strength"
+msgstr "Entrauschungsstärke"
+
+msgid "Denoise Image"
+msgstr "Bild entrauschen"
+
+msgid "Saving"
+msgstr "Speichern"

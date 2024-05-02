@@ -11,7 +11,7 @@ from graxpert.application.eventbus import eventbus
 from graxpert.ui.ui_events import UiEvents
 
 
-def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128, threshold=1.0, progress=None):
+def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128, threshold=1.0, progress=None, ai_gpu_acceleration=True):
 
     logging.info("Starting denoising")
 
@@ -26,7 +26,7 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
         batch_size = 2 ** (batch_size).bit_length() // 2  # map batch_size to power of two
 
     input = copy.deepcopy(image)
-    
+
     median = np.median(image[::4, ::4, :], axis=[0, 1])
     mad = np.median(np.abs(image[::4, ::4, :] - median), axis=[0, 1])
 
@@ -61,19 +61,32 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
 
     output = copy.deepcopy(image)
 
-    providers = get_execution_providers_ordered()
+    providers = get_execution_providers_ordered(ai_gpu_acceleration)
     session = ort.InferenceSession(ai_path, providers=providers)
 
     logging.info(f"Available inference providers : {providers}")
     logging.info(f"Used inference providers : {session.get_providers()}")
-    
+
     if "1.0.0" in ai_path or "1.1.0" in ai_path:
         model_threshold = 1.0
     else:
         model_threshold = 10.0
 
+    cancel_flag = False
+
+    def cancel_listener(event):
+        nonlocal cancel_flag
+        cancel_flag = True
+
+    eventbus.add_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
+
     last_progress = 0
     for b in range(0, ith * itw + batch_size, batch_size):
+
+        if cancel_flag:
+            logging.info("Denoising cancelled")
+            eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
+            return None
 
         input_tiles = []
         input_tile_copies = []
@@ -141,6 +154,7 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
     cached_denoised_image = output
     output = blend_images(input, output, strength, threshold, median, mad)
 
+    eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
     logging.info("Finished denoising")
 
     return output
@@ -151,7 +165,6 @@ def blend_images(original_image, denoised_image, strength, threshold, median, ma
     blend = np.where(original_image < threshold, denoised_image, original_image)
     blend = blend * strength + original_image * (1 - strength)
     return np.clip(blend, 0, 1)
-
 
 
 def reset_cached_denoised_image(event):

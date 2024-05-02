@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from customtkinter import StringVar, ThemeManager
+from customtkinter import ThemeManager
 
 import graxpert.ui.tooltip as tooltip
 from graxpert.application.app import graxpert
@@ -224,7 +224,7 @@ class DenoiseMenu(CollapsibleMenuFrame):
         self.denoise_strength = tk.DoubleVar()
         self.denoise_strength.set(graxpert.prefs.denoise_strength)
         self.denoise_strength.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_STRENGTH_CHANGED, {"denoise_strength": self.denoise_strength.get()}))
-        
+
         self.denoise_threshold = tk.DoubleVar()
         self.denoise_threshold.set(graxpert.prefs.denoise_threshold)
         self.denoise_threshold.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_THRESHOLD_CHANGED, {"denoise_threshold": self.denoise_threshold.get()}))
@@ -251,7 +251,7 @@ class DenoiseMenu(CollapsibleMenuFrame):
             self.sub_frame, width=default_label_width, variable_name=_("Denoise Strength"), variable=self.denoise_strength, min_value=0.0, max_value=1.0, precision=2
         )
         tooltip.Tooltip(self.denoise_strength_slider, text=tooltip.denoise_strength_text)
-        
+
         self.denoise_threshold_slider = ValueSlider(
             self.sub_frame, width=default_label_width, variable_name=_("Denoise Threshold"), variable=self.denoise_threshold, min_value=0.1, max_value=10.0, precision=1
         )

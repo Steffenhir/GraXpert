@@ -49,6 +49,7 @@ def collect_available_versions(ai_models_dir, bucket_name):
 def bge_version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
     return version_type(bge_ai_models_dir, bge_bucket_name, arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$"))
 
+
 def denoise_version_type(arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$")):
     return version_type(denoise_ai_models_dir, denoise_bucket_name, arg_value, pat=re.compile(r"^\d+\.\d+\.\d+$"))
 
@@ -205,6 +206,7 @@ def main():
             type=str,
             help="Allows GraXpert commandline to run all extraction methods based on a preferences file that contains background grid points",
         )
+        parser.add_argument("-gpu", "--gpu_acceleration", type=str, choices=["true", "false"], default=None, help="Set to 'false' in order to disable gpu acceleration during AI inference.")
         parser.add_argument("-v", "--version", action="version", version=f"GraXpert version: {graxpert_version} release: {graxpert_release}")
 
         bge_parser = argparse.ArgumentParser("GraXpert Background Extraction", parents=[parser], description="GraXpert, the astronomical background extraction tool")

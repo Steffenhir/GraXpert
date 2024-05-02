@@ -78,3 +78,6 @@ class AppEvents(Enum):
     LANGUAGE_CHANGED = auto()
     SCALING_CHANGED = auto()
     AI_BATCH_SIZE_CHANGED = auto()
+    AI_GPU_ACCELERATION_CHANGED = auto()
+    # process control
+    CANCEL_PROCESSING = auto()

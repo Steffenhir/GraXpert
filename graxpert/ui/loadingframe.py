@@ -1,13 +1,14 @@
 import logging
-import sys
 import tkinter as tk
 from os import path
 from queue import Empty, Queue
 from threading import Thread
 
-from customtkinter import CTkFont, CTkFrame, CTkImage, CTkLabel, CTkProgressBar, DoubleVar, StringVar
+from customtkinter import CTkButton, CTkFont, CTkFrame, CTkImage, CTkLabel, CTkProgressBar, DoubleVar, StringVar, ThemeManager
 from PIL import Image
 
+from graxpert.application.app_events import AppEvents
+from graxpert.application.eventbus import eventbus
 from graxpert.localization import _
 from graxpert.resource_utils import resource_path
 
@@ -38,11 +39,12 @@ class LoadingFrame(CTkFrame):
 
 
 class DynamicProgressFrame(CTkFrame):
-    def __init__(self, parent, label_lext=_("Progress:"), **kwargs):
+    def __init__(self, parent, label_lext=_("Progress:"), cancellable=False, **kwargs):
         super().__init__(parent, **kwargs)
 
         self.text = StringVar(self, value=label_lext)
         self.variable = DoubleVar(self, value=0.0)
+        self.cancellable = cancellable
 
         self.create_children()
         self.setup_layout()
@@ -55,6 +57,13 @@ class DynamicProgressFrame(CTkFrame):
             width=280,
         )
         self.pb = CTkProgressBar(self, variable=self.variable)
+        self.cancel_button = CTkButton(
+            self,
+            text=_("Cancel"),
+            command=lambda: eventbus.emit(AppEvents.CANCEL_PROCESSING),
+            fg_color=ThemeManager.theme["Accent.CTkButton"]["fg_color"],
+            hover_color=ThemeManager.theme["Accent.CTkButton"]["hover_color"],
+        )
 
     def setup_layout(self):
         self.columnconfigure(0, weight=1)
@@ -63,9 +72,14 @@ class DynamicProgressFrame(CTkFrame):
     def place_children(self):
         self.label.grid(column=0, row=0, sticky=tk.NSEW)
         self.pb.grid(column=0, row=1, sticky=tk.NSEW)
+        if self.cancellable:
+            self.cancel_button.grid(column=0, row=2)
+        else:
+            self.cancel_button.grid_forget()
 
     def close(self):
-        self.pb.pack_forget()
+        self.pb.grid_forget()
+        self.cancel_button.grid_forget()
         self.update()
         self.destroy()
 

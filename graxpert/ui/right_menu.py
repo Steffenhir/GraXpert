@@ -3,7 +3,7 @@ import webbrowser
 from tkinter import messagebox
 
 import customtkinter as ctk
-from customtkinter import CTkFont, CTkImage, CTkLabel, CTkTextbox
+from customtkinter import CTkFont, CTkImage, CTkLabel, CTkSwitch, CTkTextbox
 from packaging import version
 from PIL import Image
 
@@ -187,10 +187,14 @@ class AdvancedFrame(RightFrameBase):
         self.denoise_ai_version.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_AI_VERSION_CHANGED, {"denoise_ai_version": self.denoise_ai_version.get()}))
 
         # ai settings
-        self.ai_batch_size_options = ["1","2","4","8","16","32"]
+        self.ai_batch_size_options = ["1", "2", "4", "8", "16", "32"]
         self.ai_batch_size = tk.IntVar()
         self.ai_batch_size.set(graxpert.prefs.ai_batch_size)
         self.ai_batch_size.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.AI_BATCH_SIZE_CHANGED, {"ai_batch_size": self.ai_batch_size.get()}))
+
+        self.ai_gpu_acceleration = tk.BooleanVar()
+        self.ai_gpu_acceleration.set(graxpert.prefs.ai_gpu_acceleration)
+        self.ai_gpu_acceleration.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.AI_GPU_ACCELERATION_CHANGED, {"ai_gpu_acceleration": self.ai_gpu_acceleration.get()}))
 
         self.create_and_place_children()
         self.setup_layout()
@@ -242,6 +246,9 @@ class AdvancedFrame(RightFrameBase):
         # ai settings
         CTkLabel(self, text=_("AI inference batch size"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
         GraXpertOptionMenu(self, variable=self.ai_batch_size, values=self.ai_batch_size_options).grid(**self.default_grid())
+
+        CTkLabel(self, text=_("AI Hardware Acceleration"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
+        CTkSwitch(self, text=_("Enable Acceleration"), variable=self.ai_gpu_acceleration).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
 
     def setup_layout(self):
         self.columnconfigure(0, weight=1)

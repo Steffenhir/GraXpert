@@ -24,7 +24,7 @@ def gaussian_kernel(sigma=1.0, truncate=4.0):  # follow simulate skimage.filters
     return (ksize, ksize)
 
 
-def extract_background(in_imarray, background_points, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, corr_type, ai_path, progress=None):
+def extract_background(in_imarray, background_points, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, corr_type, ai_path, progress=None, ai_gpu_acceleration=True):
 
     num_colors = in_imarray.shape[-1]
 
@@ -71,7 +71,7 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         if progress is not None:
             progress.update(8)
 
-        providers = get_execution_providers_ordered()
+        providers = get_execution_providers_ordered(ai_gpu_acceleration)
         session = ort.InferenceSession(ai_path, providers=providers)
 
         logging.info(f"Providers : {providers}")

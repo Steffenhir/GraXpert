@@ -10,9 +10,9 @@ from appdirs import user_config_dir
 from graxpert.ai_model_handling import ai_model_path_from_version, bge_ai_models_dir, denoise_ai_models_dir, download_version, latest_version, list_local_versions
 from graxpert.astroimage import AstroImage
 from graxpert.background_extraction import extract_background
+from graxpert.denoising import denoise
 from graxpert.preferences import Prefs, load_preferences, save_preferences
 from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name
-from graxpert.denoising import denoise
 
 user_preferences_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
 
@@ -85,6 +85,8 @@ class BGECmdlineTool(CmdlineToolBase):
                             preferences.corr_type = json_prefs["corr_type"]
                         if "ai_version" in json_prefs:
                             preferences.ai_version = json_prefs["ai_version"]
+                        if "ai_gpu_acceleration" in json_prefs:
+                            preferences.ai_gpu_acceleration = json_prefs["ai_gpu_acceleration"]
 
                         if preferences.interpol_type_option == "Kriging" or preferences.interpol_type_option == "RBF":
                             downscale_factor = 4
@@ -108,6 +110,12 @@ class BGECmdlineTool(CmdlineToolBase):
             logging.info(f"Using user-supplied correction type {preferences.corr_type}.")
         else:
             logging.info(f"Using stored correction type {preferences.corr_type}.")
+
+        if self.args.gpu_acceleration is not None:
+            preferences.ai_gpu_acceleration = True if self.args.gpu_acceleration == "true" else False
+            logging.info(f"Using user-supplied gpu acceleration setting {preferences.ai_gpu_acceleration}.")
+        else:
+            logging.info(f"Using stored gpu acceleration setting {preferences.ai_gpu_acceleration}.")
 
         if preferences.interpol_type_option == "AI":
             ai_model_path = ai_model_path_from_version(bge_ai_models_dir, self.get_ai_version(preferences))
@@ -153,6 +161,7 @@ class BGECmdlineTool(CmdlineToolBase):
                 preferences.spline_order,
                 preferences.corr_type,
                 ai_model_path,
+                ai_gpu_acceleration=preferences.ai_gpu_acceleration,
             )
         )
 
@@ -222,6 +231,8 @@ class DenoiseCmdlineTool(CmdlineToolBase):
                             preferences.denoise_strength = json_prefs["denoise_strength"]
                         if "ai_batch_size" in json_prefs:
                             preferences.ai_batch_size = json_prefs["ai_batch_size"]
+                        if "ai_gpu_acceleration" in json_prefs:
+                            preferences.ai_gpu_acceleration = json_prefs["ai_gpu_acceleration"]
 
             except Exception as e:
                 logging.exception(e)
@@ -229,18 +240,24 @@ class DenoiseCmdlineTool(CmdlineToolBase):
                 sys.exit(1)
         else:
             preferences = Prefs()
-        
+
         if self.args.denoise_strength is not None:
             preferences.denoise_strength = self.args.denoise_strength
             logging.info(f"Using user-supplied denoise strength value {preferences.denoise_strength}.")
         else:
             logging.info(f"Using stored denoise strength value {preferences.denoise_strength}.")
-        
+
         if self.args.ai_batch_size is not None:
             preferences.ai_batch_size = self.args.ai_batch_size
             logging.info(f"Using user-supplied batch size value {preferences.ai_batch_size}.")
         else:
             logging.info(f"Using stored batch size value {preferences.ai_batch_size}.")
+
+        if self.args.gpu_acceleration is not None:
+            preferences.ai_gpu_acceleration = True if self.args.gpu_acceleration == "true" else False
+            logging.info(f"Using user-supplied gpu acceleration setting {preferences.ai_gpu_acceleration}.")
+        else:
+            logging.info(f"Using stored gpu acceleration setting {preferences.ai_gpu_acceleration}.")
 
         ai_model_path = ai_model_path_from_version(denoise_ai_models_dir, self.get_ai_version(preferences))
 
@@ -254,12 +271,8 @@ class DenoiseCmdlineTool(CmdlineToolBase):
         )
 
         processed_Astro_Image.set_from_array(
-            denoise(
-                astro_Image.img_array,
-                ai_model_path,
-                preferences.denoise_strength,
-                batch_size=preferences.ai_batch_size
-            ))
+            denoise(astro_Image.img_array, ai_model_path, preferences.denoise_strength, batch_size=preferences.ai_batch_size, ai_gpu_acceleration=preferences.ai_gpu_acceleration)
+        )
         processed_Astro_Image.save(self.get_save_path(), self.get_output_file_format())
 
     def get_ai_version(self, prefs):

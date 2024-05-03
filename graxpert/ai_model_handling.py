@@ -4,10 +4,10 @@ import re
 import shutil
 import zipfile
 
+import onnxruntime as ort
 from appdirs import user_data_dir
 from minio import Minio
 from packaging import version
-import onnxruntime as ort
 
 try:
     from graxpert.s3_secrets import endpoint, ro_access_key, ro_secret_key
@@ -166,7 +166,11 @@ def validate_local_version(ai_models_dir, local_version):
     return os.path.isfile(os.path.join(ai_models_dir, local_version, "model.onnx"))
 
 
-def get_execution_providers_ordered():
-    supported_providers = ["DmlExecutionProvider", "CoreMLExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider"]
+def get_execution_providers_ordered(gpu_acceleration=True):
+
+    if gpu_acceleration:
+        supported_providers = ["DmlExecutionProvider", "CoreMLExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider"]
+    else:
+        supported_providers = ["CPUExecutionProvider"]
 
     return [provider for provider in supported_providers if provider in ort.get_available_providers()]

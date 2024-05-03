@@ -180,6 +180,7 @@ calculate_text = _("Use the specified interpolation method to calculate a backgr
 
 denoise_text = _("Use GraXpert's denoising AI model to reduce the noise in your image. This may take a while")
 denoise_strength_text = _("Determines strength of denoising.")
+denoise_threshold_text = _("Determines the upper bound up to which pixels are denoised. Pixels above this threshold are not denoised and taken from the original image.")
 
 saveas_text = _("Choose the bitdepth of the saved pictures and the file format. " "If you are working with a .fits image the fits header will " "be preserved.")
 save_bg_text = _("Save the background model")

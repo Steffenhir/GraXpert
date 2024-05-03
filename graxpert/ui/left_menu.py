@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from customtkinter import StringVar, ThemeManager
+from customtkinter import ThemeManager
 
 import graxpert.ui.tooltip as tooltip
 from graxpert.application.app import graxpert
@@ -246,7 +246,7 @@ class DenoiseMenu(CollapsibleMenuFrame):
         self.denoise_strength_slider = ValueSlider(
             self.sub_frame, width=default_label_width, variable_name=_("Denoise Strength"), variable=self.denoise_strength, min_value=0.0, max_value=1.0, precision=2
         )
-        tooltip.Tooltip(self.denoise_strength_slider, text=tooltip.bg_tol_text)
+        tooltip.Tooltip(self.denoise_strength_slider, text=tooltip.denoise_strength_text)
 
     def setup_layout(self):
         super().setup_layout()
@@ -255,7 +255,7 @@ class DenoiseMenu(CollapsibleMenuFrame):
         super().place_children()
 
         self.denoise_strength_slider.grid(column=1, row=0, pady=pady, sticky=tk.EW)
-        self.denoise_button.grid(column=1, row=1, pady=pady, sticky=tk.EW)
+        self.denoise_button.grid(column=1, row=2, pady=pady, sticky=tk.EW)
 
     def toggle(self):
         super().toggle()

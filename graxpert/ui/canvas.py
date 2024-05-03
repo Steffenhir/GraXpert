@@ -183,12 +183,14 @@ class Canvas(CTkFrame):
 
     def on_denoise_begin(self, event=None):
         self.dynamic_progress_frame.text.set(_("Denoising"))
+        self.dynamic_progress_frame.cancellable = True
         self.show_progress_frame(True)
 
     def on_denoise_progress(self, event=None):
         self.dynamic_progress_frame.update_progress(event["progress"])
     
     def on_denoise_success(self, event=None):
+        self.dynamic_progress_frame.cancellable = False
         if not "Denoised" in self.display_options:
             self.display_options.append("Denoised")
             self.display_menu.grid_forget()
@@ -196,6 +198,7 @@ class Canvas(CTkFrame):
             self.display_menu.grid(column=0, row=0, sticky=tk.N)
 
     def on_denoise_end(self, event=None):
+        self.dynamic_progress_frame.cancellable = False
         self.dynamic_progress_frame.text.set("")
         self.dynamic_progress_frame.variable.set(0.0)
         self.show_progress_frame(False)
@@ -497,6 +500,7 @@ class Canvas(CTkFrame):
 
     def show_progress_frame(self, show):
         if show:
+            self.dynamic_progress_frame.place_children()
             self.dynamic_progress_frame.grid(column=0, row=0, rowspan=2)
         else:
             self.dynamic_progress_frame.grid_forget()

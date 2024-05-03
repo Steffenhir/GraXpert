@@ -11,7 +11,7 @@ from graxpert.application.eventbus import eventbus
 from graxpert.ui.ui_events import UiEvents
 
 
-def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128, progress=None):
+def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128, progress=None, ai_gpu_acceleration=True):
 
     logging.info("Starting denoising")
 
@@ -27,9 +27,17 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
 
     input = copy.deepcopy(image)
 
+    median = np.median(image[::4, ::4, :], axis=[0, 1])
+    mad = np.median(np.abs(image[::4, ::4, :] - median), axis=[0, 1])
+    
+    if "1.0.0" in ai_path or "1.1.0" in ai_path:
+        model_threshold = 1.0
+    else:
+        model_threshold = 10.0
+
     global cached_denoised_image
     if cached_denoised_image is not None:
-        return blend_images(input, cached_denoised_image, strength)
+        return blend_images(input, cached_denoised_image, strength, model_threshold, median, mad)
 
     num_colors = image.shape[-1]
     if num_colors == 1:
@@ -56,19 +64,29 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
     image = np.concatenate((image, image[:, (w - offset) :, :]), axis=1)
     image = np.concatenate((image[:, :offset, :], image), axis=1)
 
-    median = np.median(image[::4, ::4, :], axis=[0, 1])
-    mad = np.median(np.abs(image[::4, ::4, :] - median), axis=[0, 1])
-
     output = copy.deepcopy(image)
 
-    providers = get_execution_providers_ordered()
+    providers = get_execution_providers_ordered(ai_gpu_acceleration)
     session = ort.InferenceSession(ai_path, providers=providers)
 
     logging.info(f"Available inference providers : {providers}")
     logging.info(f"Used inference providers : {session.get_providers()}")
 
+    cancel_flag = False
+
+    def cancel_listener(event):
+        nonlocal cancel_flag
+        cancel_flag = True
+
+    eventbus.add_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
+
     last_progress = 0
     for b in range(0, ith * itw + batch_size, batch_size):
+
+        if cancel_flag:
+            logging.info("Denoising cancelled")
+            eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
+            return None
 
         input_tiles = []
         input_tile_copies = []
@@ -87,7 +105,7 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
             tile = image[x : x + window_size, y : y + window_size, :]
             tile = (tile - median) / mad * 0.04
             input_tile_copies.append(np.copy(tile))
-            tile = np.clip(tile, -1.0, 1.0)
+            tile = np.clip(tile, -model_threshold, model_threshold)
 
             input_tiles.append(tile)
 
@@ -114,7 +132,7 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
 
             x = stride * i
             y = stride * j
-            tile = np.where(input_tile_copies[t_idx] < 0.95, tile, input_tile_copies[t_idx])
+            tile = np.where(input_tile_copies[t_idx] < model_threshold, tile, input_tile_copies[t_idx])
             tile = tile / 0.04 * mad + median
             tile = tile[offset : offset + stride, offset : offset + stride, :]
             output[x + offset : stride * (i + 1) + offset, y + offset : stride * (j + 1) + offset, :] = tile
@@ -134,15 +152,18 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
         output = np.moveaxis(output, 0, -1)
 
     cached_denoised_image = output
-    output = blend_images(input, output, strength)
+    output = blend_images(input, output, strength, model_threshold, median, mad)
 
+    eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
     logging.info("Finished denoising")
 
     return output
 
 
-def blend_images(original_image, denoised_image, strength):
-    blend = denoised_image * strength + original_image * (1 - strength)
+def blend_images(original_image, denoised_image, strength, threshold, median, mad):
+    threshold = threshold / 0.04 * mad + median
+    blend = np.where(original_image < threshold, denoised_image, original_image)
+    blend = blend * strength + original_image * (1 - strength)
     return np.clip(blend, 0, 1)
 
 
@@ -155,3 +176,4 @@ cached_denoised_image = None
 eventbus.add_listener(AppEvents.LOAD_IMAGE_REQUEST, reset_cached_denoised_image)
 eventbus.add_listener(AppEvents.CALCULATE_REQUEST, reset_cached_denoised_image)
 eventbus.add_listener(UiEvents.APPLY_CROP_REQUEST, reset_cached_denoised_image)
+eventbus.add_listener(AppEvents.DENOISE_AI_VERSION_CHANGED, reset_cached_denoised_image)

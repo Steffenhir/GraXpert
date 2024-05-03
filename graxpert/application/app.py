@@ -85,10 +85,14 @@ class GraXpert:
         eventbus.add_listener(AppEvents.DENOISE_AI_VERSION_CHANGED, self.on_denoise_ai_version_changed)
         eventbus.add_listener(AppEvents.SCALING_CHANGED, self.on_scaling_changed)
         eventbus.add_listener(AppEvents.AI_BATCH_SIZE_CHANGED, self.on_ai_batch_size_changed)
+        eventbus.add_listener(AppEvents.AI_GPU_ACCELERATION_CHANGED, self.on_ai_gpu_acceleration_changed)
 
     # event handling
     def on_ai_batch_size_changed(self, event):
         self.prefs.ai_batch_size = event["ai_batch_size"]
+
+    def on_ai_gpu_acceleration_changed(self, event):
+        self.prefs.ai_gpu_acceleration = event["ai_gpu_acceleration"]
 
     def on_bge_ai_version_changed(self, event):
         self.prefs.bge_ai_version = event["bge_ai_version"]
@@ -154,6 +158,7 @@ class GraXpert:
                     self.prefs.corr_type,
                     ai_model_path_from_version(bge_ai_models_dir, self.prefs.bge_ai_version),
                     progress,
+                    self.prefs.ai_gpu_acceleration,
                 )
             )
 
@@ -187,7 +192,7 @@ class GraXpert:
     def on_change_saturation_request(self, event):
         if self.images.get("Original") is None:
             return
-        
+
         self.prefs.saturation = event["saturation"]
 
         eventbus.emit(AppEvents.CHANGE_SATURATION_BEGIN)
@@ -342,23 +347,32 @@ class GraXpert:
 
             self.prefs.images_linked_option = True
             ai_model_path = ai_model_path_from_version(denoise_ai_models_dir, self.prefs.denoise_ai_version)
-            imarray = denoise(img_array_to_be_processed, ai_model_path, self.prefs.denoise_strength, batch_size=self.prefs.ai_batch_size, progress=progress)
+            imarray = denoise(
+                img_array_to_be_processed,
+                ai_model_path,
+                self.prefs.denoise_strength,
+                batch_size=self.prefs.ai_batch_size,
+                progress=progress,
+                ai_gpu_acceleration=self.prefs.ai_gpu_acceleration,
+            )
 
-            denoised = AstroImage()
-            denoised.set_from_array(imarray)
+            if imarray is not None:
 
-            # Update fits header and metadata
-            background_mean = np.mean(self.images.get("Original").img_array)
-            denoised.update_fits_header(self.images.get("Original").fits_header, background_mean, self.prefs, self.cmd.app_state)
+                denoised = AstroImage()
+                denoised.set_from_array(imarray)
 
-            denoised.copy_metadata(self.images.get("Original"))
+                # Update fits header and metadata
+                background_mean = np.mean(self.images.get("Original").img_array)
+                denoised.update_fits_header(self.images.get("Original").fits_header, background_mean, self.prefs, self.cmd.app_state)
 
-            self.images.set("Denoised", denoised)
+                denoised.copy_metadata(self.images.get("Original"))
 
-            self.images.stretch_all(StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option), self.prefs.saturation)
+                self.images.set("Denoised", denoised)
 
-            eventbus.emit(AppEvents.DENOISE_SUCCESS)
-            eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Denoised"})
+                self.images.stretch_all(StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option), self.prefs.saturation)
+
+                eventbus.emit(AppEvents.DENOISE_SUCCESS)
+                eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": "Denoised"})
 
         except Exception as e:
             logging.exception(e)

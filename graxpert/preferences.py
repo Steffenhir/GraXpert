@@ -41,6 +41,7 @@ class Prefs:
     graxpert_version: AnyStr = graxpert_version
     denoise_strength: float = 0.5
     ai_batch_size: int = 4
+    ai_gpu_acceleration: bool = True
 
 
 def app_state_2_prefs(prefs: Prefs, app_state: AppState) -> Prefs:

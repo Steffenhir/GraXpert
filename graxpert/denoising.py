@@ -11,7 +11,7 @@ from graxpert.application.eventbus import eventbus
 from graxpert.ui.ui_events import UiEvents
 
 
-def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128, threshold=1.0, progress=None, ai_gpu_acceleration=True):
+def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128, progress=None, ai_gpu_acceleration=True):
 
     logging.info("Starting denoising")
 
@@ -29,10 +29,15 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
 
     median = np.median(image[::4, ::4, :], axis=[0, 1])
     mad = np.median(np.abs(image[::4, ::4, :] - median), axis=[0, 1])
+    
+    if "1.0.0" in ai_path or "1.1.0" in ai_path:
+        model_threshold = 1.0
+    else:
+        model_threshold = 10.0
 
     global cached_denoised_image
     if cached_denoised_image is not None:
-        return blend_images(input, cached_denoised_image, strength, threshold, median, mad)
+        return blend_images(input, cached_denoised_image, strength, model_threshold, median, mad)
 
     num_colors = image.shape[-1]
     if num_colors == 1:
@@ -66,11 +71,6 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
 
     logging.info(f"Available inference providers : {providers}")
     logging.info(f"Used inference providers : {session.get_providers()}")
-
-    if "1.0.0" in ai_path or "1.1.0" in ai_path:
-        model_threshold = 1.0
-    else:
-        model_threshold = 10.0
 
     cancel_flag = False
 
@@ -152,7 +152,7 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
         output = np.moveaxis(output, 0, -1)
 
     cached_denoised_image = output
-    output = blend_images(input, output, strength, threshold, median, mad)
+    output = blend_images(input, output, strength, model_threshold, median, mad)
 
     eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
     logging.info("Finished denoising")

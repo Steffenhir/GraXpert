@@ -68,7 +68,6 @@ class GraXpert:
         eventbus.add_listener(AppEvents.CALCULATE_REQUEST, self.on_calculate_request)
         # denoising
         eventbus.add_listener(AppEvents.DENOISE_STRENGTH_CHANGED, self.on_denoise_strength_changed)
-        eventbus.add_listener(AppEvents.DENOISE_THRESHOLD_CHANGED, self.on_denoise_threshold_changed)
         eventbus.add_listener(AppEvents.DENOISE_REQUEST, self.on_denoise_request)
         # saving
         eventbus.add_listener(AppEvents.SAVE_AS_CHANGED, self.on_save_as_changed)
@@ -329,9 +328,6 @@ class GraXpert:
     def on_denoise_strength_changed(self, event):
         self.prefs.denoise_strength = event["denoise_strength"]
 
-    def on_denoise_threshold_changed(self, event):
-        self.prefs.denoise_threshold = event["denoise_threshold"]
-
     def on_denoise_request(self, event):
         if self.images.get("Original") is None:
             messagebox.showerror("Error", _("Please load your picture first."))
@@ -356,7 +352,6 @@ class GraXpert:
                 ai_model_path,
                 self.prefs.denoise_strength,
                 batch_size=self.prefs.ai_batch_size,
-                threshold=self.prefs.denoise_threshold,
                 progress=progress,
                 ai_gpu_acceleration=self.prefs.ai_gpu_acceleration,
             )

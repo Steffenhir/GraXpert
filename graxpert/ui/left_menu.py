@@ -225,10 +225,6 @@ class DenoiseMenu(CollapsibleMenuFrame):
         self.denoise_strength.set(graxpert.prefs.denoise_strength)
         self.denoise_strength.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_STRENGTH_CHANGED, {"denoise_strength": self.denoise_strength.get()}))
 
-        self.denoise_threshold = tk.DoubleVar()
-        self.denoise_threshold.set(graxpert.prefs.denoise_threshold)
-        self.denoise_threshold.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DENOISE_THRESHOLD_CHANGED, {"denoise_threshold": self.denoise_threshold.get()}))
-
         self.create_children()
         self.setup_layout()
         self.place_children()
@@ -252,11 +248,6 @@ class DenoiseMenu(CollapsibleMenuFrame):
         )
         tooltip.Tooltip(self.denoise_strength_slider, text=tooltip.denoise_strength_text)
 
-        self.denoise_threshold_slider = ValueSlider(
-            self.sub_frame, width=default_label_width, variable_name=_("Denoise Threshold"), variable=self.denoise_threshold, min_value=0.1, max_value=10.0, precision=1
-        )
-        tooltip.Tooltip(self.denoise_threshold_slider, text=tooltip.denoise_threshold_text)
-
     def setup_layout(self):
         super().setup_layout()
 
@@ -264,7 +255,6 @@ class DenoiseMenu(CollapsibleMenuFrame):
         super().place_children()
 
         self.denoise_strength_slider.grid(column=1, row=0, pady=pady, sticky=tk.EW)
-        self.denoise_threshold_slider.grid(column=1, row=1, pady=pady, sticky=tk.EW)
         self.denoise_button.grid(column=1, row=2, pady=pady, sticky=tk.EW)
 
     def toggle(self):

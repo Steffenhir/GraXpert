@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2022-04-15 13:57+0200\n"
-"PO-Revision-Date: 2022-04-15 13:57+0200\n"
+"POT-Creation-Date: 2022-04-15 12:08+0200\n"
+"PO-Revision-Date: 2022-04-15 12:08+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -10,6 +10,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 "Language: zh_CN\n"
+
+msgid "Crop"
+msgstr "裁剪"
+
+msgid "Crop mode on/off"
+msgstr "裁剪模式开/关"
+
+msgid "Apply crop"
+msgstr "应用裁剪"
+
+msgid "Background Extraction"
+msgstr "背景提取"
 
 #: src/gui.py:147
 msgid " Loading"
@@ -23,17 +35,28 @@ msgstr "加载图像"
 msgid " Stretch Options"
 msgstr " 拉伸选项"
 
+msgid "Saturation"
+msgstr "饱和度"
+
 #: src/gui.py:176
 msgid " Sample Selection"
 msgstr " 样本选择"
 
+#: src/gui.py:176
+msgid "Display points"
+msgstr "显示点"
+
+#: src/gui.py:176
+msgid "Flooded generation"
+msgstr "填充生成"
+
 #: src/gui.py:185 src/gui.py:191
-msgid "Points per row: {}"
-msgstr "每行点数：{}"
+msgid "Points per row"
+msgstr "每行点数"
 
 #: src/gui.py:210 src/gui.py:216
-msgid "Grid Tolerance: {}"
-msgstr "网格容差：{}"
+msgid "Grid Tolerance"
+msgstr "网格容差"
 
 #: src/gui.py:231
 msgid "Create Grid"
@@ -80,30 +103,30 @@ msgid "Please load your picture first."
 msgstr "请先加载您的图片。"
 
 #: src/gui.py:423 src/gui.py:453
-msgid "Error occurred when saving the image."
+msgid "Error occured when saving the image."
 msgstr "保存图像时发生错误。"
 
 #: src/gui.py:471
-msgid "Please load your picture and select background points with right click."
-msgstr "请加载您的图片并用右键选择背景点。"
+msgid "Please select background points with left click."
+msgstr "请用左键选择背景点。"
 
 #: src/gui.py:475
 msgid ""
-"Please select at least 2 background points with right click for the Kriging "
+"Please select at least 2 background points with left click for the Kriging "
 "method."
-msgstr "请用右键选择至少 2 个背景点用于克里金方法。"
+msgstr "请用左键选择至少 2 个背景点用于克里金方法。"
 
 #: src/gui.py:479
 msgid ""
-"Please select at least 16 background points with right click for the Splines "
+"Please select at least 16 background points with left click for the Splines "
 "method."
-msgstr "请用右键选择至少 16 个背景点用于样条方法。"
+msgstr "请用左键选择至少 16 个背景点用于样条方法。"
 
 #: src/gui.py:799
 msgid "Please select background points and press the Calculate button first"
 msgstr "请先选择背景点并按下计算按钮"
 
-#: src/help_panel.py:37
+#: src/help_panel.py:38
 msgid ""
 "H\n"
 "E\n"
@@ -113,55 +136,113 @@ msgstr ""
 "帮\n"
 "助"
 
-#: src/help_panel.py:74
+#: src/help_panel.py:75
 msgid "Instructions"
 msgstr "说明"
 
-#: src/help_panel.py:77
-msgid ""
-"1.\n"
-"Load your image."
-msgstr ""
-"1.\n"
-"加载您的图像。"
+#: src/help_panel.py:78
+msgid "Load your image."
+msgstr "加载您的图像。"
 
-#: src/help_panel.py:81
-msgid ""
-"2.\n"
-"Stretch your image if necessary to reveal gradients."
-msgstr ""
-"2.\n"
-"如有必要，拉伸您的图像以显示渐变。"
+#: src/help_panel.py:82
+msgid "Stretch your image if necessary to reveal gradients."
+msgstr "如有必要，拉伸您的图像以显示渐变。"
 
-#: src/help_panel.py:86
+#: src/help_panel.py:87
 msgid ""
-"3.\n"
 "Select background points\n"
 "  a) manually with left click\n"
 "  b) automatically via grid (grid selection)\n"
 "You can remove already set points by right clicking on them."
 msgstr ""
-"3.\n"
 "选择背景点\n"
 "  a) 左键手动选择\n"
 "  b) 通过网格自动选择（网格选择）\n"
 "您可以通过右键点击已设置的点来移除它们。"
 
-#: src/help_panel.py:92
-msgid ""
-"4.\n"
-"Click on Calculate Background to get the processed image."
-msgstr ""
-"4.\n"
-"点击计算背景以获取处理后的图像。"
+#: src/help_panel.py:93
+msgid "Click on Calculate Background to get the processed image."
+msgstr "点击计算背景以获取处理后的图像。"
 
-#: src/help_panel.py:95
+#: src/help_panel.py:96
+msgid "Save the processed image."
+msgstr "保存处理后的图像。"
+
+#: src/help_panel.py
+msgid "Keybindings"
+msgstr "键绑定"
+
+#: src/help_panel.py
+msgid "Left click on picture: Set sample point"
+msgstr "左键点击图片：设置样本点"
+
+#: src/help_panel.py
+msgid "Left click on picture + drag: Move picture"
+msgstr "左键点击图片 + 拖动：移动图片"
+
+#: src/help_panel.py
 msgid ""
-"5.\n"
-"Save the processed image."
+"Left click on sample point + drag:\n"
+"Move sample point"
 msgstr ""
-"5.\n"
-"保存处理后的图像。"
+"左键点击样本点 + 拖动：\n"
+"移动样本点"
+
+#: src/help_panel.py
+msgid ""
+"Right click on sample point:\n"
+"Delete sample point"
+msgstr ""
+"右键点击样本点：\n"
+"删除样本点"
+
+#: src/help_panel.py
+msgid "Mouse wheel: Zoom"
+msgstr "鼠标滚轮：缩放"
+
+#: src/help_panel.py
+msgid "Ctrl+Z/Y: Undo/Redo sample point"
+msgstr "Ctrl+Z/Y：撤销/重做样本点"
+
+#: src/help_panel.py
+msgid ""
+"A\n"
+"D\n"
+"V\n"
+"A\n"
+"N\n"
+"C\n"
+"E\n"
+"D"
+msgstr ""
+"高\n"
+"级"
+
+#: src/help_panel.py
+msgid "Advanced Settings"
+msgstr "高级设置"
+
+#: src/help_panel.py
+msgid "Sample Points"
+msgstr "样本点"
+
+#: src/help_panel.py
+msgid "Sample size"
+msgstr "样本大小"
+
+#: src/help_panel.py
+msgid "Sample color"
+msgstr "样本颜色"
+
+#: src/help_panel.py
+msgid "Spline order"
+msgstr "样条顺序"
+
+msgid "Language"
+msgstr "语言"
+
+msgid "Correction"
+msgstr "校正"
 
 #: src/loadingframe.py:18
 msgid "Calculating..."
@@ -249,6 +330,19 @@ msgstr "保存背景模型"
 msgid "Save the processed picture"
 msgstr "保存处理后的图像"
 
+msgid ""
+"Use GraXpert's denoising AI model to reduce the noise in your image. This "
+"may take a while"
+msgstr "使用 GraXpert 的 AI 降噪模型来减少图像中的噪声。这可能需要一段时间"
+
+msgid "Determines strength of denoising."
+msgstr "确定降噪强度。"
+
+msgid ""
+"Save the stretched and processed picture. The color saturation is not "
+"changed."
+msgstr "保存拉伸和处理后的图像。颜色饱和度不会改变。"
+
 #: src/tooltip.py:189
 msgid ""
 "Switch display between \n"
@@ -263,5 +357,75 @@ msgstr ""
 "处理后：减去背景模型的图片\n"
 "背景：背景模型"
 
+msgid "This is a Beta release!"
+msgstr "这是一个 Beta 版本！"
+
+msgid "New official release available!"
+msgstr "有新的官方版本可用！"
+
+msgid "New version available!"
+msgstr "有新版本可用！"
+
 msgid "A newer version of GraXpert is available at"
 msgstr "有新版 GraXpert 可用，下载地址"
+
+msgid ""
+"This Beta version is deprecated. A newer official release of GraXpert is "
+"available at"
+msgstr "此 Beta 版本已被弃用。新版官方 GraXpert 可在以下地址获取"
+
+msgid ""
+"Please note that this is a Beta release of GraXpert. You will be notified "
+"when a newer official version is available."
+msgstr ""
+"请注意，这是 GraXpert 的 Beta 版本。当有更新的官方版本可用时，您将收到通知。"
+
+msgid "Interface"
+msgstr "界面"
+
+msgid "Scaling"
+msgstr "缩放"
+
+msgid "Please restart the program to apply the changes to UI scaling."
+msgstr "请重启程序以应用 UI 缩放的更改。"
+
+msgid "Select AI directory"
+msgstr "选择 AI 目录"
+
+msgid "Extracting Background"
+msgstr "提取背景"
+
+msgid ""
+"No AI-Model selected. Please select one from the Advanced panel on the right."
+msgstr "未选择 AI 模型。请从右侧的高级面板中选择一个。"
+
+msgid "Install AI-Model?"
+msgstr "安装 AI 模型？"
+
+msgid "Selected AI-Model is not installed. Should I download it now?"
+msgstr "所选 AI 模型未安装。现在下载吗？"
+
+msgid "Downloading AI-Model"
+msgstr "正在下载 AI 模型"
+
+msgid ""
+"An error occured during background calculation. Please see the log at {}."
+msgstr "背景计算时发生错误。请查看日志文件，位于 {}。"
+
+msgid "Loading"
+msgstr "加载中"
+
+msgid "Channels linked"
+msgstr "通道链接"
+
+msgid "Denoising"
+msgstr "降噪"
+
+msgid "Denoise Strength"
+msgstr "降噪强度"
+
+msgid "Denoise Image"
+msgstr "降噪图像"
+
+msgid "Saving"
+msgstr "保存中"

@@ -145,7 +145,7 @@ class AdvancedFrame(RightFrameBase):
         self.corr_type.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.CORRECTION_TYPE_CHANGED, {"corr_type": self.corr_type.get()}))
 
         # interface
-        self.langs = ["English", "Deutsch"]
+        self.langs = ["English", "Deutsch", "Chinese"]
         self.lang = tk.StringVar()
         self.lang.set(graxpert.prefs.lang)
         self.lang.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.LANGUAGE_CHANGED, {"lang": self.lang.get()}))

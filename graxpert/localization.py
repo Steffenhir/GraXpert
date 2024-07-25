@@ -17,6 +17,8 @@ if prefs.lang is None:
         lang = "en_EN"
     elif lang.startswith("de") or lang.startswith("gsw"):
         lang = "de_DE"
+    elif lang.startswith("zh"):
+        lang = "zh_CN"
     else:
         lang = "en_EN"
 
@@ -24,6 +26,8 @@ else:
     lang = prefs.lang
     if lang == "Deutsch":
         lang = "de_DE"
+    elif lang == "Chinese":
+        lang = "zh_CN"
     else:
         lang = "en_EN"
 

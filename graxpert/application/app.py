@@ -6,7 +6,15 @@ from tkinter import messagebox
 import numpy as np
 from appdirs import user_config_dir
 
-from graxpert.ai_model_handling import ai_model_path_from_version, bge_ai_models_dir, denoise_ai_models_dir, download_version, validate_local_version
+from graxpert.ai_model_handling import (
+    ai_model_path_from_version,
+    bge_ai_models_dir,
+    deconvolution_object_ai_models_dir,
+    deconvolution_stars_ai_models_dir,
+    denoise_ai_models_dir,
+    download_version,
+    validate_local_version,
+)
 from graxpert.app_state import INITIAL_STATE
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
@@ -14,11 +22,12 @@ from graxpert.astroimage import AstroImage
 from graxpert.AstroImageRepository import AstroImageRepository
 from graxpert.background_extraction import extract_background
 from graxpert.commands import INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, SEL_POINTS_HANDLER, Command
+from graxpert.deconvolution import deconvolve
 from graxpert.denoising import denoise
 from graxpert.localization import _
 from graxpert.mp_logging import logfile_name
 from graxpert.preferences import fitsheader_2_app_state, load_preferences, prefs_2_app_state
-from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name
+from graxpert.s3_secrets import bge_bucket_name, deconvolution_object_bucket_name, deconvolution_stars_bucket_name, denoise_bucket_name
 from graxpert.stretch import StretchParameters, stretch_all
 from graxpert.ui.loadingframe import DynamicProgressThread
 
@@ -66,6 +75,10 @@ class GraXpert:
         eventbus.add_listener(AppEvents.INTERPOL_TYPE_CHANGED, self.on_interpol_type_changed)
         eventbus.add_listener(AppEvents.SMOTTHING_CHANGED, self.on_smoothing_changed)
         eventbus.add_listener(AppEvents.CALCULATE_REQUEST, self.on_calculate_request)
+        # deconvolution
+        eventbus.add_listener(AppEvents.DECONVOLUTION_TYPE_CHANGED, self.on_deconvolution_type_changed)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_STRENGTH_CHANGED, self.on_deconvolution_strength_changed)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_REQUEST, self.on_deconvolution_request)
         # denoising
         eventbus.add_listener(AppEvents.DENOISE_STRENGTH_CHANGED, self.on_denoise_strength_changed)
         eventbus.add_listener(AppEvents.DENOISE_REQUEST, self.on_denoise_request)
@@ -82,6 +95,8 @@ class GraXpert:
         eventbus.add_listener(AppEvents.CORRECTION_TYPE_CHANGED, self.on_correction_type_changed)
         eventbus.add_listener(AppEvents.LANGUAGE_CHANGED, self.on_language_selected)
         eventbus.add_listener(AppEvents.BGE_AI_VERSION_CHANGED, self.on_bge_ai_version_changed)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_OBJECT_AI_VERSION_CHANGED, self.on_deconvolution_object_ai_version_changed)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_STARS_AI_VERSION_CHANGED, self.on_deconvolution_stars_ai_version_changed)
         eventbus.add_listener(AppEvents.DENOISE_AI_VERSION_CHANGED, self.on_denoise_ai_version_changed)
         eventbus.add_listener(AppEvents.SCALING_CHANGED, self.on_scaling_changed)
         eventbus.add_listener(AppEvents.AI_BATCH_SIZE_CHANGED, self.on_ai_batch_size_changed)
@@ -215,6 +230,78 @@ class GraXpert:
         self.cmd.execute()
 
         eventbus.emit(AppEvents.CREATE_GRID_END)
+
+    def on_deconvolution_type_changed(self, event):
+        self.prefs.deconvolution_type_option = event["deconvolution_type_option"]
+
+    def on_deconvolution_strength_changed(self, event):
+        self.prefs.deconvolution_strength = event["deconvolution_strength"]
+
+    def on_deconvolution_object_ai_version_changed(self, event):
+        self.prefs.deconvolution_object_ai_version = event["deconvolution_object_ai_version"]
+
+    def on_deconvolution_stars_ai_version_changed(self, event):
+        self.prefs.deconvolution_stars_ai_version = event["deconvolution_stars_ai_version"]
+
+    def on_deconvolution_request(self, event):
+        if self.images.get("Original") is None:
+            messagebox.showerror("Error", _("Please load your picture first."))
+            return
+
+        if not self.validate_deconvolution_ai_installation():
+            return
+
+        eventbus.emit(AppEvents.DECONVOLUTION_BEGIN)
+
+        progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.DECONVOLUTION_PROGRESS, {"progress": p}))
+
+        deconvolution_type_option = self.prefs.deconvolution_type_option
+
+        try:
+            img_array_to_be_processed = np.copy(self.images.get("Original").img_array)
+            if self.images.get("Gradient-Corrected") is not None:
+                img_array_to_be_processed = np.copy(self.images.get("Gradient-Corrected").img_array)
+
+            self.prefs.images_linked_option = True
+
+            if deconvolution_type_option == "Object-only":
+                ai_model_path = ai_model_path_from_version(deconvolution_object_ai_models_dir, self.prefs.deconvolution_object_ai_version)
+            else:
+                ai_model_path = ai_model_path_from_version(deconvolution_stars_ai_models_dir, self.prefs.deconvolution_stars_ai_version)
+            imarray = deconvolve(
+                img_array_to_be_processed,
+                ai_model_path,
+                self.prefs.deconvolution_strength,
+                batch_size=self.prefs.ai_batch_size,
+                progress=progress,
+                ai_gpu_acceleration=self.prefs.ai_gpu_acceleration,
+            )
+
+            if imarray is not None:
+
+                deconvolved = AstroImage()
+                deconvolved.set_from_array(imarray)
+
+                # Update fits header and metadata
+                background_mean = np.mean(self.images.get("Original").img_array)
+                deconvolved.update_fits_header(self.images.get("Original").fits_header, background_mean, self.prefs, self.cmd.app_state)
+
+                deconvolved.copy_metadata(self.images.get("Original"))
+
+                self.images.set(f"Deconvolved {deconvolution_type_option}", deconvolved)
+
+                self.images.stretch_all(StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option), self.prefs.saturation)
+
+                eventbus.emit(AppEvents.DECONVOLUTION_SUCCESS, {"deconvolution_type_option": f"Deconvolved {deconvolution_type_option}"})
+                eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": f"Deconvolved {deconvolution_type_option}"})
+
+        except Exception as e:
+            logging.exception(e)
+            eventbus.emit(AppEvents.DECONVOLUTION_ERROR)
+            messagebox.showerror("Error", _("An error occured during deconvolution. Please see the log at {}.".format(logfile_name)))
+        finally:
+            progress.done_progress()
+            eventbus.emit(AppEvents.DECONVOLUTION_END)
 
     def on_denoise_ai_version_changed(self, event):
         self.prefs.denoise_ai_version = event["denoise_ai_version"]
@@ -602,6 +689,44 @@ class GraXpert:
                 download_version(bge_ai_models_dir, bge_bucket_name, self.prefs.bge_ai_version, progress=callback)
                 eventbus.emit(AppEvents.AI_DOWNLOAD_END)
         return True
+
+    def validate_deconvolution_ai_installation(self):
+
+        if self.prefs.deconvolution_type_option == "Object-only":
+
+            if self.prefs.deconvolution_object_ai_version is None or self.prefs.deconvolution_object_ai_version == "None":
+                messagebox.showerror("Error", _("No Object-only Deconvolution AI-Model selected. Please select one from the Advanced panel on the right."))
+                return False
+
+            if not validate_local_version(deconvolution_object_ai_models_dir, self.prefs.deconvolution_object_ai_version):
+                if not messagebox.askyesno(_("Install AI-Model?"), _("Selected Object-only Deconvolution AI-Model is not installed. Should I download it now?")):
+                    return False
+                else:
+                    eventbus.emit(AppEvents.AI_DOWNLOAD_BEGIN)
+
+                    def callback(p):
+                        eventbus.emit(AppEvents.AI_DOWNLOAD_PROGRESS, {"progress": p})
+
+                    download_version(deconvolution_object_ai_models_dir, deconvolution_object_bucket_name, self.prefs.deconvolution_object_ai_version, progress=callback)
+                    eventbus.emit(AppEvents.AI_DOWNLOAD_END)
+            return True
+        else:
+            if self.prefs.deconvolution_stars_ai_version is None or self.prefs.deconvolution_stars_ai_version == "None":
+                messagebox.showerror("Error", _("No Stars-only Denoising AI-Model selected. Please select one from the Advanced panel on the right."))
+                return False
+
+            if not validate_local_version(deconvolution_stars_ai_models_dir, self.prefs.deconvolution_stars_ai_version):
+                if not messagebox.askyesno(_("Install AI-Model?"), _("Selected Stars-only Deconvolution AI-Model is not installed. Should I download it now?")):
+                    return False
+                else:
+                    eventbus.emit(AppEvents.AI_DOWNLOAD_BEGIN)
+
+                    def callback(p):
+                        eventbus.emit(AppEvents.AI_DOWNLOAD_PROGRESS, {"progress": p})
+
+                    download_version(deconvolution_stars_ai_models_dir, deconvolution_stars_bucket_name, self.prefs.deconvolution_stars_ai_version, progress=callback)
+                    eventbus.emit(AppEvents.AI_DOWNLOAD_END)
+            return True
 
     def validate_denoise_ai_installation(self):
         if self.prefs.denoise_ai_version is None or self.prefs.denoise_ai_version == "None":

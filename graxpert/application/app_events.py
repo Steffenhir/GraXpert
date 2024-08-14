@@ -43,6 +43,16 @@ class AppEvents(Enum):
     CALCULATE_END = auto()
     CALCULATE_SUCCESS = auto()
     CALCULATE_ERROR = auto()
+    # deconvolution
+    DECONVOLUTION_TYPE_CHANGED = auto()
+    DECONVOLUTION_STRENGTH_CHANGED = auto()
+    DECONVOLUTION_OPERATION_CHANGED = auto()
+    DECONVOLUTION_REQUEST = auto()
+    DECONVOLUTION_BEGIN = auto()
+    DECONVOLUTION_PROGRESS = auto()
+    DECONVOLUTION_END = auto()
+    DECONVOLUTION_SUCCESS = auto()
+    DECONVOLUTION_ERROR = auto()
     # denoising
     DENOISE_STRENGTH_CHANGED = auto()
     DENOISE_THRESHOLD_CHANGED = auto()
@@ -67,6 +77,9 @@ class AppEvents(Enum):
     AI_DOWNLOAD_ERROR = auto()
     # bge ai model handling
     BGE_AI_VERSION_CHANGED = auto()
+    # denoise ai model handling
+    DECONVOLUTION_OBJECT_AI_VERSION_CHANGED = auto()
+    DECONVOLUTION_STARS_AI_VERSION_CHANGED = auto()
     # denoise ai model handling
     DENOISE_AI_VERSION_CHANGED = auto()
     # advanced settings

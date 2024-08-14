@@ -103,6 +103,11 @@ class Canvas(CTkFrame):
         eventbus.add_listener(AppEvents.CALCULATE_END, self.on_calculate_end)
         eventbus.add_listener(AppEvents.CALCULATE_SUCCESS, self.on_calculate_success)
         eventbus.add_listener(AppEvents.CALCULATE_ERROR, self.on_calculate_end)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_BEGIN, self.on_deconvolution_begin)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_PROGRESS, self.on_deconvolution_progress)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_END, self.on_deconvolution_end)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_SUCCESS, self.on_deconvolution_success)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_ERROR, self.on_deconvolution_end)
         eventbus.add_listener(AppEvents.DENOISE_BEGIN, self.on_denoise_begin)
         eventbus.add_listener(AppEvents.DENOISE_PROGRESS, self.on_denoise_progress)
         eventbus.add_listener(AppEvents.DENOISE_END, self.on_denoise_end)
@@ -143,7 +148,7 @@ class Canvas(CTkFrame):
             return
 
         graxpert.images.crop_all(self.startx, self.endx, self.starty, self.endy)
-        
+
         self.startx = 0
         self.starty = 0
         self.endx = graxpert.images.get("Original").width
@@ -162,7 +167,7 @@ class Canvas(CTkFrame):
 
     def on_calculate_progress(self, event=None):
         self.dynamic_progress_frame.update_progress(event["progress"])
-    
+
     def on_calculate_success(self, event=None):
         if not "Gradient-Corrected" in self.display_options:
             self.display_options.append("Gradient-Corrected")
@@ -181,6 +186,29 @@ class Canvas(CTkFrame):
         self.show_progress_frame(False)
         self.redraw_image()
 
+    def on_deconvolution_begin(self, event=None):
+        self.dynamic_progress_frame.text.set(_("Deconvolving"))
+        self.dynamic_progress_frame.cancellable = True
+        self.show_progress_frame(True)
+
+    def on_deconvolution_progress(self, event=None):
+        self.dynamic_progress_frame.update_progress(event["progress"])
+
+    def on_deconvolution_success(self, event=None):
+        self.dynamic_progress_frame.cancellable = False
+        if not event["deconvolution_type_option"] in self.display_options:
+            self.display_options.append(event["deconvolution_type_option"])
+            self.display_menu.grid_forget()
+            self.display_menu = CTkOptionMenu(self, variable=self.display_type, values=self.display_options)
+            self.display_menu.grid(column=0, row=0, sticky=tk.N)
+
+    def on_deconvolution_end(self, event=None):
+        self.dynamic_progress_frame.cancellable = False
+        self.dynamic_progress_frame.text.set("")
+        self.dynamic_progress_frame.variable.set(0.0)
+        self.show_progress_frame(False)
+        self.redraw_image()
+
     def on_denoise_begin(self, event=None):
         self.dynamic_progress_frame.text.set(_("Denoising"))
         self.dynamic_progress_frame.cancellable = True
@@ -188,7 +216,7 @@ class Canvas(CTkFrame):
 
     def on_denoise_progress(self, event=None):
         self.dynamic_progress_frame.update_progress(event["progress"])
-    
+
     def on_denoise_success(self, event=None):
         self.dynamic_progress_frame.cancellable = False
         if not "Denoised" in self.display_options:
@@ -403,11 +431,11 @@ class Canvas(CTkFrame):
 
     def on_stretch_image_error(self, event=None):
         self.show_loading_frame(False)
-        
+
     def on_turn_on_crop_mode(self, event=None):
         if self.crop_mode:
             return
-        
+
         if graxpert.images.get("Original") is None:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
@@ -416,22 +444,21 @@ class Canvas(CTkFrame):
         self.starty = 0
         self.endx = graxpert.images.get("Original").width
         self.endy = graxpert.images.get("Original").height
-        
+
         self.crop_mode = True
         self.redraw_points()
-        
+
     def on_turn_off_crop_mode(self, event=None):
         if not self.crop_mode:
             return
-        
+
         self.startx = 0
         self.starty = 0
         self.endx = graxpert.images.get("Original").width
         self.endy = graxpert.images.get("Original").height
-        
+
         self.crop_mode = False
         self.redraw_points()
-
 
     # widget logic
     def draw_image(self, pil_image, tags=None):

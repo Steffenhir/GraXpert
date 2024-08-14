@@ -37,8 +37,12 @@ class Prefs:
     corr_type: AnyStr = "Subtraction"
     scaling: float = 1.0
     bge_ai_version: AnyStr = None
+    deconvolution_type_option: AnyStr = "Object-only"
+    deconvolution_object_ai_version: AnyStr = None
+    deconvolution_stars_ai_version: AnyStr = None
     denoise_ai_version: AnyStr = None
     graxpert_version: AnyStr = graxpert_version
+    deconvolution_strength: float = 0.5
     denoise_strength: float = 0.5
     ai_batch_size: int = 4
     ai_gpu_acceleration: bool = True

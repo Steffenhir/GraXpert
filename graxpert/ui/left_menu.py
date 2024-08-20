@@ -340,6 +340,10 @@ class SaveMenu(CollapsibleMenuFrame):
         self.saveas_type = tk.StringVar()
         self.saveas_type.set(graxpert.prefs.saveas_option)
         self.saveas_type.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.SAVE_AS_CHANGED, {"saveas_option": self.saveas_type.get()}))
+        self.saveas_stretched = tk.BooleanVar()
+        self.saveas_stretched.set(graxpert.prefs.saveas_stretched)
+        self.saveas_stretched.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.SAVE_STRETCHED_CHANGED, {"saveas_stretched": self.saveas_stretched.get()}))
+
 
         self.create_children()
         self.setup_layout()
@@ -355,16 +359,14 @@ class SaveMenu(CollapsibleMenuFrame):
         tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
         self.save_button = GraXpertButton(
             self.sub_frame,
-            text=_("Save Processed"),
+            text=_("Save Selected"),
             fg_color=ThemeManager.theme["Accent.CTkButton"]["fg_color"],
             hover_color=ThemeManager.theme["Accent.CTkButton"]["hover_color"],
             command=lambda: eventbus.emit(AppEvents.SAVE_REQUEST),
         )
         tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
-        self.save_background_button = GraXpertButton(self.sub_frame, text=_("Save Background"), command=lambda: eventbus.emit(AppEvents.SAVE_BACKGROUND_REQUEST))
-        tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
-        self.save_stretched_button = GraXpertButton(self.sub_frame, text=_("Save Stretched & Processed"), command=lambda: eventbus.emit(AppEvents.SAVE_STRETCHED_REQUEST))
-        tooltip.Tooltip(self.save_stretched_button, text=tooltip.save_stretched_pic_text)
+        self.saveas_stretched_checkbox = GraXpertCheckbox(self.sub_frame, width=default_label_width, text=_("Save Stretched"), variable = self.saveas_stretched)
+        tooltip.Tooltip(self.saveas_stretched_checkbox, text=tooltip.saveas_stretched_text)
 
     def setup_layout(self):
         super().setup_layout()
@@ -382,8 +384,7 @@ class SaveMenu(CollapsibleMenuFrame):
         # saving
         self.saveas_menu.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
         self.save_button.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
-        self.save_background_button.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
-        self.save_stretched_button.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
+        self.saveas_stretched_checkbox.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
 
     def toggle(self):
         super().toggle()

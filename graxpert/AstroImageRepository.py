@@ -1,21 +1,39 @@
+from enum import StrEnum
 from typing import Dict
 
 from graxpert.astroimage import AstroImage
 from graxpert.stretch import StretchParameters, calculate_mtf_stretch_parameters_for_image, stretch_all
 
 
-class AstroImageRepository:
-    images: Dict = {"Original": None, "Gradient-Corrected": None, "Background": None, "Deconvolved Object-only": None, "Deconvolved Stars-only": None, "Denoised": None}
+class ImageTypes(StrEnum):
+    Original = "Original"
+    Gradient_Corrected = "Gradient-Corrected"
+    Background = "Background"
+    Deconvolved_Object_only = "Deconvolved Object-only"
+    Deconvolved_Stars_only = "Deconvolved Stars-only"
+    Denoised = "Denoised"
 
-    def set(self, type: str, image: AstroImage):
+
+class AstroImageRepository:
+
+    images: Dict = {
+        ImageTypes.Original: None,
+        ImageTypes.Gradient_Corrected: None,
+        ImageTypes.Background: None,
+        ImageTypes.Deconvolved_Object_only: None,
+        ImageTypes.Deconvolved_Stars_only: None,
+        ImageTypes.Denoised: None,
+    }
+
+    def set(self, type: ImageTypes, image: AstroImage):
         self.images[type] = image
 
-    def get(self, type: str):
+    def get(self, type: ImageTypes):
         return self.images[type]
 
     def stretch_all(self, stretch_params: StretchParameters, saturation: float):
 
-        if self.get("Original") is None:
+        if self.get(ImageTypes.Original) is None:
             return
 
         stretches = []
@@ -30,40 +48,38 @@ class AstroImageRepository:
             all_image_arrays = []
             all_mtf_stretch_params = []
 
-            all_image_arrays.append(self.get("Original").img_array)
-            all_mtf_stretch_params.append(calculate_mtf_stretch_parameters_for_image(stretch_params, self.get("Original").img_array))
+            all_image_arrays.append(self.get(ImageTypes.Original).img_array)
+            all_mtf_stretch_params.append(calculate_mtf_stretch_parameters_for_image(stretch_params, self.get(ImageTypes.Original).img_array))
 
-            if self.get("Gradient-Corrected") is not None and self.get("Background") is not None:
-                all_image_arrays.append(self.get("Gradient-Corrected").img_array)
-                all_mtf_stretch_params.append(calculate_mtf_stretch_parameters_for_image(stretch_params, self.get("Gradient-Corrected").img_array))
+            if self.get(ImageTypes.Gradient_Corrected) is not None and self.get(ImageTypes.Background) is not None:
+                all_image_arrays.append(self.get(ImageTypes.Gradient_Corrected).img_array)
+                all_mtf_stretch_params.append(calculate_mtf_stretch_parameters_for_image(stretch_params, self.get(ImageTypes.Gradient_Corrected).img_array))
 
-                all_image_arrays.append(self.get("Background").img_array)
-                all_mtf_stretch_params.append(all_mtf_stretch_params[0])
-            
-
-            if self.get("Deconvolved Object-only") is not None and self.get("Gradient-Corrected") is None:
-                all_image_arrays.append(self.get("Deconvolved Object-only").img_array)
+                all_image_arrays.append(self.get(ImageTypes.Background).img_array)
                 all_mtf_stretch_params.append(all_mtf_stretch_params[0])
 
-            elif self.get("Deconvolved Object-only") is not None and self.get("Gradient-Corrected") is not None:
-                all_image_arrays.append(self.get("Deconvolved Object-only").img_array)
-                all_mtf_stretch_params.append(all_mtf_stretch_params[1])
-            
-            if self.get("Deconvolved Stars-only") is not None and self.get("Gradient-Corrected") is None:
-                all_image_arrays.append(self.get("Deconvolved Stars-only").img_array)
+            if self.get(ImageTypes.Deconvolved_Object_only) is not None and self.get(ImageTypes.Gradient_Corrected) is None:
+                all_image_arrays.append(self.get(ImageTypes.Deconvolved_Object_only).img_array)
                 all_mtf_stretch_params.append(all_mtf_stretch_params[0])
 
-            elif self.get("Deconvolved Stars-only") is not None and self.get("Gradient-Corrected") is not None:
-                all_image_arrays.append(self.get("Deconvolved Stars-only").img_array)
+            elif self.get(ImageTypes.Deconvolved_Object_only) is not None and self.get(ImageTypes.Gradient_Corrected) is not None:
+                all_image_arrays.append(self.get(ImageTypes.Deconvolved_Object_only).img_array)
                 all_mtf_stretch_params.append(all_mtf_stretch_params[1])
 
-
-            if self.get("Denoised") is not None and self.get("Gradient-Corrected") is None:
-                all_image_arrays.append(self.get("Denoised").img_array)
+            if self.get(ImageTypes.Deconvolved_Stars_only) is not None and self.get(ImageTypes.Gradient_Corrected) is None:
+                all_image_arrays.append(self.get(ImageTypes.Deconvolved_Stars_only).img_array)
                 all_mtf_stretch_params.append(all_mtf_stretch_params[0])
 
-            elif self.get("Denoised") is not None and self.get("Gradient-Corrected") is not None:
-                all_image_arrays.append(self.get("Denoised").img_array)
+            elif self.get(ImageTypes.Deconvolved_Stars_only) is not None and self.get(ImageTypes.Gradient_Corrected) is not None:
+                all_image_arrays.append(self.get(ImageTypes.Deconvolved_Stars_only).img_array)
+                all_mtf_stretch_params.append(all_mtf_stretch_params[1])
+
+            if self.get(ImageTypes.Denoised) is not None and self.get(ImageTypes.Gradient_Corrected) is None:
+                all_image_arrays.append(self.get(ImageTypes.Denoised).img_array)
+                all_mtf_stretch_params.append(all_mtf_stretch_params[0])
+
+            elif self.get(ImageTypes.Denoised) is not None and self.get(ImageTypes.Gradient_Corrected) is not None:
+                all_image_arrays.append(self.get(ImageTypes.Denoised).img_array)
                 all_mtf_stretch_params.append(all_mtf_stretch_params[1])
 
             stretches = stretch_all(all_image_arrays, all_mtf_stretch_params)

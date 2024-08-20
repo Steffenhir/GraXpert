@@ -187,8 +187,7 @@ denoise_strength_text = _("Determines strength of denoising.")
 denoise_threshold_text = _("Determines the upper bound up to which pixels are denoised. Pixels above this threshold are not denoised and taken from the original image.")
 
 saveas_text = _("Choose the bitdepth of the saved pictures and the file format. " "If you are working with a .fits image the fits header will " "be preserved.")
-save_bg_text = _("Save the background model")
-save_pic_text = _("Save the processed picture")
-save_stretched_pic_text = _("Save the stretched and processed picture. The color saturation is not changed.")
+saveas_stretched_text = _("Enable to save the stretched image instead of the linear one. The color saturation is not changed.")
+save_pic_text = _("Save the currently selected picture")
 
 display_text = _("Switch display between \n" "\n" "Original: Your original picture \n" "Processed: Picture with subtracted background model \n" "Background: The background model")

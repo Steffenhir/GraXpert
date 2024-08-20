@@ -29,6 +29,7 @@ class Prefs:
     interpol_type_option: AnyStr = "RBF"
     smoothing_option: float = 0.0
     saveas_option: AnyStr = "32 bit Tiff"
+    saveas_stretched: bool = False
     sample_size: int = 25
     sample_color: int = 55
     RBF_kernel: AnyStr = "thin_plate"

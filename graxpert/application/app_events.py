@@ -64,9 +64,8 @@ class AppEvents(Enum):
     DENOISE_ERROR = auto()
     # saving
     SAVE_AS_CHANGED = auto()
+    SAVE_STRETCHED_CHANGED = auto()
     SAVE_REQUEST = auto()
-    SAVE_BACKGROUND_REQUEST = auto()
-    SAVE_STRETCHED_REQUEST = auto()
     SAVE_BEGIN = auto()
     SAVE_END = auto()
     SAVE_ERROR = auto()

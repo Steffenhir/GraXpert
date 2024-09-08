@@ -2,6 +2,7 @@ import copy
 import logging
 import numpy as np
 import onnxruntime as ort
+import astropy.stats
 
 from graxpert.ai_model_handling import get_execution_providers_ordered
 from graxpert.application.app_events import AppEvents
@@ -36,20 +37,20 @@ def deconvolve(image, ai_path, strength, batch_size=4, window_size=512, stride=4
     dh = ith * stride - h
     dw = itw * stride - w
 
-    image = np.concatenate((image, image[(h - dh):, :, :]), axis=0)
-    image = np.concatenate((image, image[:, (w - dw):, :]), axis=1)
+    image = np.concatenate((image, image[(h - dh) :, :, :]), axis=0)
+    image = np.concatenate((image, image[:, (w - dw) :, :]), axis=1)
 
     h, w, _ = image.shape
-    image = np.concatenate((image, image[(h - offset):, :, :]), axis=0)
+    image = np.concatenate((image, image[(h - offset) :, :, :]), axis=0)
     image = np.concatenate((image[:offset, :, :], image), axis=0)
-    image = np.concatenate((image, image[:, (w - offset):, :]), axis=1)
+    image = np.concatenate((image, image[:, (w - offset) :, :]), axis=1)
     image = np.concatenate((image[:, :offset, :], image), axis=1)
 
     output = copy.deepcopy(image)
 
-    _min = np.min(image, axis=(0, 1))
-    image = image - _min + 1e-5
-    image = np.log(image)
+    # _min = np.min(image, axis=(0, 1))
+    # image = image - _min + 1e-5
+    # image = np.log(image)
 
     # _mean = np.mean(image, axis=(0, 1))
     # _std = np.std(image, axis=(0, 1))
@@ -92,11 +93,18 @@ def deconvolve(image, ai_path, strength, batch_size=4, window_size=512, stride=4
             x = stride * i
             y = stride * j
 
-            tile = image[x: x + window_size, y: y + window_size, :]
-            _mean = np.mean(tile, axis=(0, 1))
-            _std = np.std(tile, axis=(0, 1))
+            tile = image[x : x + window_size, y : y + window_size, :]
+            # _mean = np.mean(tile, axis=(0, 1))
+            # _std = np.std(tile, axis=(0, 1))
+
+            _min = np.min(tile, axis=(0, 1))
+            tile = tile - _min + 1e-5
+            tile = np.log(tile)
+
+            _mean, _, _std = astropy.stats.sigma_clipped_stats(tile, sigma=2.0, axis=(0, 1))
+            _mean, _std = _mean.astype(np.float32), _std.astype(np.float32)
             tile = (tile - _mean) / _std * 0.1
-            params.append([_mean, _std])
+            params.append([_mean, _std, _min])
 
             input_tile_copies.append(np.copy(tile))
 
@@ -122,7 +130,7 @@ def deconvolve(image, ai_path, strength, batch_size=4, window_size=512, stride=4
         for idx in range(len(params)):
             output_tiles[idx] = output_tiles[idx] * params[idx][1] / 0.1 + params[idx][0]
             output_tiles[idx] = np.exp(output_tiles[idx])
-            output_tiles[idx] = output_tiles[idx] + _min - 1e-5
+            output_tiles[idx] = output_tiles[idx] + params[idx][2] - 1e-5
 
         for t_idx, tile in enumerate(output_tiles):
 
@@ -135,8 +143,8 @@ def deconvolve(image, ai_path, strength, batch_size=4, window_size=512, stride=4
 
             x = stride * i
             y = stride * j
-            tile = tile[offset: offset + stride, offset: offset + stride, :]
-            output[x + offset: stride * (i + 1) + offset, y + offset: stride * (j + 1) + offset, :] = tile
+            tile = tile[offset : offset + stride, offset : offset + stride, :]
+            output[x + offset : stride * (i + 1) + offset, y + offset : stride * (j + 1) + offset, :] = tile
 
         p = int(b / (ith * itw + batch_size) * 100)
         if p > last_progress:
@@ -150,7 +158,7 @@ def deconvolve(image, ai_path, strength, batch_size=4, window_size=512, stride=4
     # output = np.exp(output)
     # output = output + _min - 1e-5
 
-    output = output[offset: H + offset, offset: W + offset, :]
+    output = output[offset : H + offset, offset : W + offset, :]
 
     output = strength * output + (1 - strength) * input
 

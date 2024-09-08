@@ -491,7 +491,7 @@ class GraXpert:
                 suffix_2 = "_obj_decon"
             case ImageTypes.Deconvolved_Stars_only:
                 suffix_2 = "_stars_decon"
-            case ImageTypes.Deconvolved_Stars_only:
+            case ImageTypes.Denoised:
                 suffix_2 = "_denoised"
             case _:
                 suffix_2 = ""

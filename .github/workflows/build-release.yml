@@ -19,9 +19,9 @@ jobs:
   #   runs-on: ubuntu-20.04
   #   steps:
   #     - name: setup python
-  #       uses: actions/setup-python@v2
+  #       uses: actions/setup-python@v5
   #       with:
-  #         python-version: '3.10'
+  #         python-version: '3.12'
   #     - name: checkout repository
   #       uses: actions/checkout@v3
   #     - name: configure ai s3 secrets
@@ -55,9 +55,9 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
       - name: checkout repository
         uses: actions/checkout@v3
       - name: configure ai s3 secrets
@@ -96,9 +96,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
       - name: checkout repository
         uses: actions/checkout@v3
       - name: configure ai s3 secrets

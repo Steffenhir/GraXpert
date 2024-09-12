@@ -191,15 +191,15 @@ jobs:
     needs: [build-linux-zip, build-windows]
     steps:
       # - name: download linux deb
-      #   uses: actions/download-artifact@v2
+      #   uses: actions/download-artifact@v4
       #   with:
       #     name: graxpert_${{github.ref_name}}-1_amd64.deb
       - name: download linux zip
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: GraXpert-linux.zip
       - name: download windows exe
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: GraXpert-${{github.ref_name}}-win64.msi
       # - name: download macos artifacts
@@ -207,7 +207,7 @@ jobs:
       #   with:
       #     name: GraXpert-macos-x86_64.dmg
       - name: create release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             GraXpert-linux.zip

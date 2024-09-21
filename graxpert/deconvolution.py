@@ -159,7 +159,7 @@ def deconvolve(image, ai_path, strength, batch_size=4, window_size=512, stride=4
     # output = output + _min - 1e-5
 
     output = output[offset : H + offset, offset : W + offset, :]
-
+    output = np.clip(output, 0.0, 1.0)
     output = strength * output + (1 - strength) * input
 
     eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)

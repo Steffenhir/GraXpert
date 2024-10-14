@@ -84,7 +84,7 @@ jobs:
           cd ./dist && \
           zip -r ./GraXpert-linux.zip ./GraXpert-linux
       - name: store artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: GraXpert-linux.zip
           path: ./dist/GraXpert-linux.zip
@@ -118,7 +118,7 @@ jobs:
       - name: create GraXpert-win64 bundle
         run: python ./setup.py bdist_msi
       - name: store artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: GraXpert-${{github.ref_name}}-win64.msi
           path: ./dist/GraXpert-${{github.ref_name}}-win64.msi
@@ -172,7 +172,7 @@ jobs:
           "dist/GraXpert-macos-x86_64.dmg" \
           "dist/GraXpert.app/"
       - name: store artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: GraXpert-macos-x86_64.dmg
           path: ./dist/GraXpert-macos-x86_64.dmg
@@ -188,15 +188,15 @@ jobs:
       #   with:
       #     name: graxpert_${{github.ref_name}}-1_amd64.deb
       - name: download linux zip
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: GraXpert-linux.zip
       - name: download windows exe
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: GraXpert-${{github.ref_name}}-win64.msi
       - name: download macos artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: GraXpert-macos-x86_64.dmg
       - name: create release

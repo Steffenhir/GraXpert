@@ -4,3 +4,5 @@ graxpert/s3_secrets.py
 python-venv
 build
 dist
+.idea
+env_graxpert/

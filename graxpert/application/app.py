@@ -283,10 +283,10 @@ class GraXpert:
 
         filename = tk.filedialog.askopenfilename(
             filetypes=[
-                ("Image file", ".bmp .png .jpg .tif .tiff .fit .fits .fts .xisf"),
+                ("Image file", ".bmp .png .jpg .jpeg .tif .tiff .fit .fits .fts .xisf"),
                 ("Bitmap", ".bmp"),
                 ("PNG", ".png"),
-                ("JPEG", ".jpg"),
+                ("JPEG", ".jpg .jpeg"),
                 ("Tiff", ".tif .tiff"),
                 ("Fits", ".fit .fits .fts"),
                 ("XISF", ".xisf"),

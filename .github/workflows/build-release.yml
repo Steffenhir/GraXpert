@@ -144,16 +144,16 @@ jobs:
           echo "deconvolution_object_bucket_name = \"$ai_s3_deconvolution_object_bucket_name\"" >> ./graxpert/s3_secrets.py && \
           echo "deconvolution_stars_bucket_name = \"$ai_s3_deconvolution_stars_bucket_name\"" >> ./graxpert/s3_secrets.py
       # github actions overwrites brew's python. Force it to reassert itself, by running in a separate step.
-      - name: setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      # - name: setup python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.11'
       - name: Install dependencies
         run: |
-          pip3 install --upgrade pip
-          pip3 install setuptools wheel pyinstaller
-          pip3 install onnxruntime
-          pip3 install -r requirements.txt
+          python3 -m pip install --upgrade pip
+          python3 -m pip install setuptools wheel pyinstaller
+          python3 -m pip install onnxruntime
+          python3 -m pip install -r requirements.txt
       - name: patch version
         run: |
           chmod u+x ./releng/patch_version.sh && \

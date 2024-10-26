@@ -128,8 +128,8 @@ jobs:
           path: ./dist/GraXpert-${{github.ref_name}}-win64.msi
           retention-days: 5
 
-  build-macos-arm64:
-    runs-on: macos-15
+  build-macos-x86_64:
+    runs-on: macos-13
     steps:
       - name: checkout repository
         uses: actions/checkout@v3
@@ -144,18 +144,18 @@ jobs:
           echo "deconvolution_object_bucket_name = \"$ai_s3_deconvolution_object_bucket_name\"" >> ./graxpert/s3_secrets.py && \
           echo "deconvolution_stars_bucket_name = \"$ai_s3_deconvolution_stars_bucket_name\"" >> ./graxpert/s3_secrets.py
       # github actions overwrites brew's python. Force it to reassert itself, by running in a separate step.
-      # - name: unbreak python in github actions
-      #   run: |
-      #    find /usr/local/bin -lname '*/Library/Frameworks/Python.framework/*' -delete
-      #    sudo rm -rf /Library/Frameworks/Python.framework/
-      #    brew install --force python3 && brew unlink python3 && brew unlink python3 && brew link --overwrite python3
-      - name: setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: unbreak python in github actions
+        run: |
+         find /usr/local/bin -lname '*/Library/Frameworks/Python.framework/*' -delete
+         sudo rm -rf /Library/Frameworks/Python.framework/
+         brew install --force python@3.11 && brew unlink python@3.11 && brew unlink python@3.11 && brew link --overwrite python@3.11
+      # - name: setup python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.11'
       - name: install dependencies
         run: |
-          brew install python-tk && \
+          brew install python-tk@3.11 && \
           pip3 install setuptools wheel pyinstaller --break-system-packages && \
           pip3 install onnxruntime --break-system-packages && \
           pip3 install -r requirements.txt --break-system-packages
@@ -163,36 +163,35 @@ jobs:
         run: |
           chmod u+x ./releng/patch_version.sh && \
           ./releng/patch_version.sh
-      - name: create GraXpert-macos-arm64 bundle
+      - name: create GraXpert-macos-x86_64 bundle
         # TODO migrato to cx_freeze
         run: |
           pyinstaller \
-          ./GraXpert-macos-arm64.spec
+          ./GraXpert-macos-x86_64.spec
       - name: install create-dmg
         run: brew install create-dmg
       - name: create .dmg
         run: |
           create-dmg \
-          --volname "GraXpert-macos-arm64" \
+          --volname "GraXpert-macos-x86_64" \
           --window-pos 50 50 \
           --window-size 1920 1080 \
           --icon-size 100 \
           --icon "GraXpert.app" 200 190 \
           --app-drop-link 400 190 \
-          "dist/GraXpert-macos-arm64.dmg" \
+          "dist/GraXpert-macos-x86_64.dmg" \
           "dist/GraXpert.app/"
       - name: store artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: GraXpert-macos-arm64.dmg
-          path: ./dist/GraXpert-macos-arm64.dmg
+          name: GraXpert-macos-x86_64.dmg
+          path: ./dist/GraXpert-macos-x86_64.dmg
           retention-days: 5
 
   release:
     runs-on: ubuntu-latest
     # needs: [build-linux-deb, build-linux-zip, build-windows, build-macos-x86_64]
-    # needs: [build-linux-zip, build-windows, build-macos-x86_64]
-    needs: [build-linux-zip, build-windows, build-macos-arm64]
+    needs: [build-linux-zip, build-windows, build-macos-x86_64]
     steps:
       # - name: download linux deb
       #   uses: actions/download-artifact@v4
@@ -209,12 +208,12 @@ jobs:
       - name: download macos artifacts
         uses: actions/download-artifact@v4
         with:
-          name: GraXpert-macos-arm64.dmg
+          name: GraXpert-macos-x86_64.dmg
       - name: create release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             GraXpert-linux.zip
             GraXpert-${{github.ref_name}}-win64.msi
-            GraXpert-macos-arm64.dmg
+            GraXpert-macos-x86_64.dmg
       #     graxpert_${{github.ref_name}}-1_amd64.deb

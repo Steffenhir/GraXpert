@@ -222,7 +222,7 @@ class DeconvolutionMenu(CollapsibleMenuFrame):
         super().__init__(parent, title=_("Deconvolution"), show=False, number=4, **kwargs)
 
         # method selection
-        self.deconvolution_options = ["Object-only", "Stars-only"]
+        self.deconvolution_options = ["Object-only"]  # , "Stars-only"
         self.deconvolution_type = tk.StringVar()
         self.deconvolution_type.set(graxpert.prefs.deconvolution_type_option)
         self.deconvolution_type.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_TYPE_CHANGED, {"deconvolution_type_option": self.deconvolution_type.get()}))

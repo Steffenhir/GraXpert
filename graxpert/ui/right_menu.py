@@ -196,22 +196,22 @@ class AdvancedFrame(RightFrameBase):
         )
 
         # stars deconvolution ai models
-        deconvolution_stars_ai_remote_versions = list_remote_versions(deconvolution_stars_bucket_name)
-        deconvolution_stars_ai_local_versions = list_local_versions(deconvolution_stars_ai_models_dir)
-        self.deconvolution_stars_ai_options = set([])
-        self.deconvolution_stars_ai_options.update([rv["version"] for rv in deconvolution_stars_ai_remote_versions])
-        self.deconvolution_stars_ai_options.update([lv["version"] for lv in deconvolution_stars_ai_local_versions])
-        self.deconvolution_stars_ai_options = sorted(self.deconvolution_stars_ai_options, key=lambda k: version.parse(k), reverse=True)
+        # deconvolution_stars_ai_remote_versions = list_remote_versions(deconvolution_stars_bucket_name)
+        # deconvolution_stars_ai_local_versions = list_local_versions(deconvolution_stars_ai_models_dir)
+        # self.deconvolution_stars_ai_options = set([])
+        # self.deconvolution_stars_ai_options.update([rv["version"] for rv in deconvolution_stars_ai_remote_versions])
+        # self.deconvolution_stars_ai_options.update([lv["version"] for lv in deconvolution_stars_ai_local_versions])
+        # self.deconvolution_stars_ai_options = sorted(self.deconvolution_stars_ai_options, key=lambda k: version.parse(k), reverse=True)
 
-        self.deconvolution_stars_ai_version = tk.StringVar(master)
-        self.deconvolution_stars_ai_version.set("None")  # default value
-        if graxpert.prefs.deconvolution_stars_ai_version is not None:
-            self.deconvolution_stars_ai_version.set(graxpert.prefs.deconvolution_stars_ai_version)
-        else:
-            self.deconvolution_stars_ai_options.insert(0, "None")
-        self.deconvolution_stars_ai_version.trace_add(
-            "write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_STARS_AI_VERSION_CHANGED, {"deconvolution_stars_ai_version": self.deconvolution_stars_ai_version.get()})
-        )
+        # self.deconvolution_stars_ai_version = tk.StringVar(master)
+        # self.deconvolution_stars_ai_version.set("None")  # default value
+        # if graxpert.prefs.deconvolution_stars_ai_version is not None:
+        #     self.deconvolution_stars_ai_version.set(graxpert.prefs.deconvolution_stars_ai_version)
+        # else:
+        #     self.deconvolution_stars_ai_options.insert(0, "None")
+        # self.deconvolution_stars_ai_version.trace_add(
+        #     "write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_STARS_AI_VERSION_CHANGED, {"deconvolution_stars_ai_version": self.deconvolution_stars_ai_version.get()})
+        # )
 
         # denoise ai model
         denoise_remote_versions = list_remote_versions(denoise_bucket_name)
@@ -287,8 +287,8 @@ class AdvancedFrame(RightFrameBase):
         GraXpertOptionMenu(self, variable=self.deconvolution_object_ai_version, values=self.deconvolution_object_ai_options).grid(**self.default_grid())
 
         # stars-deconvolution ai model
-        CTkLabel(self, text=_("Stars Deconvolution AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
-        GraXpertOptionMenu(self, variable=self.deconvolution_stars_ai_version, values=self.deconvolution_stars_ai_options).grid(**self.default_grid())
+        # CTkLabel(self, text=_("Stars Deconvolution AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
+        # GraXpertOptionMenu(self, variable=self.deconvolution_stars_ai_version, values=self.deconvolution_stars_ai_options).grid(**self.default_grid())
         
         # denoise ai model
         CTkLabel(self, text=_("Denoising AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)

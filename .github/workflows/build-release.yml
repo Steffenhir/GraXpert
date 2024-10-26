@@ -140,20 +140,19 @@ jobs:
           echo "ro_secret_key = \"$ai_s3_secret_key\"" >> ./graxpert/s3_secrets.py && \
           echo "bucket_name = \"$ai_s3_bucket_name\"" >> ./graxpert/s3_secrets.py && \
           echo "bge_bucket_name = \"$ai_s3_bge_bucket_name\"" >> ./graxpert/s3_secrets.py && \
-          echo "denoise_bucket_name = \"$ai_s3_denoise_bucket_name\"" >> ./graxpert/s3_secrets.py && \
-          echo "deconvolution_object_bucket_name = \"$ai_s3_deconvolution_object_bucket_name\"" >> ./graxpert/s3_secrets.py && \
-          echo "deconvolution_stars_bucket_name = \"$ai_s3_deconvolution_stars_bucket_name\"" >> ./graxpert/s3_secrets.py
+          echo "denoise_bucket_name = \"$ai_s3_denoise_bucket_name\"" >> ./graxpert/s3_secrets.py
       # github actions overwrites brew's python. Force it to reassert itself, by running in a separate step.
-      # - name: setup python
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: '3.11'
-      - name: Install dependencies
+      - name: unbreak python in github actions
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install setuptools wheel pyinstaller
-          python3 -m pip install onnxruntime
-          python3 -m pip install -r requirements.txt
+         find /usr/local/bin -lname '*/Library/Frameworks/Python.framework/*' -delete
+         sudo rm -rf /Library/Frameworks/Python.framework/
+         brew install --force python@3.11 && brew unlink python@3.11 && brew unlink python@3.11 && brew link --overwrite python@3.11
+      - name: install dependencies
+        run: |
+          brew install python-tk@3.11 && \
+          pip3 install setuptools wheel pyinstaller && \
+          pip3 install onnxruntime && \
+          pip3 install -r requirements.txt
       - name: patch version
         run: |
           chmod u+x ./releng/patch_version.sh && \
@@ -161,7 +160,8 @@ jobs:
       - name: create GraXpert-macos-x86_64 bundle
         # TODO migrato to cx_freeze
         run: |
-          python3 -m pyinstaller ./GraXpert-macos-x86_64.spec
+          pyinstaller \
+          ./GraXpert-macos-x86_64.spec
       - name: install create-dmg
         run: brew install create-dmg
       - name: create .dmg

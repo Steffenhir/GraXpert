@@ -264,9 +264,9 @@ jobs:
         with:
           name: GraXpert-macos-x86_64.dmg
       - name: download macos arm artifacts
-          uses: actions/download-artifact@v4
-          with:
-            name: GraXpert-macos-arm64.dmg
+        uses: actions/download-artifact@v4
+        with:
+          name: GraXpert-macos-arm64.dmg
       - name: create release
         uses: softprops/action-gh-release@v2
         with:

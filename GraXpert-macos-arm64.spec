@@ -2,12 +2,12 @@
 
 
 block_cipher = None
-
+from PyInstaller.utils.hooks import copy_metadata
 
 a = Analysis(['./graxpert/main.py'],
     pathex=[],
     binaries=[],
-    datas=[('./img/*', './img/'), ('./graxpert-dark-blue.json', './')],
+    datas=[('./img/*', './img/'), ('./graxpert-dark-blue.json', './')] + copy_metadata('xisf'),
     hiddenimports=['PIL._tkinter_finder', 'tkinter'],
     hookspath=['./releng'],
     hooksconfig={},
@@ -17,7 +17,7 @@ a = Analysis(['./graxpert/main.py'],
     win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False)
-pyz = PYZ(a.pure, a.zipped_data, 
+pyz = PYZ(a.pure, a.zipped_data,
     cipher=block_cipher)
 
 exe = EXE(pyz,

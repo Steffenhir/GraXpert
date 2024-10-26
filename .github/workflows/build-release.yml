@@ -149,11 +149,11 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install dependencies
-          run: |
-            pip3 install --upgrade pip
-            pip3 install setuptools wheel pyinstaller
-            pip3 install onnxruntime
-            pip3 install -r requirements.txt
+        run: |
+          pip3 install --upgrade pip
+          pip3 install setuptools wheel pyinstaller
+          pip3 install onnxruntime
+          pip3 install -r requirements.txt
       - name: patch version
         run: |
           chmod u+x ./releng/patch_version.sh && \

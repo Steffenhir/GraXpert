@@ -156,9 +156,9 @@ jobs:
       - name: install dependencies
         run: |
           brew install python-tk@3.11 && \
-          pip install setuptools wheel pyinstaller && \
-          pip install onnxruntime && \
-          pip install -r requirements.txt
+          pip3 install setuptools wheel pyinstaller && \
+          pip3 install onnxruntime && \
+          pip3 install -r requirements.txt
       - name: patch version
         run: |
           chmod u+x ./releng/patch_version.sh && \
@@ -166,8 +166,7 @@ jobs:
       - name: create GraXpert-macos-x86_64 bundle
         # TODO migrato to cx_freeze
         run: |
-          pyinstaller \
-          ./GraXpert-macos-x86_64.spec
+          python3 -m pyinstaller ./GraXpert-macos-x86_64.spec
       - name: install create-dmg
         run: brew install create-dmg
       - name: create .dmg

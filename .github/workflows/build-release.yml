@@ -156,9 +156,9 @@ jobs:
       - name: install dependencies
         run: |
           brew install python-tk@3.11 && \
-          pip3 install setuptools wheel pyinstaller --break-system-packages && \
-          pip3 install onnxruntime --break-system-packages && \
-          pip3 install -r requirements.txt --break-system-packages
+          pip3 install setuptools wheel pyinstaller && \
+          pip3 install onnxruntime && \
+          pip3 install -r requirements.txt
       - name: patch version
         run: |
           chmod u+x ./releng/patch_version.sh && \

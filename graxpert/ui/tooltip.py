@@ -181,6 +181,7 @@ calculate_text = _("Use the specified interpolation method to calculate a backgr
 deconvolution_type_text = _("Choose between different deconvolution methods.")
 deconvolution_text = _("Use GraXpert's deconvolution AI model to reduce the blur in your image. This may take a while")
 deconvolution_strength_text = _("Determines strength of deconvolution.")
+deconvolution_psfsize_text = _("Informs the AI on how much blur to expect in the image. The right parameters is found when all artifacts disappear.")
 
 denoise_text = _("Use GraXpert's denoising AI model to reduce the noise in your image. This may take a while")
 denoise_strength_text = _("Determines strength of denoising.")

@@ -9,8 +9,9 @@ from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 
 
-def deconvolve(image, ai_path, strength, batch_size=4, window_size=512, stride=448, progress=None, ai_gpu_acceleration=True):
+def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512, stride=448, progress=None, ai_gpu_acceleration=True):
     print("Starting deconvolution")
+    strength = 0.95 * strength # TODO : strenght of exactly 1.0 brings no results, to fix
 
     if batch_size < 1:
         logging.info(f"mapping batch_size of {batch_size} to 1")
@@ -93,15 +94,15 @@ def deconvolve(image, ai_path, strength, batch_size=4, window_size=512, stride=4
             x = stride * i
             y = stride * j
 
-            tile = image[x : x + window_size, y : y + window_size, :]
-            # _mean = np.mean(tile, axis=(0, 1))
-            # _std = np.std(tile, axis=(0, 1))
+            tile = image[x: x + window_size, y: y + window_size, :]
 
             _min = np.min(tile, axis=(0, 1))
             tile = tile - _min + 1e-5
             tile = np.log(tile)
 
-            _mean, _, _std = astropy.stats.sigma_clipped_stats(tile, sigma=2.0, axis=(0, 1))
+            # _mean, _, _std = astropy.stats.sigma_clipped_stats(tile, sigma=2.0, axis=(0, 1))
+            _mean = tile.mean()
+            _std = tile.std()
             _mean, _std = _mean.astype(np.float32), _std.astype(np.float32)
             tile = (tile - _mean) / _std * 0.1
             params.append([_mean, _std, _min])
@@ -116,9 +117,12 @@ def deconvolve(image, ai_path, strength, batch_size=4, window_size=512, stride=4
         input_tiles = np.array(input_tiles)
         input_tiles = np.moveaxis(input_tiles, -1, 1)
         input_tiles = np.reshape(input_tiles, [input_tiles.shape[0] * num_colors, 1, window_size, window_size])
+        # input_tiles_with_strenght = np.concatenate([input_tiles, np.full_like(input_tiles, strength)], axis=1)
 
         output_tiles = []
-        session_result = session.run(None, {"gen_input_image": input_tiles})[0]
+        sigma = np.full(shape=(input_tiles.shape[0], 1), fill_value=psfsize, dtype=np.float32)
+        strenght_p = np.full(shape=(input_tiles.shape[0], 1), fill_value=strength, dtype=np.float32)
+        session_result = session.run(None, {"gen_input_image": input_tiles, "sigma": sigma, "strenght": strenght_p})[0]
         for e in session_result:
             output_tiles.append(e)
 
@@ -154,13 +158,10 @@ def deconvolve(image, ai_path, strength, batch_size=4, window_size=512, stride=4
                 logging.info(f"Progress: {p}%")
             last_progress = p
 
-    # output = 10 * output * _std + _mean
-    # output = np.exp(output)
-    # output = output + _min - 1e-5
-
-    output = output[offset : H + offset, offset : W + offset, :]
+    output = output[offset: H + offset, offset: W + offset, :]
     output = np.clip(output, 0.0, 1.0)
-    output = strength * output + (1 - strength) * input
+
+    # output = strength * output + (1 - strength) * input
 
     eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
     logging.info("Finished denoising")

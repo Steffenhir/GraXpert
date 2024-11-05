@@ -79,6 +79,7 @@ class GraXpert:
         # deconvolution
         eventbus.add_listener(AppEvents.DECONVOLUTION_TYPE_CHANGED, self.on_deconvolution_type_changed)
         eventbus.add_listener(AppEvents.DECONVOLUTION_STRENGTH_CHANGED, self.on_deconvolution_strength_changed)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_PSFSIZE_CHANGED, self.on_deconvolution_psfsize_changed)
         eventbus.add_listener(AppEvents.DECONVOLUTION_REQUEST, self.on_deconvolution_request)
         # denoising
         eventbus.add_listener(AppEvents.DENOISE_STRENGTH_CHANGED, self.on_denoise_strength_changed)
@@ -239,6 +240,9 @@ class GraXpert:
     def on_deconvolution_strength_changed(self, event):
         self.prefs.deconvolution_strength = event["deconvolution_strength"]
 
+    def on_deconvolution_psfsize_changed(self, event):
+        self.prefs.deconvolution_psfsize = event["deconvolution_psfsize"]
+
     def on_deconvolution_object_ai_version_changed(self, event):
         self.prefs.deconvolution_object_ai_version = event["deconvolution_object_ai_version"]
 
@@ -274,6 +278,7 @@ class GraXpert:
                 img_array_to_be_processed,
                 ai_model_path,
                 self.prefs.deconvolution_strength,
+                self.prefs.deconvolution_psfsize,
                 batch_size=self.prefs.ai_batch_size,
                 progress=progress,
                 ai_gpu_acceleration=self.prefs.ai_gpu_acceleration,

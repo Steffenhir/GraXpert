@@ -7,6 +7,8 @@ env:
   ai_s3_bucket_name: ${{ secrets.AI_S3_BUCKET_NAME }}
   ai_s3_bge_bucket_name: ${{ secrets.AI_S3_BGE_BUCKET_NAME }}
   ai_s3_denoise_bucket_name: ${{ secrets.AI_S3_DENOISE_BUCKET_NAME }}
+  ai_s3_deconvolution_object_bucket_name: ${{ secrets.AI_S3_DECONVOLUTION_OBJECT_BUCKET_NAME }}
+  ai_s3_deconvolution_stars_bucket_name: ${{ secrets.AI_S3_DECONVOLUTION_STARS_BUCKET_NAME }}
 
 on:
   push:

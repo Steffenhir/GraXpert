@@ -438,7 +438,7 @@ class GraXpert:
         progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.DENOISE_PROGRESS, {"progress": p}))
 
         try:
-            
+
             if self.images.get(ImageTypes.Deconvolved_Object_only) is not None:
                 img_array_to_be_processed = np.copy(self.images.get(ImageTypes.Deconvolved_Object_only).img_array)
             elif self.images.get(ImageTypes.Gradient_Corrected) is not None:

@@ -144,10 +144,10 @@ class Tooltip:
         if tw:
             tw.destroy()
         self.tw = None
-    
+
     def enable(self):
         self.enable_tt = True
-    
+
     def disable(self):
         self.enable_tt = False
         self.hide()

@@ -2,7 +2,6 @@ import copy
 import logging
 import numpy as np
 import onnxruntime as ort
-import astropy.stats
 
 from graxpert.ai_model_handling import get_execution_providers_ordered
 from graxpert.application.app_events import AppEvents
@@ -100,7 +99,6 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
             tile = tile - _min + 1e-5
             tile = np.log(tile)
 
-            # _mean, _, _std = astropy.stats.sigma_clipped_stats(tile, sigma=2.0, axis=(0, 1))
             _mean = tile.mean()
             _std = tile.std()
             _mean, _std = _mean.astype(np.float32), _std.astype(np.float32)

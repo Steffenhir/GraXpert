@@ -74,7 +74,7 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
     for b in range(0, ith * itw + batch_size, batch_size):
 
         if cancel_flag:
-            logging.info("Deconolution cancelled")
+            logging.info("Deconvolution cancelled")
             eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
             return None
 
@@ -162,6 +162,6 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
     # output = strength * output + (1 - strength) * input
 
     eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
-    logging.info("Finished denoising")
+    logging.info("Finished deconvolution")
 
     return output

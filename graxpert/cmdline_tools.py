@@ -7,12 +7,13 @@ from textwrap import dedent
 import numpy as np
 from appdirs import user_config_dir
 
-from graxpert.ai_model_handling import ai_model_path_from_version, bge_ai_models_dir, denoise_ai_models_dir, download_version, latest_version, list_local_versions
+from graxpert.ai_model_handling import ai_model_path_from_version, bge_ai_models_dir, denoise_ai_models_dir, deconvolution_object_ai_models_dir, download_version, latest_version, list_local_versions
 from graxpert.astroimage import AstroImage
 from graxpert.background_extraction import extract_background
 from graxpert.denoising import denoise
+from graxpert.deconvolution import deconvolve
 from graxpert.preferences import Prefs, load_preferences, save_preferences
-from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name
+from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name, deconvolution_object_bucket_name
 
 user_preferences_filename = os.path.join(user_config_dir(appname="GraXpert"), "preferences.json")
 
@@ -293,6 +294,122 @@ class DenoiseCmdlineTool(CmdlineToolBase):
             try:
                 logging.info(f"AI version {ai_version} not found locally, downloading...")
                 download_version(denoise_ai_models_dir, denoise_bucket_name, ai_version)
+                logging.info("download successful")
+            except Exception as e:
+                logging.exception(e)
+                logging.shutdown()
+                sys.exit(1)
+
+        user_preferences.ai_version = ai_version
+        save_preferences(user_preferences_filename, user_preferences)
+
+        return ai_version
+
+
+class DeconvObjCmdlineTool(CmdlineToolBase):
+    def __init__(self, args):
+        super().__init__(args)
+        self.args = args
+
+    def execute(self):
+        astro_Image = AstroImage(do_update_display=False)
+        astro_Image.set_from_file(self.args.filename, None, None)
+
+        processed_Astro_Image = AstroImage(do_update_display=False)
+
+        processed_Astro_Image.fits_header = astro_Image.fits_header
+
+        if self.args.preferences_file is not None:
+            preferences = Prefs()
+            try:
+                preferences_file = os.path.abspath(self.args.preferences_file)
+                if os.path.isfile(preferences_file):
+                    with open(preferences_file, "r") as f:
+                        json_prefs = json.load(f)
+                        if "ai_version" in json_prefs:
+                            preferences.ai_version = json_prefs["ai_version"]
+                        if "deconvolution_strength" in json_prefs:
+                            preferences.deconvolution_strength = json_prefs["deconvolution_strength"]
+                        if "deconvolution_psfsize" in json_prefs:
+                            preferences.deconvolution_psfsize = json_prefs["deconvolution_psfsize"]
+                        if "ai_batch_size" in json_prefs:
+                            preferences.ai_batch_size = json_prefs["ai_batch_size"]
+                        if "ai_gpu_acceleration" in json_prefs:
+                            preferences.ai_gpu_acceleration = json_prefs["ai_gpu_acceleration"]
+
+            except Exception as e:
+                logging.exception(e)
+                logging.shutdown()
+                sys.exit(1)
+        else:
+            preferences = Prefs()
+
+        if self.args.deconvolution_strength is not None:
+            preferences.deconvolution_strength = self.args.deconvolution_strength
+            logging.info(f"Using user-supplied deconvolution strength value {preferences.deconvolution_strength}.")
+        else:
+            logging.info(f"Using stored deconvolution strength value {preferences.deconvolution_strength}.")
+
+        if self.args.deconvolution_psfsize is not None:
+            preferences.deconvolution_psfsize = self.args.deconvolution_psfsize
+            logging.info(f"Using user-supplied deconvolution psfsize value {preferences.deconvolution_psfsize}.")
+        else:
+            logging.info(f"Using stored deconvolution psfsize value {preferences.deconvolution_psfsize}.")
+
+        if self.args.ai_batch_size is not None:
+            preferences.ai_batch_size = self.args.ai_batch_size
+            logging.info(f"Using user-supplied batch size value {preferences.ai_batch_size}.")
+        else:
+            logging.info(f"Using stored batch size value {preferences.ai_batch_size}.")
+
+        if self.args.gpu_acceleration is not None:
+            preferences.ai_gpu_acceleration = True if self.args.gpu_acceleration == "true" else False
+            logging.info(f"Using user-supplied gpu acceleration setting {preferences.ai_gpu_acceleration}.")
+        else:
+            logging.info(f"Using stored gpu acceleration setting {preferences.ai_gpu_acceleration}.")
+
+        ai_model_path = ai_model_path_from_version(deconvolution_object_ai_models_dir, self.get_ai_version(preferences))
+
+        logging.info(
+            dedent(
+                f"""\
+                    Excecuting deconvolution on objects with the following parameters:
+                    AI model path - {ai_model_path}
+                    deconvolution strength - {preferences.deconvolution_strength}
+                    deconvolution psfsize - {preferences.deconvolution_psfsize}"""
+            )
+        )
+
+        processed_Astro_Image.set_from_array(
+            deconvolve(
+                astro_Image.img_array,
+                ai_model_path,
+                preferences.deconvolution_strength,
+                preferences.deconvolution_psfsize,
+                batch_size=preferences.ai_batch_size,
+                ai_gpu_acceleration=preferences.ai_gpu_acceleration,
+            )
+        )
+        processed_Astro_Image.save(self.get_save_path(), self.get_output_file_format())
+
+    def get_ai_version(self, prefs):
+        user_preferences = load_preferences(user_preferences_filename)
+
+        ai_version = None
+        if self.args.ai_version:
+            ai_version = self.args.ai_version
+            logging.info(f"Using user-supplied AI version {ai_version}.")
+        else:
+            ai_version = prefs.deconvolution_object_ai_version
+
+        if ai_version is None:
+            ai_version = latest_version(deconvolution_object_ai_models_dir, deconvolution_object_bucket_name)
+            logging.info(f"Using AI version {ai_version}. You can overwrite this by providing the argument '-ai_version'")
+
+        if not ai_version in [v["version"] for v in list_local_versions(deconvolution_object_ai_models_dir)]:
+            try:
+                logging.info(f"AI version {ai_version} not found locally, downloading...")
+                download_version(deconvolution_object_ai_models_dir, deconvolution_object_bucket_name, ai_version)
                 logging.info("download successful")
             except Exception as e:
                 logging.exception(e)

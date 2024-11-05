@@ -4,7 +4,6 @@ import os
 
 import numpy as np
 from astropy.io import fits
-from astropy.stats import sigma_clipped_stats
 from PIL import Image, ImageEnhance
 from skimage import exposure, img_as_float32, io
 from skimage.util import img_as_uint

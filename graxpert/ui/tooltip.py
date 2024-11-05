@@ -144,10 +144,10 @@ class Tooltip:
         if tw:
             tw.destroy()
         self.tw = None
-    
+
     def enable(self):
         self.enable_tt = True
-    
+
     def disable(self):
         self.enable_tt = False
         self.hide()
@@ -178,13 +178,17 @@ smoothing_text = _(
 
 calculate_text = _("Use the specified interpolation method to calculate a background model " "and subtract it from the picture. This may take a while.")
 
+deconvolution_type_text = _("Choose between different deconvolution methods.")
+deconvolution_text = _("Use GraXpert's deconvolution AI model to reduce the blur in your image. This may take a while")
+deconvolution_strength_text = _("Determines strength of deconvolution.")
+deconvolution_psfsize_text = _("Informs the AI on how much blur to expect in the image. The right parameters is found when all artifacts disappear.")
+
 denoise_text = _("Use GraXpert's denoising AI model to reduce the noise in your image. This may take a while")
 denoise_strength_text = _("Determines strength of denoising.")
 denoise_threshold_text = _("Determines the upper bound up to which pixels are denoised. Pixels above this threshold are not denoised and taken from the original image.")
 
 saveas_text = _("Choose the bitdepth of the saved pictures and the file format. " "If you are working with a .fits image the fits header will " "be preserved.")
-save_bg_text = _("Save the background model")
-save_pic_text = _("Save the processed picture")
-save_stretched_pic_text = _("Save the stretched and processed picture. The color saturation is not changed.")
+saveas_stretched_text = _("Enable to save the stretched image instead of the linear one. The color saturation is not changed.")
+save_pic_text = _("Save the currently selected picture")
 
 display_text = _("Switch display between \n" "\n" "Original: Your original picture \n" "Processed: Picture with subtracted background model \n" "Background: The background model")

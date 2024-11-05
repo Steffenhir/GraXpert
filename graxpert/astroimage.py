@@ -4,7 +4,6 @@ import os
 
 import numpy as np
 from astropy.io import fits
-from astropy.stats import sigma_clipped_stats
 from PIL import Image, ImageEnhance
 from skimage import exposure, img_as_float32, io
 from skimage.util import img_as_uint
@@ -180,7 +179,8 @@ class AstroImage:
         if self.img_array is None:
             return
 
-        self.fits_header["STRETCH"] = stretch_params.stretch_option
+        if self.fits_header is not None:
+            self.fits_header["STRETCH"] = stretch_params.stretch_option
 
         stretched_img = self.stretch(stretch_params)
 

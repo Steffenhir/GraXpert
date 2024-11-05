@@ -6,24 +6,34 @@ from tkinter import messagebox
 import numpy as np
 from appdirs import user_config_dir
 
-from graxpert.ai_model_handling import ai_model_path_from_version, bge_ai_models_dir, denoise_ai_models_dir, download_version, validate_local_version
+from graxpert.ai_model_handling import (
+    ai_model_path_from_version,
+    bge_ai_models_dir,
+    deconvolution_object_ai_models_dir,
+    deconvolution_stars_ai_models_dir,
+    denoise_ai_models_dir,
+    download_version,
+    validate_local_version,
+)
 from graxpert.app_state import INITIAL_STATE
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 from graxpert.astroimage import AstroImage
-from graxpert.AstroImageRepository import AstroImageRepository
+from graxpert.AstroImageRepository import AstroImageRepository, ImageTypes
 from graxpert.background_extraction import extract_background
 from graxpert.commands import INIT_HANDLER, RESET_POINTS_HANDLER, RM_POINT_HANDLER, SEL_POINTS_HANDLER, Command
+from graxpert.deconvolution import deconvolve
 from graxpert.denoising import denoise
 from graxpert.localization import _
 from graxpert.mp_logging import logfile_name
 from graxpert.preferences import fitsheader_2_app_state, load_preferences, prefs_2_app_state
-from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name
+from graxpert.s3_secrets import bge_bucket_name, deconvolution_object_bucket_name, deconvolution_stars_bucket_name, denoise_bucket_name
 from graxpert.stretch import StretchParameters, stretch_all
 from graxpert.ui.loadingframe import DynamicProgressThread
 
 
 class GraXpert:
+
     def __init__(self):
         self.initialize()
 
@@ -36,7 +46,7 @@ class GraXpert:
         self.data_type = ""
 
         self.images = AstroImageRepository()
-        self.display_type = "Original"
+        self.display_type = ImageTypes.Original
 
         self.mat_affine = np.eye(3)
 
@@ -66,14 +76,18 @@ class GraXpert:
         eventbus.add_listener(AppEvents.INTERPOL_TYPE_CHANGED, self.on_interpol_type_changed)
         eventbus.add_listener(AppEvents.SMOTTHING_CHANGED, self.on_smoothing_changed)
         eventbus.add_listener(AppEvents.CALCULATE_REQUEST, self.on_calculate_request)
+        # deconvolution
+        eventbus.add_listener(AppEvents.DECONVOLUTION_TYPE_CHANGED, self.on_deconvolution_type_changed)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_STRENGTH_CHANGED, self.on_deconvolution_strength_changed)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_PSFSIZE_CHANGED, self.on_deconvolution_psfsize_changed)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_REQUEST, self.on_deconvolution_request)
         # denoising
         eventbus.add_listener(AppEvents.DENOISE_STRENGTH_CHANGED, self.on_denoise_strength_changed)
         eventbus.add_listener(AppEvents.DENOISE_REQUEST, self.on_denoise_request)
         # saving
         eventbus.add_listener(AppEvents.SAVE_AS_CHANGED, self.on_save_as_changed)
+        eventbus.add_listener(AppEvents.SAVE_STRETCHED_CHANGED, self.on_save_stretched_changed)
         eventbus.add_listener(AppEvents.SAVE_REQUEST, self.on_save_request)
-        eventbus.add_listener(AppEvents.SAVE_BACKGROUND_REQUEST, self.on_save_background_request)
-        eventbus.add_listener(AppEvents.SAVE_STRETCHED_REQUEST, self.on_save_stretched_request)
         # advanced settings
         eventbus.add_listener(AppEvents.SAMPLE_SIZE_CHANGED, self.on_sample_size_changed)
         eventbus.add_listener(AppEvents.SAMPLE_COLOR_CHANGED, self.on_sample_color_changed)
@@ -82,6 +96,8 @@ class GraXpert:
         eventbus.add_listener(AppEvents.CORRECTION_TYPE_CHANGED, self.on_correction_type_changed)
         eventbus.add_listener(AppEvents.LANGUAGE_CHANGED, self.on_language_selected)
         eventbus.add_listener(AppEvents.BGE_AI_VERSION_CHANGED, self.on_bge_ai_version_changed)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_OBJECT_AI_VERSION_CHANGED, self.on_deconvolution_object_ai_version_changed)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_STARS_AI_VERSION_CHANGED, self.on_deconvolution_stars_ai_version_changed)
         eventbus.add_listener(AppEvents.DENOISE_AI_VERSION_CHANGED, self.on_denoise_ai_version_changed)
         eventbus.add_listener(AppEvents.SCALING_CHANGED, self.on_scaling_changed)
         eventbus.add_listener(AppEvents.AI_BATCH_SIZE_CHANGED, self.on_ai_batch_size_changed)
@@ -107,7 +123,7 @@ class GraXpert:
         self.prefs.bg_tol_option = event["bg_tol_option"]
 
     def on_calculate_request(self, event=None):
-        if self.images.get("Original") is None:
+        if self.images.get(ImageTypes.Original) is None:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
 
@@ -142,7 +158,7 @@ class GraXpert:
         try:
             self.prefs.images_linked_option = False
 
-            img_array_to_be_processed = np.copy(self.images.get("Original").img_array)
+            img_array_to_be_processed = np.copy(self.images.get(ImageTypes.Original).img_array)
 
             background = AstroImage()
             background.set_from_array(
@@ -167,14 +183,14 @@ class GraXpert:
 
             # Update fits header and metadata
             background_mean = np.mean(background.img_array)
-            gradient_corrected.update_fits_header(self.images.get("Original").fits_header, background_mean, self.prefs, self.cmd.app_state)
-            gradient_corrected.update_fits_header(self.images.get("Original").fits_header, background_mean, self.prefs, self.cmd.app_state)
+            gradient_corrected.update_fits_header(self.images.get(ImageTypes.Original).fits_header, background_mean, self.prefs, self.cmd.app_state)
+            gradient_corrected.update_fits_header(self.images.get(ImageTypes.Original).fits_header, background_mean, self.prefs, self.cmd.app_state)
 
-            gradient_corrected.copy_metadata(self.images.get("Original"))
-            background.copy_metadata(self.images.get("Original"))
+            gradient_corrected.copy_metadata(self.images.get(ImageTypes.Original))
+            background.copy_metadata(self.images.get(ImageTypes.Original))
 
-            self.images.set("Gradient-Corrected", gradient_corrected)
-            self.images.set("Background", background)
+            self.images.set(ImageTypes.Gradient_Corrected, gradient_corrected)
+            self.images.set(ImageTypes.Background, background)
 
             self.images.stretch_all(StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option), self.prefs.saturation)
 
@@ -190,7 +206,7 @@ class GraXpert:
             eventbus.emit(AppEvents.CALCULATE_END)
 
     def on_change_saturation_request(self, event):
-        if self.images.get("Original") is None:
+        if self.images.get(ImageTypes.Original) is None:
             return
 
         self.prefs.saturation = event["saturation"]
@@ -205,16 +221,94 @@ class GraXpert:
         self.prefs.corr_type = event["corr_type"]
 
     def on_create_grid_request(self, event=None):
-        if self.images.get("Original") is None:
+        if self.images.get(ImageTypes.Original) is None:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
 
         eventbus.emit(AppEvents.CREATE_GRID_BEGIN)
 
-        self.cmd = Command(SEL_POINTS_HANDLER, self.cmd, data=self.images.get("Original").img_array, num_pts=self.prefs.bg_pts_option, tol=self.prefs.bg_tol_option, sample_size=self.prefs.sample_size)
+        self.cmd = Command(
+            SEL_POINTS_HANDLER, self.cmd, data=self.images.get(ImageTypes.Original).img_array, num_pts=self.prefs.bg_pts_option, tol=self.prefs.bg_tol_option, sample_size=self.prefs.sample_size
+        )
         self.cmd.execute()
 
         eventbus.emit(AppEvents.CREATE_GRID_END)
+
+    def on_deconvolution_type_changed(self, event):
+        self.prefs.deconvolution_type_option = event["deconvolution_type_option"]
+
+    def on_deconvolution_strength_changed(self, event):
+        self.prefs.deconvolution_strength = event["deconvolution_strength"]
+
+    def on_deconvolution_psfsize_changed(self, event):
+        self.prefs.deconvolution_psfsize = event["deconvolution_psfsize"]
+
+    def on_deconvolution_object_ai_version_changed(self, event):
+        self.prefs.deconvolution_object_ai_version = event["deconvolution_object_ai_version"]
+
+    def on_deconvolution_stars_ai_version_changed(self, event):
+        self.prefs.deconvolution_stars_ai_version = event["deconvolution_stars_ai_version"]
+
+    def on_deconvolution_request(self, event):
+        if self.images.get(ImageTypes.Original) is None:
+            messagebox.showerror("Error", _("Please load your picture first."))
+            return
+
+        if not self.validate_deconvolution_ai_installation():
+            return
+
+        eventbus.emit(AppEvents.DECONVOLUTION_BEGIN)
+
+        progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.DECONVOLUTION_PROGRESS, {"progress": p}))
+
+        deconvolution_type_option = self.prefs.deconvolution_type_option
+
+        try:
+            img_array_to_be_processed = np.copy(self.images.get(ImageTypes.Original).img_array)
+            if self.images.get(ImageTypes.Gradient_Corrected) is not None:
+                img_array_to_be_processed = np.copy(self.images.get(ImageTypes.Gradient_Corrected).img_array)
+
+            self.prefs.images_linked_option = True
+
+            if deconvolution_type_option == "Object-only":
+                ai_model_path = ai_model_path_from_version(deconvolution_object_ai_models_dir, self.prefs.deconvolution_object_ai_version)
+            else:
+                ai_model_path = ai_model_path_from_version(deconvolution_stars_ai_models_dir, self.prefs.deconvolution_stars_ai_version)
+            imarray = deconvolve(
+                img_array_to_be_processed,
+                ai_model_path,
+                self.prefs.deconvolution_strength,
+                self.prefs.deconvolution_psfsize,
+                batch_size=self.prefs.ai_batch_size,
+                progress=progress,
+                ai_gpu_acceleration=self.prefs.ai_gpu_acceleration,
+            )
+
+            if imarray is not None:
+
+                deconvolved = AstroImage()
+                deconvolved.set_from_array(imarray)
+
+                # Update fits header and metadata
+                background_mean = np.mean(self.images.get(ImageTypes.Original).img_array)
+                deconvolved.update_fits_header(self.images.get(ImageTypes.Original).fits_header, background_mean, self.prefs, self.cmd.app_state)
+
+                deconvolved.copy_metadata(self.images.get(ImageTypes.Original))
+
+                self.images.set(f"Deconvolved {deconvolution_type_option}", deconvolved)
+
+                self.images.stretch_all(StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option), self.prefs.saturation)
+
+                eventbus.emit(AppEvents.DECONVOLUTION_SUCCESS, {"deconvolution_type_option": f"Deconvolved {deconvolution_type_option}"})
+                eventbus.emit(AppEvents.UPDATE_DISPLAY_TYPE_REEQUEST, {"display_type": f"Deconvolved {deconvolution_type_option}"})
+
+        except Exception as e:
+            logging.exception(e)
+            eventbus.emit(AppEvents.DECONVOLUTION_ERROR)
+            messagebox.showerror("Error", _("An error occured during deconvolution. Please see the log at {}.".format(logfile_name)))
+        finally:
+            progress.done_progress()
+            eventbus.emit(AppEvents.DECONVOLUTION_END)
 
     def on_denoise_ai_version_changed(self, event):
         self.prefs.denoise_ai_version = event["denoise_ai_version"]
@@ -238,7 +332,7 @@ class GraXpert:
     def on_load_image(self, event):
         eventbus.emit(AppEvents.LOAD_IMAGE_BEGIN)
         filename = event["filename"]
-        self.display_type = "Original"
+        self.display_type = ImageTypes.Original
 
         try:
             image = AstroImage()
@@ -255,13 +349,13 @@ class GraXpert:
 
         self.data_type = os.path.splitext(filename)[1]
         self.images.reset()
-        self.images.set("Original", image)
+        self.images.set(ImageTypes.Original, image)
         self.prefs.working_dir = os.path.dirname(filename)
 
         os.chdir(os.path.dirname(filename))
 
-        width = self.images.get("Original").img_display.width
-        height = self.images.get("Original").img_display.height
+        width = self.images.get(ImageTypes.Original).img_display.width
+        height = self.images.get(ImageTypes.Original).img_display.height
 
         if self.prefs.width != width or self.prefs.height != height:
             self.reset_backgroundpts()
@@ -269,7 +363,7 @@ class GraXpert:
         self.prefs.width = width
         self.prefs.height = height
 
-        tmp_state = fitsheader_2_app_state(self, self.cmd.app_state, self.images.get("Original").fits_header)
+        tmp_state = fitsheader_2_app_state(self, self.cmd.app_state, self.images.get(ImageTypes.Original).fits_header)
         self.cmd: Command = Command(INIT_HANDLER, background_points=tmp_state.background_points)
         self.cmd.execute()
 
@@ -322,6 +416,9 @@ class GraXpert:
     def on_save_as_changed(self, event):
         self.prefs.saveas_option = event["saveas_option"]
 
+    def on_save_stretched_changed(self, event):
+        self.prefs.saveas_stretched = event["saveas_stretched"]
+
     def on_smoothing_changed(self, event):
         self.prefs.smoothing_option = event["smoothing_option"]
 
@@ -329,7 +426,7 @@ class GraXpert:
         self.prefs.denoise_strength = event["denoise_strength"]
 
     def on_denoise_request(self, event):
-        if self.images.get("Original") is None:
+        if self.images.get(ImageTypes.Original) is None:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
 
@@ -341,9 +438,13 @@ class GraXpert:
         progress = DynamicProgressThread(callback=lambda p: eventbus.emit(AppEvents.DENOISE_PROGRESS, {"progress": p}))
 
         try:
-            img_array_to_be_processed = np.copy(self.images.get("Original").img_array)
-            if self.images.get("Gradient-Corrected") is not None:
-                img_array_to_be_processed = np.copy(self.images.get("Gradient-Corrected").img_array)
+
+            if self.images.get(ImageTypes.Deconvolved_Object_only) is not None:
+                img_array_to_be_processed = np.copy(self.images.get(ImageTypes.Deconvolved_Object_only).img_array)
+            elif self.images.get(ImageTypes.Gradient_Corrected) is not None:
+                img_array_to_be_processed = np.copy(self.images.get(ImageTypes.Gradient_Corrected).img_array)
+            else:
+                img_array_to_be_processed = np.copy(self.images.get(ImageTypes.Original).img_array)
 
             self.prefs.images_linked_option = True
             ai_model_path = ai_model_path_from_version(denoise_ai_models_dir, self.prefs.denoise_ai_version)
@@ -362,12 +463,12 @@ class GraXpert:
                 denoised.set_from_array(imarray)
 
                 # Update fits header and metadata
-                background_mean = np.mean(self.images.get("Original").img_array)
-                denoised.update_fits_header(self.images.get("Original").fits_header, background_mean, self.prefs, self.cmd.app_state)
+                background_mean = np.mean(self.images.get(ImageTypes.Original).img_array)
+                denoised.update_fits_header(self.images.get(ImageTypes.Original).fits_header, background_mean, self.prefs, self.cmd.app_state)
 
-                denoised.copy_metadata(self.images.get("Original"))
+                denoised.copy_metadata(self.images.get(ImageTypes.Original))
 
-                self.images.set("Denoised", denoised)
+                self.images.set(ImageTypes.Denoised, denoised)
 
                 self.images.stretch_all(StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option, self.prefs.images_linked_option), self.prefs.saturation)
 
@@ -383,12 +484,41 @@ class GraXpert:
             eventbus.emit(AppEvents.DENOISE_END)
 
     def on_save_request(self, event):
+
+        suffix_1 = "_graxpert"
+
+        match self.display_type:
+            case ImageTypes.Gradient_Corrected:
+                suffix_2 = "_bge"
+            case ImageTypes.Background:
+                suffix_2 = "_background"
+            case ImageTypes.Deconvolved_Object_only:
+                suffix_2 = "_obj_decon"
+            case ImageTypes.Deconvolved_Stars_only:
+                suffix_2 = "_stars_decon"
+            case ImageTypes.Denoised:
+                suffix_2 = "_denoised"
+            case _:
+                suffix_2 = ""
+
+        match self.prefs.saveas_stretched:
+            case True:
+                suffix_3 = "_stretched"
+            case _:
+                suffix_3 = ""
+
         if self.prefs.saveas_option == "16 bit Tiff" or self.prefs.saveas_option == "32 bit Tiff":
-            dir = tk.filedialog.asksaveasfilename(initialfile=self.filename + "_GraXpert.tiff", filetypes=[("Tiff", ".tiff")], defaultextension=".tiff", initialdir=self.prefs.working_dir)
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile=self.filename + f"{suffix_1}{suffix_2}{suffix_3}.tiff", filetypes=[("Tiff", ".tiff")], defaultextension=".tiff", initialdir=self.prefs.working_dir
+            )
         elif self.prefs.saveas_option == "16 bit XISF" or self.prefs.saveas_option == "32 bit XISF":
-            dir = tk.filedialog.asksaveasfilename(initialfile=self.filename + "_GraXpert.xisf", filetypes=[("XISF", ".xisf")], defaultextension=".xisf", initialdir=self.prefs.working_dir)
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile=self.filename + f"{suffix_1}{suffix_2}{suffix_3}.xisf", filetypes=[("XISF", ".xisf")], defaultextension=".xisf", initialdir=self.prefs.working_dir
+            )
         else:
-            dir = tk.filedialog.asksaveasfilename(initialfile=self.filename + "_GraXpert.fits", filetypes=[("Fits", ".fits")], defaultextension=".fits", initialdir=self.prefs.working_dir)
+            dir = tk.filedialog.asksaveasfilename(
+                initialfile=self.filename + f"{suffix_1}{suffix_2}{suffix_3}.fits", filetypes=[("Fits", ".fits")], defaultextension=".fits", initialdir=self.prefs.working_dir
+            )
 
         if dir == "":
             return
@@ -396,66 +526,14 @@ class GraXpert:
         eventbus.emit(AppEvents.SAVE_BEGIN)
 
         try:
-            if self.images.get("Denoised") is not None:
-                self.images.get("Denoised").save(dir, self.prefs.saveas_option)
-            elif self.images.get("Gradient-Corrected") is not None:
-                self.images.get("Gradient-Corrected").save(dir, self.prefs.saveas_option)
+            if self.prefs.saveas_stretched:
+                self.images.get(self.display_type).save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
             else:
-                self.images.get("Original").save(dir, self.prefs.saveas_option)
+                self.images.get(self.display_type).save(dir, self.prefs.saveas_option)
 
         except Exception as e:
             logging.exception(e)
             eventbus.emit(AppEvents.SAVE_ERROR)
-            messagebox.showerror("Error", _("Error occured when saving the image."))
-
-        eventbus.emit(AppEvents.SAVE_END)
-
-    def on_save_background_request(self, event):
-        if self.prefs.saveas_option == "16 bit Tiff" or self.prefs.saveas_option == "32 bit Tiff":
-            dir = tk.filedialog.asksaveasfilename(initialfile=self.filename + "_background.tiff", filetypes=[("Tiff", ".tiff")], defaultextension=".tiff", initialdir=self.prefs.working_dir)
-        elif self.prefs.saveas_option == "16 bit XISF" or self.prefs.saveas_option == "32 bit XISF":
-            dir = tk.filedialog.asksaveasfilename(initialfile=self.filename + "_background.xisf", filetypes=[("XISF", ".xisf")], defaultextension=".xisf", initialdir=self.prefs.working_dir)
-        else:
-            dir = tk.filedialog.asksaveasfilename(initialfile=self.filename + "_background.fits", filetypes=[("Fits", ".fits")], defaultextension=".fits", initialdir=os.getcwd())
-
-        if dir == "":
-            return
-
-        eventbus.emit(AppEvents.SAVE_BEGIN)
-
-        try:
-            self.images.get("Background").save(dir, self.prefs.saveas_option)
-        except Exception as e:
-            logging.exception(e)
-            eventbus.emit(AppEvents.SAVE_ERROR)
-            messagebox.showerror("Error", _("Error occured when saving the image."))
-
-        eventbus.emit(AppEvents.SAVE_END)
-
-    def on_save_stretched_request(self, event):
-        if self.prefs.saveas_option == "16 bit Tiff" or self.prefs.saveas_option == "32 bit Tiff":
-            dir = tk.filedialog.asksaveasfilename(initialfile=self.filename + "_stretched_GraXpert.tiff", filetypes=[("Tiff", ".tiff")], defaultextension=".tiff", initialdir=self.prefs.working_dir)
-        elif self.prefs.saveas_option == "16 bit XISF" or self.prefs.saveas_option == "32 bit XISF":
-            dir = tk.filedialog.asksaveasfilename(initialfile=self.filename + "_stretched_GraXpert.xisf", filetypes=[("XISF", ".xisf")], defaultextension=".xisf", initialdir=self.prefs.working_dir)
-        else:
-            dir = tk.filedialog.asksaveasfilename(initialfile=self.filename + "_stretched_GraXpert.fits", filetypes=[("Fits", ".fits")], defaultextension=".fits", initialdir=self.prefs.working_dir)
-
-        if dir == "":
-            return
-
-        eventbus.emit(AppEvents.SAVE_BEGIN)
-
-        try:
-            if self.images.get("Denoised") is not None:
-                self.images.get("Denoised").save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
-            elif self.images.get("Gradient-Corrected") is not None:
-                self.images.get("Gradient-Corrected").save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
-            else:
-                self.images.get("Original").save_stretched(dir, self.prefs.saveas_option, StretchParameters(self.prefs.stretch_option, self.prefs.channels_linked_option))
-
-        except Exception as e:
-            eventbus.emit(AppEvents.SAVE_ERROR)
-            logging.exception(e)
             messagebox.showerror("Error", _("Error occured when saving the image."))
 
         eventbus.emit(AppEvents.SAVE_END)
@@ -602,6 +680,44 @@ class GraXpert:
                 download_version(bge_ai_models_dir, bge_bucket_name, self.prefs.bge_ai_version, progress=callback)
                 eventbus.emit(AppEvents.AI_DOWNLOAD_END)
         return True
+
+    def validate_deconvolution_ai_installation(self):
+
+        if self.prefs.deconvolution_type_option == "Object-only":
+
+            if self.prefs.deconvolution_object_ai_version is None or self.prefs.deconvolution_object_ai_version == "None":
+                messagebox.showerror("Error", _("No Object-only Deconvolution AI-Model selected. Please select one from the Advanced panel on the right."))
+                return False
+
+            if not validate_local_version(deconvolution_object_ai_models_dir, self.prefs.deconvolution_object_ai_version):
+                if not messagebox.askyesno(_("Install AI-Model?"), _("Selected Object-only Deconvolution AI-Model is not installed. Should I download it now?")):
+                    return False
+                else:
+                    eventbus.emit(AppEvents.AI_DOWNLOAD_BEGIN)
+
+                    def callback(p):
+                        eventbus.emit(AppEvents.AI_DOWNLOAD_PROGRESS, {"progress": p})
+
+                    download_version(deconvolution_object_ai_models_dir, deconvolution_object_bucket_name, self.prefs.deconvolution_object_ai_version, progress=callback)
+                    eventbus.emit(AppEvents.AI_DOWNLOAD_END)
+            return True
+        else:
+            if self.prefs.deconvolution_stars_ai_version is None or self.prefs.deconvolution_stars_ai_version == "None":
+                messagebox.showerror("Error", _("No Stars-only Denoising AI-Model selected. Please select one from the Advanced panel on the right."))
+                return False
+
+            if not validate_local_version(deconvolution_stars_ai_models_dir, self.prefs.deconvolution_stars_ai_version):
+                if not messagebox.askyesno(_("Install AI-Model?"), _("Selected Stars-only Deconvolution AI-Model is not installed. Should I download it now?")):
+                    return False
+                else:
+                    eventbus.emit(AppEvents.AI_DOWNLOAD_BEGIN)
+
+                    def callback(p):
+                        eventbus.emit(AppEvents.AI_DOWNLOAD_PROGRESS, {"progress": p})
+
+                    download_version(deconvolution_stars_ai_models_dir, deconvolution_stars_bucket_name, self.prefs.deconvolution_stars_ai_version, progress=callback)
+                    eventbus.emit(AppEvents.AI_DOWNLOAD_END)
+            return True
 
     def validate_denoise_ai_installation(self):
         if self.prefs.denoise_ai_version is None or self.prefs.denoise_ai_version == "None":

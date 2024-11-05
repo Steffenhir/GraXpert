@@ -217,9 +217,87 @@ class ExtractionMenu(CollapsibleMenuFrame):
             eventbus.emit(UiEvents.SHOW_MENU_REQUEST, "BGE")
 
 
+class DeconvolutionMenu(CollapsibleMenuFrame):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, title=_("Deconvolution"), show=False, number=4, **kwargs)
+
+        # method selection
+        self.deconvolution_options = ["Object-only"]  # , "Stars-only"
+        self.deconvolution_type = tk.StringVar()
+        self.deconvolution_type.set(graxpert.prefs.deconvolution_type_option)
+        self.deconvolution_type.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_TYPE_CHANGED, {"deconvolution_type_option": self.deconvolution_type.get()}))
+
+        self.deconvolution_strength = tk.DoubleVar()
+        self.deconvolution_strength.set(graxpert.prefs.deconvolution_strength)
+        self.deconvolution_strength.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_STRENGTH_CHANGED, {"deconvolution_strength": self.deconvolution_strength.get()}))
+
+        self.deconvolution_psfsize = tk.DoubleVar()
+        self.deconvolution_strength.set(graxpert.prefs.deconvolution_psfsize)
+        self.deconvolution_strength.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_PSFSIZE_CHANGED, {"deconvolution_psfsize": self.deconvolution_psfsize.get()}))
+
+        self.create_children()
+        self.setup_layout()
+        self.place_children()
+
+        eventbus.add_listener(UiEvents.SHOW_MENU_REQUEST, lambda e: self.hide() if not e == "DECONVOLUTION" else None)
+
+    def create_children(self):
+        super().create_children()
+
+        # method selection
+        self.deconvolution_type_title = ProcessingStep(self.sub_frame, number=0, title=_("Deconvolution Method:"))
+        self.deconvolution_menu = GraXpertOptionMenu(self.sub_frame, variable=self.deconvolution_type, values=self.deconvolution_options)
+        tooltip.Tooltip(self.deconvolution_menu, text=tooltip.deconvolution_type_text)
+
+        self.deconvolution_button = GraXpertButton(
+            self.sub_frame,
+            text=_("Deconvolve Image"),
+            fg_color=ThemeManager.theme["Accent.CTkButton"]["fg_color"],
+            hover_color=ThemeManager.theme["Accent.CTkButton"]["hover_color"],
+            command=lambda: eventbus.emit(AppEvents.DECONVOLUTION_REQUEST),
+        )
+        self.tt_load = tooltip.Tooltip(self.deconvolution_button, text=tooltip.deconvolution_text)
+
+        self.deconvolution_strength_slider = ValueSlider(
+            self.sub_frame, width=default_label_width, variable_name=_("Deconvolution Strength"), variable=self.deconvolution_strength, min_value=0.0, max_value=1.0, precision=2
+        )
+        tooltip.Tooltip(self.deconvolution_strength_slider, text=tooltip.deconvolution_strength_text)
+
+        self.deconvolution_psfsize_slider = ValueSlider(
+            self.sub_frame, width=default_label_width, variable_name=_("Blur PSF Size"), variable=self.deconvolution_psfsize, min_value=0.0, max_value=1.0, precision=2
+        )
+        tooltip.Tooltip(self.deconvolution_psfsize_slider, text=tooltip.deconvolution_psfsize_text)
+
+    def setup_layout(self):
+        super().setup_layout()
+
+    def place_children(self):
+        super().place_children()
+
+        row = -1
+
+        def next_row():
+            nonlocal row
+            row += 1
+            return row
+
+        # method selection
+        self.deconvolution_type_title.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
+        self.deconvolution_menu.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
+
+        self.deconvolution_strength_slider.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
+        self.deconvolution_psfsize_slider.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
+        self.deconvolution_button.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
+
+    def toggle(self):
+        super().toggle()
+        if self.show:
+            eventbus.emit(UiEvents.SHOW_MENU_REQUEST, "DECONVOLUTION")
+
+
 class DenoiseMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Denoising"), show=False, number=4, **kwargs)
+        super().__init__(parent, title=_("Denoising"), show=False, number=5, **kwargs)
 
         self.denoise_strength = tk.DoubleVar()
         self.denoise_strength.set(graxpert.prefs.denoise_strength)
@@ -265,13 +343,16 @@ class DenoiseMenu(CollapsibleMenuFrame):
 
 class SaveMenu(CollapsibleMenuFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, title=_("Saving"), show=False, number=5, **kwargs)
+        super().__init__(parent, title=_("Saving"), show=False, number=6, **kwargs)
 
         # saving
         self.saveas_options = ["16 bit Tiff", "32 bit Tiff", "16 bit Fits", "32 bit Fits", "16 bit XISF", "32 bit XISF"]
         self.saveas_type = tk.StringVar()
         self.saveas_type.set(graxpert.prefs.saveas_option)
         self.saveas_type.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.SAVE_AS_CHANGED, {"saveas_option": self.saveas_type.get()}))
+        self.saveas_stretched = tk.BooleanVar()
+        self.saveas_stretched.set(graxpert.prefs.saveas_stretched)
+        self.saveas_stretched.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.SAVE_STRETCHED_CHANGED, {"saveas_stretched": self.saveas_stretched.get()}))
 
         self.create_children()
         self.setup_layout()
@@ -287,16 +368,14 @@ class SaveMenu(CollapsibleMenuFrame):
         tooltip.Tooltip(self.saveas_menu, text=tooltip.saveas_text)
         self.save_button = GraXpertButton(
             self.sub_frame,
-            text=_("Save Processed"),
+            text=_("Save Selected"),
             fg_color=ThemeManager.theme["Accent.CTkButton"]["fg_color"],
             hover_color=ThemeManager.theme["Accent.CTkButton"]["hover_color"],
             command=lambda: eventbus.emit(AppEvents.SAVE_REQUEST),
         )
         tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
-        self.save_background_button = GraXpertButton(self.sub_frame, text=_("Save Background"), command=lambda: eventbus.emit(AppEvents.SAVE_BACKGROUND_REQUEST))
-        tooltip.Tooltip(self.save_background_button, text=tooltip.save_bg_text)
-        self.save_stretched_button = GraXpertButton(self.sub_frame, text=_("Save Stretched & Processed"), command=lambda: eventbus.emit(AppEvents.SAVE_STRETCHED_REQUEST))
-        tooltip.Tooltip(self.save_stretched_button, text=tooltip.save_stretched_pic_text)
+        self.saveas_stretched_checkbox = GraXpertCheckbox(self.sub_frame, width=default_label_width, text=_("Save Stretched"), variable=self.saveas_stretched)
+        tooltip.Tooltip(self.saveas_stretched_checkbox, text=tooltip.saveas_stretched_text)
 
     def setup_layout(self):
         super().setup_layout()
@@ -314,8 +393,7 @@ class SaveMenu(CollapsibleMenuFrame):
         # saving
         self.saveas_menu.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
         self.save_button.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
-        self.save_background_button.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
-        self.save_stretched_button.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
+        self.saveas_stretched_checkbox.grid(column=1, row=next_row(), pady=pady, sticky=tk.EW)
 
     def toggle(self):
         super().toggle()
@@ -334,6 +412,7 @@ class LeftMenu(GraXpertScrollableFrame):
         self.load_menu = LoadMenu(self, fg_color="transparent")
         self.crop_menu = CropMenu(self, fg_color="transparent")
         self.extraction_menu = ExtractionMenu(self, fg_color="transparent")
+        self.deconvolution_menu = DeconvolutionMenu(self, fg_color="transparent")
         self.denoise_menu = DenoiseMenu(self, fg_color="transparent")
         self.save_menu = SaveMenu(self, fg_color="transparent")
 
@@ -353,5 +432,6 @@ class LeftMenu(GraXpertScrollableFrame):
         self.load_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)
         self.crop_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)
         self.extraction_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)
+        self.deconvolution_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)
         self.denoise_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)
         self.save_menu.grid(column=0, row=next_row(), ipadx=padx, sticky=tk.N)

@@ -22,6 +22,9 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
         logging.info(f"mapping batch_size of {batch_size} to {2 ** (batch_size).bit_length() // 2}")
         batch_size = 2 ** (batch_size).bit_length() // 2  # map batch_size to power of two
 
+    if batch_size >= 4 and image.shape[-1] == 3:
+        batch_size = batch_size // 4
+
     num_colors = image.shape[-1]
 
     H, W, _ = image.shape

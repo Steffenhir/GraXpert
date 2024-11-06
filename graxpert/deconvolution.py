@@ -67,7 +67,7 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
     for b in range(0, ith * itw + batch_size, batch_size):
 
         if cancel_flag:
-            logging.info("Deconolution cancelled")
+            logging.info("Deconvolution cancelled")
             eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
             return None
 
@@ -108,7 +108,6 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
         input_tiles = np.array(input_tiles)
         input_tiles = np.moveaxis(input_tiles, -1, 1)
         input_tiles = np.reshape(input_tiles, [input_tiles.shape[0] * num_colors, 1, window_size, window_size])
-        # input_tiles_with_strenght = np.concatenate([input_tiles, np.full_like(input_tiles, strength)], axis=1)
 
         output_tiles = []
         sigma = np.full(shape=(input_tiles.shape[0], 1), fill_value=psfsize, dtype=np.float32)
@@ -153,6 +152,6 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
     output = np.clip(output, 0.0, 1.0)
 
     eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
-    logging.info("Finished denoising")
+    logging.info("Finished deconvolution")
 
     return output

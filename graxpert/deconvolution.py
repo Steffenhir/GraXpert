@@ -2,7 +2,6 @@ import copy
 import logging
 import numpy as np
 import onnxruntime as ort
-import astropy.stats
 
 from graxpert.ai_model_handling import get_execution_providers_ordered
 from graxpert.application.app_events import AppEvents
@@ -22,8 +21,6 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
     elif not (batch_size & (batch_size - 1) == 0):  # check if batch_size is power of two
         logging.info(f"mapping batch_size of {batch_size} to {2 ** (batch_size).bit_length() // 2}")
         batch_size = 2 ** (batch_size).bit_length() // 2  # map batch_size to power of two
-
-    input = copy.deepcopy(image)
 
     num_colors = image.shape[-1]
 
@@ -48,14 +45,6 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
     image = np.concatenate((image[:, :offset, :], image), axis=1)
 
     output = copy.deepcopy(image)
-
-    # _min = np.min(image, axis=(0, 1))
-    # image = image - _min + 1e-5
-    # image = np.log(image)
-
-    # _mean = np.mean(image, axis=(0, 1))
-    # _std = np.std(image, axis=(0, 1))
-    # image = (image - _mean) / _std * 0.1
 
     providers = get_execution_providers_ordered(ai_gpu_acceleration)
     session = ort.InferenceSession(ai_path, providers=providers)
@@ -100,7 +89,6 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
             tile = tile - _min + 1e-5
             tile = np.log(tile)
 
-            # _mean, _, _std = astropy.stats.sigma_clipped_stats(tile, sigma=2.0, axis=(0, 1))
             _mean = tile.mean()
             _std = tile.std()
             _mean, _std = _mean.astype(np.float32), _std.astype(np.float32)
@@ -160,8 +148,6 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
 
     output = output[offset: H + offset, offset: W + offset, :]
     output = np.clip(output, 0.0, 1.0)
-
-    # output = strength * output + (1 - strength) * input
 
     eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
     logging.info("Finished denoising")

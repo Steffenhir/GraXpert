@@ -259,13 +259,13 @@ class DeconvolutionMenu(CollapsibleMenuFrame):
         self.tt_load = tooltip.Tooltip(self.deconvolution_button, text=tooltip.deconvolution_text)
 
         self.deconvolution_strength_slider = ValueSlider(
-            self.sub_frame, width=default_label_width, variable_name=_("Deconvolution Strength"), variable=self.deconvolution_strength, min_value=0.0, max_value=1.0, precision=2
+            self.sub_frame, width=default_label_width, variable_name=_("Deconvolution Strength"), variable=self.deconvolution_strength, min_value=0.0, max_value=1.0, precision=1
         )
         tooltip.Tooltip(self.deconvolution_strength_slider, text=tooltip.deconvolution_strength_text)
 
         self.deconvolution_psfsize_slider = ValueSlider(
-            self.sub_frame, width=default_label_width, variable_name=_("Blur PSF Size"),
-            variable=self.deconvolution_psfsize, min_value=0.0, max_value=1.0, precision=2
+            self.sub_frame, width=default_label_width, variable_name=_("Image FHWM (in pixels)"),
+            variable=self.deconvolution_psfsize, min_value=0.0, max_value=14.0, precision=1
         )
         tooltip.Tooltip(self.deconvolution_psfsize_slider, text=tooltip.deconvolution_psfsize_text)
 

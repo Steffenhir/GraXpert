@@ -11,6 +11,9 @@ from graxpert.application.eventbus import eventbus
 def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512, stride=448, progress=None, ai_gpu_acceleration=True):
     print("Starting deconvolution")
     strength = 0.95 * strength # TODO : strenght of exactly 1.0 brings no results, to fix
+    psfsize = np.clip((psfsize / 2.355 - 1.0) / 5.0, 0.05, 0.95)
+
+    logging.info(f"Calculated normalized PSFsize value: {psfsize}")
 
     if batch_size < 1:
         logging.info(f"mapping batch_size of {batch_size} to 1")

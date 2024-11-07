@@ -1,6 +1,5 @@
 import numpy as np
 from skimage import color
-from skimage.transform import rescale
 
 import graxpert.skyall
 import graxpert.stretch

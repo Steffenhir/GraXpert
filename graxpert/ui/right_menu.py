@@ -289,7 +289,7 @@ class AdvancedFrame(RightFrameBase):
         # stars-deconvolution ai model
         # CTkLabel(self, text=_("Stars Deconvolution AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
         # GraXpertOptionMenu(self, variable=self.deconvolution_stars_ai_version, values=self.deconvolution_stars_ai_options).grid(**self.default_grid())
-        
+
         # denoise ai model
         CTkLabel(self, text=_("Denoising AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
         GraXpertOptionMenu(self, variable=self.denoise_ai_version, values=self.denoise_ai_options).grid(**self.default_grid())

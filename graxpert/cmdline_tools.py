@@ -7,7 +7,7 @@ from textwrap import dedent
 import numpy as np
 from appdirs import user_config_dir
 
-from graxpert.ai_model_handling import ai_model_path_from_version, bge_ai_models_dir, denoise_ai_models_dir, deconvolution_object_ai_models_dir,download_version, latest_version, list_local_versions
+from graxpert.ai_model_handling import ai_model_path_from_version, bge_ai_models_dir, denoise_ai_models_dir, deconvolution_object_ai_models_dir, download_version, latest_version, list_local_versions
 from graxpert.astroimage import AstroImage
 from graxpert.background_extraction import extract_background
 from graxpert.denoising import denoise
@@ -305,6 +305,7 @@ class DenoiseCmdlineTool(CmdlineToolBase):
 
         return ai_version
 
+
 class DeconvObjCmdlineTool(CmdlineToolBase):
     def __init__(self, args):
         super().__init__(args)
@@ -380,7 +381,14 @@ class DeconvObjCmdlineTool(CmdlineToolBase):
         )
 
         processed_Astro_Image.set_from_array(
-            deconvolve(astro_Image.img_array, ai_model_path, preferences.deconvolution_strength, preferences.deconvolution_psfsize, batch_size=preferences.ai_batch_size, ai_gpu_acceleration=preferences.ai_gpu_acceleration)
+            deconvolve(
+                astro_Image.img_array,
+                ai_model_path,
+                preferences.deconvolution_strength,
+                preferences.deconvolution_psfsize,
+                batch_size=preferences.ai_batch_size,
+                ai_gpu_acceleration=preferences.ai_gpu_acceleration,
+            )
         )
         processed_Astro_Image.save(self.get_save_path(), self.get_output_file_format())
 

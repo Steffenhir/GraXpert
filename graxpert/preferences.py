@@ -44,7 +44,7 @@ class Prefs:
     denoise_ai_version: AnyStr = None
     graxpert_version: AnyStr = graxpert_version
     deconvolution_strength: float = 0.5
-    deconvolution_psfsize: float = 0.3
+    deconvolution_psfsize: float = 5.0
     denoise_strength: float = 0.5
     ai_batch_size: int = 4
     ai_gpu_acceleration: bool = True

@@ -232,8 +232,8 @@ class DeconvolutionMenu(CollapsibleMenuFrame):
         self.deconvolution_strength.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_STRENGTH_CHANGED, {"deconvolution_strength": self.deconvolution_strength.get()}))
 
         self.deconvolution_psfsize = tk.DoubleVar()
-        self.deconvolution_strength.set(graxpert.prefs.deconvolution_psfsize)
-        self.deconvolution_strength.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_PSFSIZE_CHANGED, {"deconvolution_psfsize": self.deconvolution_psfsize.get()}))
+        self.deconvolution_psfsize.set(graxpert.prefs.deconvolution_psfsize)
+        self.deconvolution_psfsize.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_PSFSIZE_CHANGED, {"deconvolution_psfsize": self.deconvolution_psfsize.get()}))
 
         self.create_children()
         self.setup_layout()

@@ -1,5 +1,6 @@
 import copy
 import logging
+
 import numpy as np
 import onnxruntime as ort
 
@@ -10,7 +11,7 @@ from graxpert.application.eventbus import eventbus
 
 def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512, stride=448, progress=None, ai_gpu_acceleration=True):
     print("Starting deconvolution")
-    strength = 0.95 * strength # TODO : strenght of exactly 1.0 brings no results, to fix
+    strength = 0.95 * strength  # TODO : strenght of exactly 1.0 brings no results, to fix
     psfsize = np.clip((psfsize / 2.355 - 1.0) / 5.0, 0.05, 0.95)
 
     logging.info(f"Calculated normalized PSFsize value: {psfsize}")
@@ -89,7 +90,7 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
             x = stride * i
             y = stride * j
 
-            tile = image[x: x + window_size, y: y + window_size, :]
+            tile = image[x : x + window_size, y : y + window_size, :]
 
             _min = np.min(tile, axis=(0, 1))
             tile = tile - _min + 1e-5
@@ -151,7 +152,7 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
                 logging.info(f"Progress: {p}%")
             last_progress = p
 
-    output = output[offset: H + offset, offset: W + offset, :]
+    output = output[offset : H + offset, offset : W + offset, :]
     output = np.clip(output, 0.0, 1.0)
 
     eventbus.remove_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)

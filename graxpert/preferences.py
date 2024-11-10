@@ -29,6 +29,7 @@ class Prefs:
     interpol_type_option: AnyStr = "RBF"
     smoothing_option: float = 0.0
     saveas_option: AnyStr = "32 bit Tiff"
+    saveas_stretched: bool = False
     sample_size: int = 25
     sample_color: int = 55
     RBF_kernel: AnyStr = "thin_plate"
@@ -37,8 +38,13 @@ class Prefs:
     corr_type: AnyStr = "Subtraction"
     scaling: float = 1.0
     bge_ai_version: AnyStr = None
+    deconvolution_type_option: AnyStr = "Object-only"
+    deconvolution_object_ai_version: AnyStr = None
+    deconvolution_stars_ai_version: AnyStr = None
     denoise_ai_version: AnyStr = None
     graxpert_version: AnyStr = graxpert_version
+    deconvolution_strength: float = 0.5
+    deconvolution_psfsize: float = 5.0
     denoise_strength: float = 0.5
     ai_batch_size: int = 4
     ai_gpu_acceleration: bool = True
@@ -70,10 +76,10 @@ def load_preferences(prefs_filename) -> Prefs:
 
                 if "ai_version" in json_prefs:
                     logging.warning(f"Obsolete key 'ai_version' found in {prefs_filename}. Renaming it to 'bge_ai_version.")
-                    json_prefs = {"bge_ai_version" if k == "ai_version" else k:v for k,v in json_prefs.items()}
-                    
+                    json_prefs = {"bge_ai_version" if k == "ai_version" else k: v for k, v in json_prefs.items()}
+
                 prefs = merge_json(prefs, json_prefs)
-                
+
                 if not "graxpert_version" in json_prefs:  # reset scaling in case we start from GraXpert < 2.1.0
                     prefs.scaling = 1.0
         else:

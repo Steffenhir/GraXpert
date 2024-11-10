@@ -32,6 +32,10 @@ if os.path.exists(ai_models_dir):
 
 os.makedirs(bge_ai_models_dir, exist_ok=True)
 
+deconvolution_object_ai_models_dir = os.path.join(user_data_dir(appname="GraXpert"), "deconvolution-object-ai-models")
+os.makedirs(deconvolution_object_ai_models_dir, exist_ok=True)
+deconvolution_stars_ai_models_dir = os.path.join(user_data_dir(appname="GraXpert"), "deconvolution-stars-ai-models")
+os.makedirs(deconvolution_stars_ai_models_dir, exist_ok=True)
 denoise_ai_models_dir = os.path.join(user_data_dir(appname="GraXpert"), "denoise-ai-models")
 os.makedirs(denoise_ai_models_dir, exist_ok=True)
 

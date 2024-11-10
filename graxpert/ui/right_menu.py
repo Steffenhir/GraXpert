@@ -7,13 +7,13 @@ from customtkinter import CTkFont, CTkImage, CTkLabel, CTkSwitch, CTkTextbox
 from packaging import version
 from PIL import Image
 
-from graxpert.ai_model_handling import bge_ai_models_dir, denoise_ai_models_dir, list_local_versions, list_remote_versions
+from graxpert.ai_model_handling import bge_ai_models_dir, deconvolution_object_ai_models_dir, deconvolution_stars_ai_models_dir, denoise_ai_models_dir, list_local_versions, list_remote_versions
 from graxpert.application.app import graxpert
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 from graxpert.localization import _, lang
 from graxpert.resource_utils import resource_path
-from graxpert.s3_secrets import bge_bucket_name, denoise_bucket_name
+from graxpert.s3_secrets import bge_bucket_name, deconvolution_object_bucket_name, deconvolution_stars_bucket_name, denoise_bucket_name
 from graxpert.ui.widgets import GraXpertOptionMenu, GraXpertScrollableFrame, ProcessingStep, ValueSlider, padx, pady
 
 
@@ -104,6 +104,13 @@ class HelpFrame(RightFrameBase):
         url_label_2.bind("<Button-1>", lambda e: callback(url_link_2))
 
         row = self.nrow()
+        HelpText(self, rows=2, text=_("Deconvolution AI models are licensed under CC BY-NC-SA:")).grid(column=0, row=row, padx=padx, pady=pady, sticky=tk.W)
+        url_link_3 = "https://raw.githubusercontent.com/Steffenhir/GraXpert/main/licenses/Deconvolution-Model-LICENSE.html"
+        url_label_3 = CTkLabel(self, text="<Link>", text_color="dodger blue")
+        url_label_3.grid(column=0, row=row, padx=padx, sticky=tk.E)
+        url_label_3.bind("<Button-1>", lambda e: callback(url_link_3))
+
+        row = self.nrow()
         HelpText(self, rows=2, text=_("Denoising AI models are licensed under CC BY-NC-SA:")).grid(column=0, row=row, padx=padx, pady=pady, sticky=tk.W)
         url_link_3 = "https://raw.githubusercontent.com/Steffenhir/GraXpert/main/licenses/Denoise-Model-LICENSE.html"
         url_label_3 = CTkLabel(self, text="<Link>", text_color="dodger blue")
@@ -169,6 +176,42 @@ class AdvancedFrame(RightFrameBase):
         else:
             self.bge_ai_options.insert(0, "None")
         self.bge_ai_version.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.BGE_AI_VERSION_CHANGED, {"bge_ai_version": self.bge_ai_version.get()}))
+
+        # object deconvolution ai models
+        deconvolution_object_ai_remote_versions = list_remote_versions(deconvolution_object_bucket_name)
+        deconvolution_object_ai_local_versions = list_local_versions(deconvolution_object_ai_models_dir)
+        self.deconvolution_object_ai_options = set([])
+        self.deconvolution_object_ai_options.update([rv["version"] for rv in deconvolution_object_ai_remote_versions])
+        self.deconvolution_object_ai_options.update([lv["version"] for lv in deconvolution_object_ai_local_versions])
+        self.deconvolution_object_ai_options = sorted(self.deconvolution_object_ai_options, key=lambda k: version.parse(k), reverse=True)
+
+        self.deconvolution_object_ai_version = tk.StringVar(master)
+        self.deconvolution_object_ai_version.set("None")  # default value
+        if graxpert.prefs.deconvolution_object_ai_version is not None:
+            self.deconvolution_object_ai_version.set(graxpert.prefs.deconvolution_object_ai_version)
+        else:
+            self.deconvolution_object_ai_options.insert(0, "None")
+        self.deconvolution_object_ai_version.trace_add(
+            "write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_OBJECT_AI_VERSION_CHANGED, {"deconvolution_object_ai_version": self.deconvolution_object_ai_version.get()})
+        )
+
+        # stars deconvolution ai models
+        # deconvolution_stars_ai_remote_versions = list_remote_versions(deconvolution_stars_bucket_name)
+        # deconvolution_stars_ai_local_versions = list_local_versions(deconvolution_stars_ai_models_dir)
+        # self.deconvolution_stars_ai_options = set([])
+        # self.deconvolution_stars_ai_options.update([rv["version"] for rv in deconvolution_stars_ai_remote_versions])
+        # self.deconvolution_stars_ai_options.update([lv["version"] for lv in deconvolution_stars_ai_local_versions])
+        # self.deconvolution_stars_ai_options = sorted(self.deconvolution_stars_ai_options, key=lambda k: version.parse(k), reverse=True)
+
+        # self.deconvolution_stars_ai_version = tk.StringVar(master)
+        # self.deconvolution_stars_ai_version.set("None")  # default value
+        # if graxpert.prefs.deconvolution_stars_ai_version is not None:
+        #     self.deconvolution_stars_ai_version.set(graxpert.prefs.deconvolution_stars_ai_version)
+        # else:
+        #     self.deconvolution_stars_ai_options.insert(0, "None")
+        # self.deconvolution_stars_ai_version.trace_add(
+        #     "write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_STARS_AI_VERSION_CHANGED, {"deconvolution_stars_ai_version": self.deconvolution_stars_ai_version.get()})
+        # )
 
         # denoise ai model
         denoise_remote_versions = list_remote_versions(denoise_bucket_name)
@@ -238,6 +281,14 @@ class AdvancedFrame(RightFrameBase):
         # bge ai model
         CTkLabel(self, text=_("Background Extraction AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
         GraXpertOptionMenu(self, variable=self.bge_ai_version, values=self.bge_ai_options).grid(**self.default_grid())
+
+        # object-deconvolution ai model
+        CTkLabel(self, text=_("Object Deconvolution AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
+        GraXpertOptionMenu(self, variable=self.deconvolution_object_ai_version, values=self.deconvolution_object_ai_options).grid(**self.default_grid())
+
+        # stars-deconvolution ai model
+        # CTkLabel(self, text=_("Stars Deconvolution AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)
+        # GraXpertOptionMenu(self, variable=self.deconvolution_stars_ai_version, values=self.deconvolution_stars_ai_options).grid(**self.default_grid())
 
         # denoise ai model
         CTkLabel(self, text=_("Denoising AI-Model"), font=self.heading_font2).grid(column=0, row=self.nrow(), pady=pady, sticky=tk.N)

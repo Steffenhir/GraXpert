@@ -355,7 +355,6 @@ class SaveMenu(CollapsibleMenuFrame):
         self.saveas_stretched.set(graxpert.prefs.saveas_stretched)
         self.saveas_stretched.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.SAVE_STRETCHED_CHANGED, {"saveas_stretched": self.saveas_stretched.get()}))
 
-
         self.create_children()
         self.setup_layout()
         self.place_children()
@@ -376,7 +375,7 @@ class SaveMenu(CollapsibleMenuFrame):
             command=lambda: eventbus.emit(AppEvents.SAVE_REQUEST),
         )
         tooltip.Tooltip(self.save_button, text=tooltip.save_pic_text)
-        self.saveas_stretched_checkbox = GraXpertCheckbox(self.sub_frame, width=default_label_width, text=_("Save Stretched"), variable = self.saveas_stretched)
+        self.saveas_stretched_checkbox = GraXpertCheckbox(self.sub_frame, width=default_label_width, text=_("Save Stretched"), variable=self.saveas_stretched)
         tooltip.Tooltip(self.saveas_stretched_checkbox, text=tooltip.saveas_stretched_text)
 
     def setup_layout(self):

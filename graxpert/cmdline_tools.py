@@ -305,6 +305,7 @@ class DenoiseCmdlineTool(CmdlineToolBase):
 
         return ai_version
 
+
 class DeconvObjCmdlineTool(CmdlineToolBase):
     def __init__(self, args):
         super().__init__(args)
@@ -380,7 +381,14 @@ class DeconvObjCmdlineTool(CmdlineToolBase):
         )
 
         processed_Astro_Image.set_from_array(
-            deconvolve(astro_Image.img_array, ai_model_path, preferences.deconvolution_strength, preferences.deconvolution_psfsize, batch_size=preferences.ai_batch_size, ai_gpu_acceleration=preferences.ai_gpu_acceleration)
+            deconvolve(
+                astro_Image.img_array,
+                ai_model_path,
+                preferences.deconvolution_strength,
+                preferences.deconvolution_psfsize,
+                batch_size=preferences.ai_batch_size,
+                ai_gpu_acceleration=preferences.ai_gpu_acceleration,
+            )
         )
         processed_Astro_Image.save(self.get_save_path(), self.get_output_file_format())
 
@@ -413,7 +421,7 @@ class DeconvObjCmdlineTool(CmdlineToolBase):
 
         return ai_version
 
-
+      
 class DeconvStellarCmdlineTool(CmdlineToolBase):
     def __init__(self, args):
         super().__init__(args)

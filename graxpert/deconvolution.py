@@ -52,13 +52,13 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
     dh = ith * stride - h
     dw = itw * stride - w
 
-    image = np.concatenate((image, image[(h - dh):, :, :]), axis=0)
-    image = np.concatenate((image, image[:, (w - dw):, :]), axis=1)
+    image = np.concatenate((image, image[(h - dh) :, :, :]), axis=0)
+    image = np.concatenate((image, image[:, (w - dw) :, :]), axis=1)
 
     h, w, _ = image.shape
-    image = np.concatenate((image, image[(h - offset):, :, :]), axis=0)
+    image = np.concatenate((image, image[(h - offset) :, :, :]), axis=0)
     image = np.concatenate((image[:offset, :, :], image), axis=0)
-    image = np.concatenate((image, image[:, (w - offset):, :]), axis=1)
+    image = np.concatenate((image, image[:, (w - offset) :, :]), axis=1)
     image = np.concatenate((image[:, :offset, :], image), axis=1)
 
     output = copy.deepcopy(image)
@@ -156,8 +156,8 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
 
             x = stride * i
             y = stride * j
-            tile = tile[offset: offset + stride, offset: offset + stride, :]
-            output[x + offset: stride * (i + 1) + offset, y + offset: stride * (j + 1) + offset, :] = tile
+            tile = tile[offset : offset + stride, offset : offset + stride, :]
+            output[x + offset : stride * (i + 1) + offset, y + offset : stride * (j + 1) + offset, :] = tile
 
         p = int(b / (ith * itw + batch_size) * 100)
         if p > last_progress:

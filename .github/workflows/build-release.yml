@@ -7,6 +7,8 @@ env:
   ai_s3_bucket_name: ${{ secrets.AI_S3_BUCKET_NAME }}
   ai_s3_bge_bucket_name: ${{ secrets.AI_S3_BGE_BUCKET_NAME }}
   ai_s3_denoise_bucket_name: ${{ secrets.AI_S3_DENOISE_BUCKET_NAME }}
+  ai_s3_deconvolution_object_bucket_name: ${{ secrets.AI_S3_DECONVOLUTION_OBJECT_BUCKET_NAME }}
+  ai_s3_deconvolution_stars_bucket_name: ${{ secrets.AI_S3_DECONVOLUTION_STARS_BUCKET_NAME }}
 
 on:
   push:
@@ -72,8 +74,8 @@ jobs:
           echo "deconvolution_stars_bucket_name = \"$ai_s3_deconvolution_stars_bucket_name\"" >> ./graxpert/s3_secrets.py
       - name: install dependencies
         run: |
-          pip install setuptools wheel cx_freeze && \
-          pip install onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/ && \
+          pip install setuptools wheel cx_freeze==7.2.3 && \
+          pip install onnxruntime-gpu && \
           pip install -r requirements.txt
       - name: patch version
         run: |
@@ -114,7 +116,7 @@ jobs:
           "deconvolution_stars_bucket_name = `"$env:ai_s3_deconvolution_stars_bucket_name`"" | Out-File -Append .\graxpert\s3_secrets.py
       - name: install dependencies
         run: |
-          pip install setuptools wheel cx_freeze; `
+          pip install setuptools wheel cx_freeze==7.2.3; `
           pip install onnxruntime-directml; `
           pip install -r requirements.txt
       - name: patch version
@@ -158,7 +160,7 @@ jobs:
           chmod u+x ./releng/patch_version.sh && \
           ./releng/patch_version.sh
       - name: create GraXpert-macos-arm64 bundle
-        # TODO migrato to cx_freeze
+        # TODO migrate to cx_freeze
         run: |
           pyinstaller \
           ./GraXpert-macos-arm64.spec
@@ -218,7 +220,7 @@ jobs:
           chmod u+x ./releng/patch_version.sh && \
           ./releng/patch_version.sh
       - name: create GraXpert-macos-x86_64 bundle
-        # TODO migrato to cx_freeze
+        # TODO migrate to cx_freeze
         run: |
           pyinstaller \
           ./GraXpert-macos-x86_64.spec

@@ -390,7 +390,7 @@ def main():
             clt = DeconvObjCmdlineTool(args)
             clt.execute()
             logging.shutdown()
-        elif args.cli and args.command == "deconv-obj":
+        elif args.cli and args.command == "deconv-stellar":
             from graxpert.cmdline_tools import DeconvStellarCmdlineTool
 
             logging.info(f"Starting GraXpert CLI, Deconvolution Stellar, version: {graxpert_version} release: {graxpert_release}")

@@ -201,7 +201,7 @@ def main():
             "--command",
             required=False,
             default="background-extraction",
-            choices=["background-extraction", "denoising", "deconv-obj"],
+            choices=["background-extraction", "denoising", "deconv-obj", "deconv-stellar"],
             type=str,
             help="Choose the image operation to execute: Background Extraction or Denoising or Deconvolution",
         )
@@ -355,7 +355,7 @@ def main():
             elif "deconv-obj" in sys.argv:
                 deconv_obj_parser.print_help()
             elif "deconv-stellar" in sys.argv:
-                deconv_obj_parser.print_help()
+                deconv_stellar_parser.print_help()
             sys.exit(0)
 
         args, extras = parser.parse_known_args()

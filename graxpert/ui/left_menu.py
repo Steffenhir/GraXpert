@@ -222,7 +222,7 @@ class DeconvolutionMenu(CollapsibleMenuFrame):
         super().__init__(parent, title=_("Deconvolution"), show=False, number=4, **kwargs)
 
         # method selection
-        self.deconvolution_options = ["Object-only"]  # , "Stars-only"
+        self.deconvolution_options = ["Object-only", "Stars-only"]
         self.deconvolution_type = tk.StringVar()
         self.deconvolution_type.set(graxpert.prefs.deconvolution_type_option)
         self.deconvolution_type.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_TYPE_CHANGED, {"deconvolution_type_option": self.deconvolution_type.get()}))
@@ -232,8 +232,8 @@ class DeconvolutionMenu(CollapsibleMenuFrame):
         self.deconvolution_strength.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_STRENGTH_CHANGED, {"deconvolution_strength": self.deconvolution_strength.get()}))
 
         self.deconvolution_psfsize = tk.DoubleVar()
-        self.deconvolution_strength.set(graxpert.prefs.deconvolution_psfsize)
-        self.deconvolution_strength.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_PSFSIZE_CHANGED, {"deconvolution_psfsize": self.deconvolution_psfsize.get()}))
+        self.deconvolution_psfsize.set(graxpert.prefs.deconvolution_psfsize)
+        self.deconvolution_psfsize.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DECONVOLUTION_PSFSIZE_CHANGED, {"deconvolution_psfsize": self.deconvolution_psfsize.get()}))
 
         self.create_children()
         self.setup_layout()
@@ -259,12 +259,13 @@ class DeconvolutionMenu(CollapsibleMenuFrame):
         self.tt_load = tooltip.Tooltip(self.deconvolution_button, text=tooltip.deconvolution_text)
 
         self.deconvolution_strength_slider = ValueSlider(
-            self.sub_frame, width=default_label_width, variable_name=_("Deconvolution Strength"), variable=self.deconvolution_strength, min_value=0.0, max_value=1.0, precision=2
+            self.sub_frame, width=default_label_width, variable_name=_("Deconvolution Strength"), variable=self.deconvolution_strength, min_value=0.0, max_value=1.0, precision=1
         )
         tooltip.Tooltip(self.deconvolution_strength_slider, text=tooltip.deconvolution_strength_text)
 
         self.deconvolution_psfsize_slider = ValueSlider(
-            self.sub_frame, width=default_label_width, variable_name=_("Blur PSF Size"), variable=self.deconvolution_psfsize, min_value=0.0, max_value=1.0, precision=2
+            self.sub_frame, width=default_label_width, variable_name=_("Image FWHM (in pixels)"),
+            variable=self.deconvolution_psfsize, min_value=0.0, max_value=14.0, precision=1
         )
         tooltip.Tooltip(self.deconvolution_psfsize_slider, text=tooltip.deconvolution_psfsize_text)
 

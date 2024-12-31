@@ -306,8 +306,7 @@ def main():
             help='Number of image tiles which Graxpert will denoise in parallel. Be careful: increasing this value might result in out-of-memory errors. Valid Range: 1..32, default: "4"',
         )
 
-        deconv_stellar_parser = argparse.ArgumentParser("GraXpert Deconvolution Stellar", parents=[parser],
-                                                        description="GraXpert, the astronomical denoising tool")
+        deconv_stellar_parser = argparse.ArgumentParser("GraXpert Deconvolution Stellar", parents=[parser], description="GraXpert, the astronomical denoising tool")
         deconv_stellar_parser.add_argument(
             "-ai_version",
             "--ai_version",

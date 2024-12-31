@@ -175,11 +175,14 @@ def get_execution_providers_ordered(gpu_acceleration=True):
     if gpu_acceleration:
         supported_providers = [
             "DmlExecutionProvider",
-            ('CoreMLExecutionProvider', {
-                'flags': "COREML_FLAG_CREATE_MLPROGRAM",
-            }),
+            (
+                "CoreMLExecutionProvider",
+                {
+                    "flags": "COREML_FLAG_CREATE_MLPROGRAM",
+                },
+            ),
             "CUDAExecutionProvider",
-            "CPUExecutionProvider"
+            "CPUExecutionProvider",
         ]
     else:
         supported_providers = ["CPUExecutionProvider"]

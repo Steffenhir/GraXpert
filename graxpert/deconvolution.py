@@ -9,7 +9,8 @@ from graxpert.application.eventbus import eventbus
 
 
 def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512, stride=448, progress=None, ai_gpu_acceleration=True):
-    print("Starting deconvolution")
+
+    logging.info("Starting deconvolution")
     if "stars" in ai_path:
         type = "Stellar"
     elif "obj" in ai_path:
@@ -64,7 +65,6 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
     output = copy.deepcopy(image)
 
     providers = get_execution_providers_ordered(ai_gpu_acceleration)
-    print(providers)
     session = ort.InferenceSession(ai_path, providers=providers)
 
     logging.info(f"Available inference providers : {providers}")

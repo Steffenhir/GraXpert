@@ -173,8 +173,26 @@ def validate_local_version(ai_models_dir, local_version):
 def get_execution_providers_ordered(gpu_acceleration=True):
 
     if gpu_acceleration:
-        supported_providers = ["DmlExecutionProvider", "CoreMLExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider"]
+        supported_providers = [
+            "DmlExecutionProvider",
+            (
+                "CoreMLExecutionProvider",
+                {
+                    "flags": "COREML_FLAG_CREATE_MLPROGRAM",
+                },
+            ),
+            "CUDAExecutionProvider",
+            "CPUExecutionProvider",
+        ]
     else:
         supported_providers = ["CPUExecutionProvider"]
 
-    return [provider for provider in supported_providers if provider in ort.get_available_providers()]
+    result = []
+    for provider in supported_providers:
+        if isinstance(provider, tuple):
+            if provider[0] in ort.get_available_providers():
+                result.append(provider)  # Append the entire tuple
+        else:
+            if provider in ort.get_available_providers():
+                result.append(provider)
+    return result

@@ -10,9 +10,21 @@ from graxpert.application.eventbus import eventbus
 
 
 def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512, stride=448, progress=None, ai_gpu_acceleration=True):
-    print("Starting deconvolution")
+
+    logging.info("Starting deconvolution")
+    if "stars" in ai_path:
+        type = "Stellar"
+    elif "obj" in ai_path:
+        type = "Obj"
     strength = 0.95 * strength  # TODO : strenght of exactly 1.0 brings no results, to fix
-    psfsize = np.clip((psfsize / 2.355 - 1.0) / 5.0, 0.05, 0.95)
+
+    if type == "Stellar":
+        psfsize = np.clip((psfsize / 2.355 - 1.5) / 3.0, 0.05, 0.95)  # Stellar
+    else:
+        if "1.0.0" in ai_path:
+            psfsize = np.clip((psfsize / 2.355 - 1.0) / 5.0, 0.05, 0.95)  # Object v1.0.0
+        else:
+            psfsize = np.clip((psfsize / 2.355 - 0.5) / 5.5, 0.05, 0.95)  # Object v1.0.1
 
     logging.info(f"Calculated normalized PSFsize value: {psfsize}")
 
@@ -116,7 +128,11 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
         output_tiles = []
         sigma = np.full(shape=(input_tiles.shape[0], 1), fill_value=psfsize, dtype=np.float32)
         strenght_p = np.full(shape=(input_tiles.shape[0], 1), fill_value=strength, dtype=np.float32)
-        session_result = session.run(None, {"gen_input_image": input_tiles, "sigma": sigma, "strenght": strenght_p})[0]
+        conds = np.concatenate([sigma, strenght_p], axis=-1)
+        if type == "Obj" and "1.0.0" in ai_path:
+            session_result = session.run(None, {"gen_input_image": input_tiles, "sigma": sigma, "strenght": strenght_p})[0]
+        else:
+            session_result = session.run(None, {"gen_input_image": input_tiles, "params": conds})[0]
         for e in session_result:
             output_tiles.append(e)
 

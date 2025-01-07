@@ -355,6 +355,8 @@ def main():
                 deconv_obj_parser.print_help()
             elif "deconv-stellar" in sys.argv:
                 deconv_stellar_parser.print_help()
+            else:
+                parser.print_help()
             sys.exit(0)
 
         args, extras = parser.parse_known_args()

@@ -54,7 +54,7 @@ jobs:
   #         retention-days: 5
 
   build-linux-zip:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: setup python
         uses: actions/setup-python@v5
@@ -168,15 +168,30 @@ jobs:
         run: brew install create-dmg
       - name: create .dmg
         run: |
-          create-dmg \
-          --volname "GraXpert-macos-arm64" \
-          --window-pos 50 50 \
-          --window-size 1920 1080 \
-          --icon-size 100 \
-          --icon "GraXpert.app" 200 190 \
-          --app-drop-link 400 190 \
-          "dist/GraXpert-macos-arm64.dmg" \
-          "dist/GraXpert.app/"
+          # The currently available github macos runners have a bug that cause occasional create-dmg failures
+          # with the message "hdiutil: create failed - Resource busy"
+          # FIXME: Undo this nasty retry loop once the following issue gets figured out:
+          #        https://github.com/actions/runner-images/issues/7522#issuecomment-2534682126
+          max_tries=10
+          i=0
+          until create-dmg \
+            --no-internet-enable \
+            --volname "GraXpert-macos-arm64" \
+            --window-pos 50 50 \
+            --window-size 1920 1080 \
+            --icon-size 100 \
+            --icon "GraXpert.app" 200 190 \
+            --app-drop-link 400 190 \
+            "dist/GraXpert-macos-arm64.dmg" \
+            "dist/GraXpert.app/"
+          do
+              if [ $i -eq $max_tries ]
+              then
+                  echo 'Error: create-dmg did not succeed even after 10 tries.'
+                  exit 1
+              fi
+              ((i++))
+          done
       - name: store artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -228,15 +243,30 @@ jobs:
         run: brew install create-dmg
       - name: create .dmg
         run: |
-          create-dmg \
-          --volname "GraXpert-macos-x86_64" \
-          --window-pos 50 50 \
-          --window-size 1920 1080 \
-          --icon-size 100 \
-          --icon "GraXpert.app" 200 190 \
-          --app-drop-link 400 190 \
-          "dist/GraXpert-macos-x86_64.dmg" \
-          "dist/GraXpert.app/"
+          # The currently available github macos runners have a bug that cause occasional create-dmg failures
+          # with the message "hdiutil: create failed - Resource busy"
+          # FIXME: Undo this nasty retry loop once the following issue gets figured out:
+          #        https://github.com/actions/runner-images/issues/7522#issuecomment-2534682126
+          max_tries=10
+          i=0
+          until create-dmg \
+            --no-internet-enable \
+            --volname "GraXpert-macos-x86_64" \
+            --window-pos 50 50 \
+            --window-size 1920 1080 \
+            --icon-size 100 \
+            --icon "GraXpert.app" 200 190 \
+            --app-drop-link 400 190 \
+            "dist/GraXpert-macos-x86_64.dmg" \
+            "dist/GraXpert.app/"
+          do
+              if [ $i -eq $max_tries ]
+              then
+                  echo 'Error: create-dmg did not succeed even after 10 tries.'
+                  exit 1
+              fi
+              ((i++))
+          done            
       - name: store artifacts
         uses: actions/upload-artifact@v4
         with:

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - main
       - develop
 
 jobs: 
@@ -19,7 +19,8 @@ jobs:
         uses: actions/checkout@v3
       - name: install dependencies
         run: |
-          pip install -r requirements.txt && \
+          pip install -r requirements.txt
+          pip install onnxruntime-gpu
           pip install pytest
       - name: patch version
         run: |
@@ -42,7 +43,8 @@ jobs:
         uses: actions/checkout@v3
       - name: install dependencies
         run: |
-          pip install -r requirements.txt && `
+          pip install -r requirements.txt
+          pip install onnxruntime-gpu
           pip install pytest
       - name: patch version
         run: ./releng/patch_version.ps1
@@ -52,7 +54,7 @@ jobs:
         run: python -m pytest --import-mode=append tests/
 
   test-macos-x86_64:
-    runs-on: macos-11
+    runs-on: macos-14
     steps:
       - name: checkout repository
         uses: actions/checkout@v3
@@ -64,8 +66,8 @@ jobs:
       - name: install dependencies
         run: |
           brew install python-tk && \
-          pip3 install -r requirements.txt
-          pip3 install pytest
+          pip3 install --break-system-packages -r requirements.txt
+          pip3 install --break-system-packages pytest
       - name: patch version
         run: |
           chmod u+x ./releng/patch_version.sh && \
@@ -73,5 +75,29 @@ jobs:
       - name: Run tests
         run: python3 -m pytest --import-mode=append tests/
 
+  test-devcontainer:
+    runs-on: ubuntu-latest
+    # These permissions are needed to push the devcontainer image to the GitHub Container Registry
+    permissions:
+      contents: read
+      packages: write 
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v3
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Run tests in dev container
+        uses: devcontainers/ci@v0.3
+        with:
+          # Use this as a cache to avoid rebuilding the container on every CI run (also devs can use it as a known working prebuilt dev environment for main branch)
+          imageName: ghcr.io/${{ github.repository_owner }}/graxpert-${{ github.ref_name }}-devcontainer
+
+          runCmd: |
+            pip install --user pytest
+            python -m pytest --import-mode=append tests/

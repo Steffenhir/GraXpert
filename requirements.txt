@@ -11,3 +11,4 @@ requests
 scikit-image
 scipy
 xisf
+onnxruntime

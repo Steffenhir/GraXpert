@@ -5,7 +5,7 @@ import time
 import numpy as np
 import onnxruntime as ort
 
-from graxpert.ai_model_handling import get_execution_providers_ordered
+from graxpert.ai_model_handling import get_execution_providers_ordered, fallback_run
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 from graxpert.ui.ui_events import UiEvents
@@ -66,12 +66,6 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
 
     output = copy.deepcopy(image)
 
-    providers = get_execution_providers_ordered(ai_gpu_acceleration)
-    session = ort.InferenceSession(ai_path, providers=providers)
-
-    logging.info(f"Available inference providers : {providers}")
-    logging.info(f"Used inference providers : {session.get_providers()}")
-
     cancel_flag = False
 
     def cancel_listener(event):
@@ -115,7 +109,7 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
         input_tiles = np.array(input_tiles)
 
         output_tiles = []
-        session_result = session.run(None, {"gen_input_image": input_tiles})[0]
+        session_result = fallback_run(ai_path, ai_gpu_acceleration, {"gen_input_image": input_tiles})[0]
         for e in session_result:
             output_tiles.append(e)
 

@@ -174,6 +174,13 @@ def get_execution_providers_ordered(gpu_acceleration=True):
 
     if gpu_acceleration:
         supported_providers = [
+            (
+                "OpenVINOExecutionProvider",
+                {
+                    "device_type": "GPU",
+                },
+            ),
+            "ROCMExecutionProvider",
             "DmlExecutionProvider",
             (
                 "CoreMLExecutionProvider",
@@ -188,11 +195,44 @@ def get_execution_providers_ordered(gpu_acceleration=True):
         supported_providers = ["CPUExecutionProvider"]
 
     result = []
+    available = ort.get_available_providers()
     for provider in supported_providers:
         if isinstance(provider, tuple):
-            if provider[0] in ort.get_available_providers():
+            if provider[0] in available:
                 result.append(provider)  # Append the entire tuple
         else:
-            if provider in ort.get_available_providers():
+            if provider in available:
                 result.append(provider)
     return result
+
+def fallback_run(ai_path: str, ai_gpu_acceleration: bool, inputs: dict):
+    """
+    Fallback function to run inference with ONNX Runtime session.
+    This is useful when if the session.run() method fails due to driver/install problems with GPU acceleration..
+
+    If a failure happens, all GPU providers are blacklisted for the remainder of this run and a warning is logged.
+    We fallback to the guaranteed safe CPUExecutionProvider.
+    """
+    if not hasattr(fallback_run, "blacklisted"):
+        fallback_run.blacklisted = False
+
+    if fallback_run.blacklisted:
+        # If we fail once, we assume all other GPU invocations will also fail for the remainder of the session
+        ai_gpu_acceleration = False
+
+    providers = get_execution_providers_ordered(ai_gpu_acceleration)
+    session = ort.InferenceSession(ai_path, providers=providers)
+
+    logging.info(f"Available inference providers : {providers}")
+    logging.info(f"Used inference providers : {session.get_providers()}")
+
+    try:
+        return session.run(None, inputs)
+    except Exception as e:
+        if not fallback_run.blacklisted:
+            logging.warning(f"Critical error with AI provider, falling back to CPU implementation: {e}")
+            fallback_run.blacklisted = True
+            return fallback_run(ai_path, ai_gpu_acceleration, inputs)  # Retry with CPU provider
+        else: 
+            logging.error(f"Critical error with CPU AI provider: {e}")
+            raise e

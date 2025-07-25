@@ -73,8 +73,9 @@ Open your terminal or command prompt and use git to clone the GraXpert repositor
 git clone https://github.com/Steffenhir/GraXpert
 cd GraXpert
 ```
+## Option 1: Manual developer environment setup
 
-## Setting up a Virtual Environment
+### Setup the Virtual Environment
 We recommend using a virtual environment to isolate the project's dependencies. Ensure you have Python>=3.10 installed on your system before proceeding. Here's how to set up a virtual environment with Python:
 Windows:
 ```
@@ -94,7 +95,7 @@ python3 -m venv graxpert-env
 source graxpert-env/bin/activate
 ```
 
-## Install required packages
+### Install required packages
 All the requirements can be found in the requirements.txt file. You can install them with:
 
 Windows and Linux:
@@ -114,8 +115,15 @@ and solves issues with macOS Sonoma. Please use the version matching with your P
 brew install python-tk@3.10
 ```
 
+## Option 2: Automatic setup with devcontainers
+This project includes an (optional) [devcontainer](https://containers.dev/) configuration.  If you are using any editor with built-in devcontainer support (i.e. VScode or jetbrains etc...), you should get prompted to "Reopen in a devcontainer?"
+
+If you choose to use a devcontainer a docker (or podman) based container environment will be created for your development.  This environment appears to be a Debian machine (regardless of your host-OS).  All windowing/file/network operations are forwarded through your host.
+
+This provides a nice 'guaranteed' repeatable build/debug environment for all developers.
+
 ## Running GraXpert
-Once you have set up the virtual environment and installed the required packages, you can start GraXpert:
+Once you have set up the virtual environment (using either of the options above), you can start GraXpert in your shell:
 
 ```
 python -m graxpert.main

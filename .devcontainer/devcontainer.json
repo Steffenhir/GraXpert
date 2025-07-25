@@ -1,0 +1,66 @@
+{
+	"name": "graxpert-devcontainer",
+
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": {
+			"WORKSPACE": "${containerWorkspaceFolder}"
+		}
+	},
+	"postCreateCommand": "bash .devcontainer/post-create.sh",
+	"runArgs": [
+		"--privileged", // Allow full hw access from host, also allows writing core dump files
+		//"--network=host", // Use host network rather than our bridged container network
+		"--ipc=host", // Needed to make python SharedMemory work
+
+		"--name=graxpert-devcontainer", // For easier management
+
+		"--user=1000:1000",
+		"--userns=keep-id:uid=1000,gid=1000",
+
+		"--ulimit=core=-1:-1" // Allow core dumps
+	],
+	"mounts": [
+		// Needed for x11 forwarding
+    	"source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+		"source=/run/user/1000,target=/run/user/1000,type=bind",
+
+		"source=${localEnv:HOME}/Pictures/telescope,target=/images,type=bind,consistency=cached"
+
+	],
+	"containerEnv": {
+		// Needed for X11 forwarding
+		"DISPLAY": "${localEnv:DISPLAY}",
+		"XAUTHORITY": "${localEnv:XAUTHORITY}",
+
+		"PYTHONDEVMODE": "1" // Enable Python dev mode for better debug output
+	},
+	"remoteUser": "vscode",
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.profiles.linux": {
+					"bash": {
+						"path": "bash"
+					}
+				},
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"python": {
+					// "terminal.activateEnvInCurrentTerminal": "true",
+					// "defaultInterpreterPath": ".venv/bin/python"
+				}
+			},
+			"remote.extensionKind": {
+				"ms-azuretools.vscode-docker": ["ui"]
+				},
+			"extensions": [
+				"ms-azuretools.vscode-docker",
+				"ms-python.python",
+    			"ms-python.vscode-pylance"
+
+				// For the time being leave this off, the existing codebase has lots of trailing spaces
+				// "shardulm94.trailing-spaces"
+			]
+		}
+	}
+}

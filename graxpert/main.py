@@ -12,6 +12,7 @@ import logging
 import multiprocessing
 import re
 import sys
+import faulthandler
 
 from packaging import version
 
@@ -407,5 +408,6 @@ def main():
 if __name__ == "__main__":
     multiprocessing.freeze_support()
     configure_logging()
+    faulthandler.enable(sys.__stderr__)
     main()
     logging.shutdown()

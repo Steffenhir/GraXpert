@@ -22,11 +22,14 @@ class Prefs:
     bg_pts_option: int = 15
     stretch_option: AnyStr = "No Stretch"
     saturation: float = 1.0
+    channels_linked_option: bool = False
+    images_linked_option: bool = False
     display_pts: bool = True
     bg_tol_option: float = 1.0
     interpol_type_option: AnyStr = "RBF"
     smoothing_option: float = 0.0
     saveas_option: AnyStr = "32 bit Tiff"
+    saveas_stretched: bool = False
     sample_size: int = 25
     sample_color: int = 55
     RBF_kernel: AnyStr = "thin_plate"
@@ -34,8 +37,17 @@ class Prefs:
     lang: AnyStr = None
     corr_type: AnyStr = "Subtraction"
     scaling: float = 1.0
-    ai_version: AnyStr = None
+    bge_ai_version: AnyStr = None
+    deconvolution_type_option: AnyStr = "Object-only"
+    deconvolution_object_ai_version: AnyStr = None
+    deconvolution_stars_ai_version: AnyStr = None
+    denoise_ai_version: AnyStr = None
     graxpert_version: AnyStr = graxpert_version
+    deconvolution_strength: float = 0.5
+    deconvolution_psfsize: float = 5.0
+    denoise_strength: float = 0.5
+    ai_batch_size: int = 4
+    ai_gpu_acceleration: bool = True
 
 
 def app_state_2_prefs(prefs: Prefs, app_state: AppState) -> Prefs:
@@ -61,7 +73,13 @@ def load_preferences(prefs_filename) -> Prefs:
         if os.path.isfile(prefs_filename):
             with open(prefs_filename) as f:
                 json_prefs = json.load(f)
+
+                if "ai_version" in json_prefs:
+                    logging.warning(f"Obsolete key 'ai_version' found in {prefs_filename}. Renaming it to 'bge_ai_version.")
+                    json_prefs = {"bge_ai_version" if k == "ai_version" else k: v for k, v in json_prefs.items()}
+
                 prefs = merge_json(prefs, json_prefs)
+
                 if not "graxpert_version" in json_prefs:  # reset scaling in case we start from GraXpert < 2.1.0
                     prefs.scaling = 1.0
         else:
@@ -90,20 +108,23 @@ def app_state_2_fitsheader(prefs: Prefs, app_state: AppState, fits_header):
     fits_header["CORR-TYPE"] = prefs.corr_type
 
     if prefs.interpol_type_option == "AI":
-        fits_header["AI-VER"] = prefs.ai_version
+        fits_header["BGE-AI-VER"] = prefs.bge_ai_version
 
     if prefs.interpol_type_option != "AI":
         fits_header["SAMPLE-SIZE"] = prefs.sample_size
         fits_header["RBF-KERNEL"] = prefs.RBF_kernel
         fits_header["SPLINE-ORDER"] = prefs.spline_order
-        fits_header["BG-PTS"] = str(app_state.background_points)
+        fits_header["BG-PTS"] = str(list(map(lambda e: e.tolist(), app_state.background_points)))
 
     return fits_header
 
 
 def fitsheader_2_app_state(prefs: Prefs, app_state: AppState, fits_header):
     if "BG-PTS" in fits_header.keys():
-        app_state.background_points = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
+        try:
+            app_state.background_points = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
+        except:
+            logging.warning("Could not transfer background points from fits header to application state", stack_info=True)
 
     if "INTP-OPT" in fits_header.keys():
         prefs.interpol_type_option = fits_header["INTP-OPT"]

@@ -9,27 +9,31 @@ from PIL import Image, ImageTk
 from graxpert.application.app import graxpert
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
+from graxpert.AstroImageRepository import ImageTypes
 from graxpert.commands import ADD_POINT_HANDLER, ADD_POINTS_HANDLER, MOVE_POINT_HANDLER, Command
 from graxpert.localization import _
 from graxpert.resource_utils import resource_path
 from graxpert.ui.loadingframe import DynamicProgressFrame, LoadingFrame
 from graxpert.ui.ui_events import UiEvents
+from graxpert.ui.widgets import default_option_menu_height
 
 
 class Canvas(CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
-        self.display_options = ["Original", "Processed", "Background"]
+        self.display_options = []
         self.display_type = StringVar()
-        self.display_type.set(self.display_options[0])
+        self.display_type.set(None)
         self.display_type.trace_add("write", lambda a, b, c: eventbus.emit(AppEvents.DISPLAY_TYPE_CHANGED, {"display_type": self.display_type.get()}))
+        self.display_menu = None
 
         self.startx = 0
         self.starty = 0
         self.endx = 0
         self.endy = 0
         self.crop_mode = False
+        self.clicked_inside_pt = False
 
         self.create_children()
         self.setup_layout()
@@ -39,8 +43,8 @@ class Canvas(CTkFrame):
 
     # widget setup
     def create_children(self):
+        self.topbar = CTkFrame(self, height=default_option_menu_height)
         self.canvas = CTkCanvas(self, background="black", bd=0, highlightthickness=0)
-        self.display_menu = CTkOptionMenu(self, variable=self.display_type, values=self.display_options)
         self.help_button = CTkButton(
             self.canvas,
             text=_("H\nE\nL\nP"),
@@ -63,8 +67,8 @@ class Canvas(CTkFrame):
         self.canvas.rowconfigure(1, weight=1)
 
     def place_children(self):
+        self.topbar.grid(column=0, row=0, sticky=tk.NSEW)
         self.canvas.grid(column=0, row=1, sticky=tk.NSEW)
-        self.display_menu.grid(column=0, row=0, sticky=tk.N)
         self.help_button.grid(column=0, row=0, sticky=tk.SE)
         self.advanced_button.grid(column=0, row=1, sticky=tk.NE)
         self.static_loading_frame.grid_forget()
@@ -98,7 +102,18 @@ class Canvas(CTkFrame):
         eventbus.add_listener(AppEvents.CALCULATE_BEGIN, self.on_calculate_begin)
         eventbus.add_listener(AppEvents.CALCULATE_PROGRESS, self.on_calculate_progress)
         eventbus.add_listener(AppEvents.CALCULATE_END, self.on_calculate_end)
+        eventbus.add_listener(AppEvents.CALCULATE_SUCCESS, self.on_calculate_success)
         eventbus.add_listener(AppEvents.CALCULATE_ERROR, self.on_calculate_end)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_BEGIN, self.on_deconvolution_begin)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_PROGRESS, self.on_deconvolution_progress)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_END, self.on_deconvolution_end)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_SUCCESS, self.on_deconvolution_success)
+        eventbus.add_listener(AppEvents.DECONVOLUTION_ERROR, self.on_deconvolution_end)
+        eventbus.add_listener(AppEvents.DENOISE_BEGIN, self.on_denoise_begin)
+        eventbus.add_listener(AppEvents.DENOISE_PROGRESS, self.on_denoise_progress)
+        eventbus.add_listener(AppEvents.DENOISE_END, self.on_denoise_end)
+        eventbus.add_listener(AppEvents.DENOISE_SUCCESS, self.on_denoise_success)
+        eventbus.add_listener(AppEvents.DENOISE_ERROR, self.on_denoise_end)
         eventbus.add_listener(AppEvents.SAVE_BEGIN, self.on_save_begin)
         eventbus.add_listener(AppEvents.SAVE_END, self.on_save_end)
         eventbus.add_listener(AppEvents.SAVE_ERROR, self.on_save_end)
@@ -110,7 +125,8 @@ class Canvas(CTkFrame):
         eventbus.add_listener(AppEvents.DISPLAY_TYPE_CHANGED, self.redraw_image)
         eventbus.add_listener(UiEvents.RESET_ZOOM_REQUEST, self.reset_zoom)
         eventbus.add_listener(UiEvents.DISPLAY_START_BADGE_REQUEST, self.on_display_start_badge_request)
-        eventbus.add_listener(UiEvents.TOGGLE_CROP_REQUEST, self.on_toggle_crop_request)
+        eventbus.add_listener(UiEvents.TURN_ON_CROP_MODE, self.on_turn_on_crop_mode)
+        eventbus.add_listener(UiEvents.TURN_OFF_CROP_MODE, self.on_turn_off_crop_mode)
         eventbus.add_listener(UiEvents.APPLY_CROP_REQUEST, self.on_apply_crop_request)
 
     # event handling
@@ -132,13 +148,15 @@ class Canvas(CTkFrame):
         if not self.crop_mode:
             return
 
-        for astroimg in graxpert.images.values():
-            if astroimg is not None:
-                astroimg.crop(self.startx, self.endx, self.starty, self.endy)
+        graxpert.images.crop_all(self.startx, self.endx, self.starty, self.endy)
+
+        self.startx = 0
+        self.starty = 0
+        self.endx = graxpert.images.get(ImageTypes.Original).width
+        self.endy = graxpert.images.get(ImageTypes.Original).height
 
         eventbus.emit(AppEvents.RESET_POITS_REQUEST)
-        self.crop_mode = False
-        self.zoom_fit(graxpert.images[self.display_type.get()].width, graxpert.images[self.display_type.get()].height)
+        self.zoom_fit(graxpert.images.get(self.display_type.get()).width, graxpert.images.get(self.display_type.get()).height)
 
         self.redraw_points()
         self.redraw_image()
@@ -151,7 +169,65 @@ class Canvas(CTkFrame):
     def on_calculate_progress(self, event=None):
         self.dynamic_progress_frame.update_progress(event["progress"])
 
+    def on_calculate_success(self, event=None):
+        if not "Gradient-Corrected" in self.display_options:
+            self.display_options.append("Gradient-Corrected")
+            self.display_menu.grid_forget()
+            self.display_menu = CTkOptionMenu(self, variable=self.display_type, values=self.display_options)
+            self.display_menu.grid(column=0, row=0, sticky=tk.N)
+        if not "Background" in self.display_options:
+            self.display_menu._values.append("Background")
+            self.display_menu.grid_forget()
+            self.display_menu = CTkOptionMenu(self, variable=self.display_type, values=self.display_options)
+            self.display_menu.grid(column=0, row=0, sticky=tk.N)
+
     def on_calculate_end(self, event=None):
+        self.dynamic_progress_frame.text.set("")
+        self.dynamic_progress_frame.variable.set(0.0)
+        self.show_progress_frame(False)
+        self.redraw_image()
+
+    def on_deconvolution_begin(self, event=None):
+        self.dynamic_progress_frame.text.set(_("Deconvolving"))
+        self.dynamic_progress_frame.cancellable = True
+        self.show_progress_frame(True)
+
+    def on_deconvolution_progress(self, event=None):
+        self.dynamic_progress_frame.update_progress(event["progress"])
+
+    def on_deconvolution_success(self, event=None):
+        self.dynamic_progress_frame.cancellable = False
+        if not event["deconvolution_type_option"] in self.display_options:
+            self.display_options.append(event["deconvolution_type_option"])
+            self.display_menu.grid_forget()
+            self.display_menu = CTkOptionMenu(self, variable=self.display_type, values=self.display_options)
+            self.display_menu.grid(column=0, row=0, sticky=tk.N)
+
+    def on_deconvolution_end(self, event=None):
+        self.dynamic_progress_frame.cancellable = False
+        self.dynamic_progress_frame.text.set("")
+        self.dynamic_progress_frame.variable.set(0.0)
+        self.show_progress_frame(False)
+        self.redraw_image()
+
+    def on_denoise_begin(self, event=None):
+        self.dynamic_progress_frame.text.set(_("Denoising"))
+        self.dynamic_progress_frame.cancellable = True
+        self.show_progress_frame(True)
+
+    def on_denoise_progress(self, event=None):
+        self.dynamic_progress_frame.update_progress(event["progress"])
+
+    def on_denoise_success(self, event=None):
+        self.dynamic_progress_frame.cancellable = False
+        if not "Denoised" in self.display_options:
+            self.display_options.append("Denoised")
+            self.display_menu.grid_forget()
+            self.display_menu = CTkOptionMenu(self, variable=self.display_type, values=self.display_options)
+            self.display_menu.grid(column=0, row=0, sticky=tk.N)
+
+    def on_denoise_end(self, event=None):
+        self.dynamic_progress_frame.cancellable = False
         self.dynamic_progress_frame.text.set("")
         self.dynamic_progress_frame.variable.set(0.0)
         self.show_progress_frame(False)
@@ -172,7 +248,7 @@ class Canvas(CTkFrame):
         self.show_loading_frame(False)
 
     def on_display_start_badge_request(self, event=None):
-        self.start_badge = ImageTk.PhotoImage(file=resource_path("img/graXpert_Startbadge_Ariel.png"))
+        self.start_badge = ImageTk.PhotoImage(file=resource_path("img/graXpert_Startbadge_Umbriel.png"))
         self.canvas.create_image(self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2, anchor=tk.CENTER, image=self.start_badge, tags="start_badge")
         self.canvas.after(5000, lambda: self.canvas.delete("start_badge"))
 
@@ -181,13 +257,19 @@ class Canvas(CTkFrame):
         self.show_loading_frame(True)
 
     def on_load_image_end(self, event=None):
-        width = graxpert.images["Original"].img_display.width
-        height = graxpert.images["Original"].img_display.height
+
+        if self.display_menu is not None:
+            self.display_menu.grid_forget()
+        self.display_options = [ImageTypes.Original]
+        self.display_type.set(self.display_options[0])
+        self.display_menu = CTkOptionMenu(self, variable=self.display_type, values=self.display_options)
+        self.display_menu.grid(column=0, row=0, sticky=tk.N)
+
+        width = graxpert.images.get(ImageTypes.Original).img_display.width
+        height = graxpert.images.get(ImageTypes.Original).img_display.height
 
         self.zoom_fit(width, height)
         self.redraw_image()
-
-        self.display_type.set("Original")
 
         self.show_loading_frame(False)
 
@@ -196,7 +278,7 @@ class Canvas(CTkFrame):
 
     def on_mouse_down_left(self, event=None):
         self.left_drag_timer = -1
-        if graxpert.images["Original"] is None:
+        if graxpert.images.get(ImageTypes.Original) is None:
             return
 
         self.clicked_inside_pt = False
@@ -236,7 +318,7 @@ class Canvas(CTkFrame):
         self.__old_event = event
 
     def on_mouse_down_right(self, event=None):
-        if graxpert.images["Original"] is None or not graxpert.prefs.display_pts:
+        if graxpert.images.get(ImageTypes.Original) is None or not graxpert.prefs.display_pts:
             return
 
         graxpert.remove_pt(event)
@@ -247,10 +329,10 @@ class Canvas(CTkFrame):
         eventbus.emit(UiEvents.MOUSE_MOVED, {"mouse_event": event})
 
     def on_mouse_move_left(self, event=None):
-        if graxpert.images["Original"] is None:
+        if graxpert.images.get(ImageTypes.Original) is None:
             return
 
-        if graxpert.images[graxpert.display_type] is None:
+        if graxpert.images.get(graxpert.display_type) is None:
             return
 
         if self.left_drag_timer == -1:
@@ -289,7 +371,7 @@ class Canvas(CTkFrame):
         return
 
     def on_mouse_release_left(self, event=None):
-        if graxpert.images["Original"] is None or not graxpert.prefs.display_pts:
+        if graxpert.images.get(ImageTypes.Original) is None or not graxpert.prefs.display_pts:
             return
 
         if self.clicked_inside_pt and not self.crop_mode:
@@ -311,7 +393,7 @@ class Canvas(CTkFrame):
                     tol=graxpert.prefs.bg_tol_option,
                     bg_pts=graxpert.prefs.bg_pts_option,
                     sample_size=graxpert.prefs.sample_size,
-                    image=graxpert.images["Original"],
+                    image=graxpert.images.get(ImageTypes.Original),
                 )
             graxpert.cmd.execute()
 
@@ -320,7 +402,7 @@ class Canvas(CTkFrame):
         self.left_drag_timer = -1
 
     def on_mouse_wheel(self, event=None):
-        if graxpert.images[self.display_type.get()] is None:
+        if graxpert.images.get(self.display_type.get()) is None:
             return
         if event.delta > 0 or event.num == 4:
             graxpert.scale_at(6 / 5, event.x, event.y)
@@ -351,21 +433,32 @@ class Canvas(CTkFrame):
     def on_stretch_image_error(self, event=None):
         self.show_loading_frame(False)
 
-    def on_toggle_crop_request(self, event=None):
-        if graxpert.images["Original"] is None:
+    def on_turn_on_crop_mode(self, event=None):
+        if self.crop_mode:
+            return
+
+        if graxpert.images.get(ImageTypes.Original) is None:
             messagebox.showerror("Error", _("Please load your picture first."))
             return
 
         self.startx = 0
         self.starty = 0
-        self.endx = graxpert.images["Original"].width
-        self.endy = graxpert.images["Original"].height
+        self.endx = graxpert.images.get(ImageTypes.Original).width
+        self.endy = graxpert.images.get(ImageTypes.Original).height
 
-        if self.crop_mode:
-            self.crop_mode = False
-        else:
-            self.crop_mode = True
+        self.crop_mode = True
+        self.redraw_points()
 
+    def on_turn_off_crop_mode(self, event=None):
+        if not self.crop_mode:
+            return
+
+        self.startx = 0
+        self.starty = 0
+        self.endx = graxpert.images.get(ImageTypes.Original).width
+        self.endy = graxpert.images.get(ImageTypes.Original).height
+
+        self.crop_mode = False
         self.redraw_points()
 
     # widget logic
@@ -379,7 +472,7 @@ class Canvas(CTkFrame):
 
         affine_inv = (mat_inv[0, 0], mat_inv[0, 1], mat_inv[0, 2], mat_inv[1, 0], mat_inv[1, 1], mat_inv[1, 2])
 
-        dst = pil_image.transform((canvas_width, canvas_height), Image.AFFINE, affine_inv, Image.BILINEAR)
+        dst = pil_image.transform((canvas_width, canvas_height), Image.AFFINE, affine_inv, Image.NEAREST)
 
         im = ImageTk.PhotoImage(image=dst)
 
@@ -390,12 +483,12 @@ class Canvas(CTkFrame):
         return
 
     def redraw_image(self, event=None):
-        if graxpert.images[self.display_type.get()] is None:
+        if graxpert.images.get(self.display_type.get()) is None:
             return
-        self.draw_image(graxpert.images[self.display_type.get()].img_display_saturated)
+        self.draw_image(graxpert.images.get(self.display_type.get()).img_display_saturated)
 
     def redraw_points(self, event=None):
-        if graxpert.images["Original"] is None:
+        if graxpert.images.get(ImageTypes.Original) is None:
             return
 
         color = hls_to_rgb(graxpert.prefs.sample_color / 360, 0.5, 1.0)
@@ -421,9 +514,9 @@ class Canvas(CTkFrame):
             self.canvas.create_oval(corner2[0] - 15, corner2[1] - 15, corner2[0] + 15, corner2[1] + 15, outline=color, width=2, tags="crop")
 
     def reset_zoom(self, event=None):
-        if graxpert.images[self.display_type.get()] is None:
+        if graxpert.images.get(self.display_type.get()) is None:
             return
-        self.zoom_fit(graxpert.images[self.display_type.get()].width, graxpert.images[self.display_type.get()].height)
+        self.zoom_fit(graxpert.images.get(self.display_type.get()).width, graxpert.images.get(self.display_type.get()).height)
         self.redraw_image()
 
     def show_loading_frame(self, show):
@@ -435,14 +528,15 @@ class Canvas(CTkFrame):
 
     def show_progress_frame(self, show):
         if show:
+            self.dynamic_progress_frame.place_children()
             self.dynamic_progress_frame.grid(column=0, row=0, rowspan=2)
         else:
             self.dynamic_progress_frame.grid_forget()
         self.update()
 
     def zoom_fit(self, image_width, image_height):
-        canvas_width = self.winfo_width()
-        canvas_height = self.winfo_height()
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
 
         if (image_width * image_height <= 0) or (canvas_width * canvas_height <= 0):
             return

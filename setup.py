@@ -6,6 +6,8 @@ from cx_Freeze import Executable, setup
 
 from graxpert.version import release, version
 
+sys.setrecursionlimit(15_000)
+
 astropy_path = os.path.dirname(os.path.abspath(astropy.__file__))
 
 directory_table = [("ProgramMenuFolder", "TARGETDIR", "."), ("GraXpert", "ProgramMenuFolder", "GraXpert")]
@@ -22,7 +24,7 @@ bdist_msi_options = {
     "add_to_path": True,
     "data": msi_data,
     "summary_data": msi_summary_data,
-    "upgrade_code": "{8887032b-9211-4752-8f88-6d29833bb001}",
+    "upgrade_code": "{d0ba2b1d-e18e-42c9-9ded-beb9cadad494}",
     "target_name": "GraXpert",
     "install_icon": "./img/Icon.ico",
 }

@@ -29,10 +29,24 @@ for Intel processors (x86_64) and for apple silicon (arm64).
 GraXpert comes with a graphical user interface. However, the AI method which does not need the selection of any background sample points can also be executed from the command line.
 Here are the available command-line arguments and their descriptions:
 
+- -cmd [image_operation]: This flag indicates which AI model to use. Options are "background-extraction" (default) or "denoising".
 - filename: The path of the unprocessed image (required).
+- -cli: This flag always has to be added when using the command line integration of GraXpert. Otherwise, the GUI will start and open the specified file name.
+- -output [output_file_name]: Specify the name of the output image (without file ending). Otherwise the image will be saved with the suffix '_GraXpert' added to the original file name.
+- -preferences_file: Allows GraXpert commandline to run all extraction methods based on a preferences file that contains background grid points.
+- -gpu: Set to 'false' in order to disable gpu acceleration during AI inference, otherwise set to 'true' to enable it.
 - -ai_version [version]: Specify the version of the AI model to use. If not provided, it defaults to the latest available version. You can choose from locally available versions and remotely available versions.
+
+Specific commands to each operation:
+
+Background Extraction:
 - -correction [type]: Select the background correction method. Options are "Subtraction" (default) or "Division."
 - -smoothing [strength]: Adjust the strength of smoothing, ranging from 0.0 (no smoothing) to 1 (maximum smoothing).
+- -bg: Also save the generated background model.
+
+Denoising:
+- -strength [value]: Adjust the strength of denoising, ranging from 0.0 (minimum) to 1 (maximum). Default: "0.5".
+- -batch_size [value]: Number of image tiles which Graxpert will denoise in parallel. Be careful: increasing this value might result in out-of-memory errors. Valid Range: 1..32, default: "4".
 
 ## Examples
 The following examples show how GraXpert can be used from the command line in Windows. For Linux and macOS, you have to do the following replacements:
@@ -42,12 +56,12 @@ The following examples show how GraXpert can be used from the command line in Wi
 
 Basic Usage:
 ```
-GraXpert-win64.exe my_image.fits
+GraXpert-win64.exe my_image.fits -cli
 ```
 
-Specify AI Model Version '1.1', correction type 'Division' and smoothing '0.5':
+Specify AI Model Version '1.1', correction type 'Division', smoothing '0.1', and save background model:
 ```
-GraXpert-win64.exe my_image.fits -ai_version 1.1 -correction Division -smoothing 0.5
+GraXpert-win64.exe my_image.fits -cli -ai_version 1.1 -correction Division -smoothing 0.1 -bg
 ```
 
 # Installation for Developers

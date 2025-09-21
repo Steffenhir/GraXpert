@@ -1,7 +1,6 @@
 import logging
 
 import numpy as np
-from skimage import img_as_float32, io
 
 """
 Find the mode of a distribution using a route based on the SKYALL as described in
@@ -144,10 +143,10 @@ def f(x, coeff):
 
 
 # Testing
+# from skimage import img_as_float32, io
 #y=3100
 #x=483
 #size=25
 #im = img_as_float32(io.imread("../../milchstr.tif")[x-size:x+size,y-size:y+size,0])
 
 #mode(im)
-

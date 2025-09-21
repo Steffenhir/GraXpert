@@ -1,19 +1,13 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import copy_metadata
 
 
 block_cipher = None
-
-
-datas = []
-datas += [('./img/*', './img/'), ('./graxpert-dark-blue.json', './')]
-datas += copy_metadata('xisf')
-
+from PyInstaller.utils.hooks import copy_metadata
 
 a = Analysis(['./graxpert/main.py'],
     pathex=[],
     binaries=[],
-    datas=datas,
+    datas=[('./img/*', './img/'), ('./graxpert-dark-blue.json', './')] + copy_metadata('xisf'),
     hiddenimports=['PIL._tkinter_finder', 'tkinter'],
     hookspath=['./releng'],
     hooksconfig={},
@@ -23,7 +17,7 @@ a = Analysis(['./graxpert/main.py'],
     win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False)
-pyz = PYZ(a.pure, a.zipped_data, 
+pyz = PYZ(a.pure, a.zipped_data,
     cipher=block_cipher)
 
 exe = EXE(pyz,
@@ -38,7 +32,7 @@ exe = EXE(pyz,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch='x86_64',
+    target_arch='arm64',
     codesign_identity=None,
     entitlements_file=None , icon='./img/Icon.ico')
 
@@ -58,7 +52,7 @@ app = BUNDLE(coll,
             icon='./img/Icon.ico',
             bundle_identifier=None,
             info_plist={
-                'CFBundleShortVersionString': 'RELEASE (SNAPSHOT)',
+                'CFBundleShortVersionString': 'Beta-Release (v1.0.6cAI)',
                 'NSHighResolutionCapable': 'True'
             }
             )

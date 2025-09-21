@@ -71,6 +71,10 @@ msgstr ""
 msgid "Save Processed"
 msgstr ""
 
+#: src/gui.py:422
+msgid "Save Stretched & Processed"
+msgstr ""
+
 #: src/gui.py:345
 msgid "An error occurred while loading your picture."
 msgstr ""
@@ -176,6 +180,9 @@ msgstr ""
 msgid "Adjust the number of points per row for the grid created by automatic background selection."
 msgstr ""
 
+msgid "If enabled, additional grid points are automatically created based on 1) the luminance of the sample just added and 2) the grid tolerance slider below."
+msgstr ""
+
 #: src/tooltip.py:173
 msgid "Choose between different interpolation methods."
 msgstr ""
@@ -207,5 +214,8 @@ msgid ""
 "Original: Your original picture \n"
 "Processed: Picture with subtracted background model \n"
 "Background: The background model"
+msgstr ""
+
+msgid "A newer version of GraXpert is available at"
 msgstr ""
 

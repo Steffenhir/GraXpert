@@ -1,9 +1,13 @@
 appdirs
 astropy
-hdpitkinter
+customtkinter
+minio
+ml_dtypes
+numpy
 Pillow
 pykrige
+opencv-Python
+requests
 scikit-image
 scipy
-screeninfo
 xisf

@@ -174,6 +174,12 @@ def get_execution_providers_ordered(gpu_acceleration=True):
 
     if gpu_acceleration:
         supported_providers = [
+            (
+                "OpenVINOExecutionProvider",
+                {
+                    "device_type": "GPU",
+                },
+            ),
             "DmlExecutionProvider",
             (
                 "CoreMLExecutionProvider",

@@ -104,16 +104,16 @@ def save_preferences(prefs_filename, prefs):
 
 def app_state_2_fitsheader(prefs: Prefs, app_state: AppState, fits_header):
     fits_header["INTP-OPT"] = prefs.interpol_type_option
-    fits_header["SMOOTHING"] = prefs.smoothing_option
-    fits_header["CORR-TYPE"] = prefs.corr_type
+    fits_header["SMOOTH"] = prefs.smoothing_option
+    fits_header["CORRTYPE"] = prefs.corr_type
 
     if prefs.interpol_type_option == "AI":
-        fits_header["BGE-AI-VER"] = prefs.bge_ai_version
+        fits_header["BGAI_VER"] = prefs.bge_ai_version
 
     if prefs.interpol_type_option != "AI":
-        fits_header["SAMPLE-SIZE"] = prefs.sample_size
-        fits_header["RBF-KERNEL"] = prefs.RBF_kernel
-        fits_header["SPLINE-ORDER"] = prefs.spline_order
+        fits_header["SAMPSIZE"] = prefs.sample_size
+        fits_header["RBFKRNL"] = prefs.RBF_kernel
+        fits_header["SPLNORDR"] = prefs.spline_order
         fits_header["BG-PTS"] = str(list(map(lambda e: e.tolist(), app_state.background_points)))
 
     return fits_header
@@ -128,12 +128,12 @@ def fitsheader_2_app_state(prefs: Prefs, app_state: AppState, fits_header):
 
     if "INTP-OPT" in fits_header.keys():
         prefs.interpol_type_option = fits_header["INTP-OPT"]
-        prefs.smoothing_option = fits_header["SMOOTHING"]
-        prefs.corr_type = fits_header["CORR-TYPE"]
+        prefs.smoothing_option = fits_header["SMOOTH"]
+        prefs.corr_type = fits_header["CORRTYPE"]
 
         if fits_header["INTP-OPT"] != "AI":
-            prefs.sample_size = fits_header["SAMPLE-SIZE"]
-            prefs.RBF_kernel = fits_header["RBF-KERNEL"]
-            prefs.spline_order = fits_header["SPLINE-ORDER"]
+            prefs.sample_size = fits_header["SAMPSIZE"]
+            prefs.RBF_kernel = fits_header["RBFKRNL"]
+            prefs.spline_order = fits_header["SPLNORDR"]
 
     return app_state

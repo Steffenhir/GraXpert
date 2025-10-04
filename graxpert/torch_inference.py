@@ -38,6 +38,45 @@ def _lazy_import_onnx2torch():
     return importlib.import_module("onnx2torch")
 
 
+_ONNX2TORCH_PATCHED = False
+
+
+def _ensure_onnx2torch_patches():
+    """Register runtime patches for onnx2torch used by our models."""
+
+    global _ONNX2TORCH_PATCHED
+    if _ONNX2TORCH_PATCHED:
+        return
+
+    try:
+        from onnx2torch.node_converters import registry
+        from onnx2torch.node_converters.shape import OnnxShape
+        from onnx2torch.onnx_graph import OnnxGraph
+        from onnx2torch.onnx_node import OnnxNode
+        from onnx2torch.utils.common import OperationConverterResult, onnx_mapping_from_node
+    except Exception as exc:  # pragma: no cover - defensive logging only
+        logging.debug("Failed to import onnx2torch internals for patching: %s", exc)
+        return
+
+    try:
+        registry.get_converter("Shape", 19)
+    except NotImplementedError:
+
+        @registry.add_converter(operation_type="Shape", version=19)
+        def _shape_v19_converter(  # type: ignore[unused-ignore]
+            node: OnnxNode, graph: OnnxGraph
+        ) -> OperationConverterResult:
+            return OperationConverterResult(
+                torch_module=OnnxShape(
+                    start=node.attributes.get("start", 0),
+                    end=node.attributes.get("end", None),
+                ),
+                onnx_mapping=onnx_mapping_from_node(node=node),
+            )
+
+    _ONNX2TORCH_PATCHED = True
+
+
 def get_inference_device(gpu_acceleration: bool = True) -> Tuple["torch.device", str]:
     """Return the most suitable torch device for inference.
 
@@ -95,6 +134,8 @@ def _load_model(ai_path: str, device_type: str) -> _ModelCacheEntry:
     torch = _lazy_import_torch()
     onnx = _lazy_import_onnx()
     onnx2torch = _lazy_import_onnx2torch()
+
+    _ensure_onnx2torch_patches()
 
     logging.info("Loading AI model '%s' for device '%s'", ai_path, device_type)
 

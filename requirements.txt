@@ -4,10 +4,13 @@ customtkinter
 minio
 ml_dtypes
 numpy
+onnx
+onnx2torch
 Pillow
 pykrige
 opencv-Python
 requests
 scikit-image
 scipy
+torch
 xisf

@@ -4,7 +4,6 @@ import re
 import shutil
 import zipfile
 
-import onnxruntime as ort
 from appdirs import user_data_dir
 from minio import Minio
 from packaging import version
@@ -170,29 +169,7 @@ def validate_local_version(ai_models_dir, local_version):
     return os.path.isfile(os.path.join(ai_models_dir, local_version, "model.onnx"))
 
 
-def get_execution_providers_ordered(gpu_acceleration=True):
-
-    if gpu_acceleration:
-        supported_providers = [
-            "DmlExecutionProvider",
-            (
-                "CoreMLExecutionProvider",
-                {
-                    "flags": "COREML_FLAG_CREATE_MLPROGRAM",
-                },
-            ),
-            "CUDAExecutionProvider",
-            "CPUExecutionProvider",
-        ]
-    else:
-        supported_providers = ["CPUExecutionProvider"]
-
-    result = []
-    for provider in supported_providers:
-        if isinstance(provider, tuple):
-            if provider[0] in ort.get_available_providers():
-                result.append(provider)  # Append the entire tuple
-        else:
-            if provider in ort.get_available_providers():
-                result.append(provider)
-    return result
+def get_execution_providers_ordered(*args, **kwargs):
+    raise RuntimeError(
+        "onnxruntime execution providers have been removed. Use 'graxpert.torch_inference.get_inference_device' instead."
+    )

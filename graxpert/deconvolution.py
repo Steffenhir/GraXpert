@@ -2,9 +2,7 @@ import copy
 import logging
 
 import numpy as np
-import onnxruntime as ort
-
-from graxpert.ai_model_handling import get_execution_providers_ordered
+from graxpert.torch_inference import get_inference_device, run_model
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 
@@ -65,11 +63,8 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
 
     output = copy.deepcopy(image)
 
-    providers = get_execution_providers_ordered(ai_gpu_acceleration)
-    session = ort.InferenceSession(ai_path, providers=providers)
-
-    logging.info(f"Available inference providers : {providers}")
-    logging.info(f"Used inference providers : {session.get_providers()}")
+    device, device_name = get_inference_device(ai_gpu_acceleration)
+    logging.info(f"Using inference device: {device_name}")
 
     cancel_flag = False
 
@@ -121,7 +116,7 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
         if not input_tiles:
             continue
 
-        input_tiles = np.array(input_tiles)
+        input_tiles = np.array(input_tiles, dtype=np.float32)
         input_tiles = np.moveaxis(input_tiles, -1, 1)
         input_tiles = np.reshape(input_tiles, [input_tiles.shape[0] * num_colors, 1, window_size, window_size])
 
@@ -129,10 +124,14 @@ def deconvolve(image, ai_path, strength, psfsize, batch_size=4, window_size=512,
         sigma = np.full(shape=(input_tiles.shape[0], 1), fill_value=psfsize, dtype=np.float32)
         strenght_p = np.full(shape=(input_tiles.shape[0], 1), fill_value=strength, dtype=np.float32)
         conds = np.concatenate([sigma, strenght_p], axis=-1)
+        feeds = {"gen_input_image": input_tiles}
         if type == "Obj" and "1.0.0" in ai_path:
-            session_result = session.run(None, {"gen_input_image": input_tiles, "sigma": sigma, "strenght": strenght_p})[0]
+            feeds.update({"sigma": sigma, "strenght": strenght_p})
         else:
-            session_result = session.run(None, {"gen_input_image": input_tiles, "params": conds})[0]
+            feeds.update({"params": conds})
+
+        session_outputs = run_model(ai_path, feeds, device)
+        session_result = next(iter(session_outputs.values()))
         for e in session_result:
             output_tiles.append(e)
 

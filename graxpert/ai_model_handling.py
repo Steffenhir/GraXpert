@@ -100,7 +100,7 @@ def ai_model_path_from_version(ai_models_dir, local_version):
     if local_version is None:
         return None
 
-    return os.path.join(ai_models_dir, local_version, "model.onnx")
+    return os.path.join(ai_models_dir, local_version, "model.pt")
 
 
 def compute_orphaned_local_versions(ai_models_dir):
@@ -140,7 +140,7 @@ def download_version(ai_models_dir, bucket_name, target_version, progress=None):
         ai_model_dir = os.path.join(ai_models_dir, "{}".format(remote_version["version"]))
         os.makedirs(ai_model_dir, exist_ok=True)
 
-        ai_model_file = os.path.join(ai_model_dir, "model.onnx")
+        ai_model_file = os.path.join(ai_model_dir, "model.pt")
         ai_model_zip = os.path.join(ai_model_dir, "model.zip")
         client.fget_object(
             remote_version["bucket"],
@@ -153,7 +153,7 @@ def download_version(ai_models_dir, bucket_name, target_version, progress=None):
             zip_ref.extractall(ai_model_dir)
 
         if not os.path.isfile(ai_model_file):
-            raise ValueError(f"Could not find ai 'model.onnx' file after extracting {ai_model_zip}")
+            raise ValueError(f"Could not find ai 'model.pt' file after extracting {ai_model_zip}")
         os.remove(ai_model_zip)
 
     except Exception as e:
@@ -166,7 +166,7 @@ def download_version(ai_models_dir, bucket_name, target_version, progress=None):
 
 
 def validate_local_version(ai_models_dir, local_version):
-    return os.path.isfile(os.path.join(ai_models_dir, local_version, "model.onnx"))
+    return os.path.isfile(os.path.join(ai_models_dir, local_version, "model.pt"))
 
 
 def get_execution_providers_ordered(*args, **kwargs):

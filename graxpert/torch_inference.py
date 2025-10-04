@@ -1,12 +1,13 @@
-"""Utilities for running converted ONNX models with PyTorch."""
+"""Utilities for running packaged PyTorch models across multiple backends."""
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Dict, Iterable, Tuple
+from typing import Dict, Iterable, Optional, Tuple
 
 import numpy as np
 
@@ -14,9 +15,11 @@ import numpy as np
 @dataclass(frozen=True)
 class _ModelCacheEntry:
     module: "torch.nn.Module"
-    input_names: Tuple[str, ...]
-    output_names: Tuple[str, ...]
-    mtime: float
+    input_names: Optional[Tuple[str, ...]]
+    output_names: Optional[Tuple[str, ...]]
+    model_mtime: float
+    metadata_mtime: float
+    metadata_path: Optional[str]
 
 
 def _lazy_import_torch():
@@ -24,64 +27,10 @@ def _lazy_import_torch():
 
     torch = importlib.import_module("torch")
     return torch
-
-
-def _lazy_import_onnx():
-    import importlib
-
-    return importlib.import_module("onnx")
-
-
-def _lazy_import_onnx2torch():
-    import importlib
-
-    return importlib.import_module("onnx2torch")
-
-
-_ONNX2TORCH_PATCHED = False
-
-
-def _ensure_onnx2torch_patches():
-    """Register runtime patches for onnx2torch used by our models."""
-
-    global _ONNX2TORCH_PATCHED
-    if _ONNX2TORCH_PATCHED:
-        return
-
-    try:
-        from onnx2torch.node_converters import registry
-        from onnx2torch.node_converters.shape import OnnxShape
-        from onnx2torch.onnx_graph import OnnxGraph
-        from onnx2torch.onnx_node import OnnxNode
-        from onnx2torch.utils.common import OperationConverterResult, onnx_mapping_from_node
-    except Exception as exc:  # pragma: no cover - defensive logging only
-        logging.debug("Failed to import onnx2torch internals for patching: %s", exc)
-        return
-
-    try:
-        registry.get_converter("Shape", 19)
-    except NotImplementedError:
-
-        @registry.add_converter(operation_type="Shape", version=19)
-        def _shape_v19_converter(  # type: ignore[unused-ignore]
-            node: OnnxNode, graph: OnnxGraph
-        ) -> OperationConverterResult:
-            return OperationConverterResult(
-                torch_module=OnnxShape(
-                    start=node.attributes.get("start", 0),
-                    end=node.attributes.get("end", None),
-                ),
-                onnx_mapping=onnx_mapping_from_node(node=node),
-            )
-
-    _ONNX2TORCH_PATCHED = True
-
-
 def get_inference_device(gpu_acceleration: bool = True) -> Tuple["torch.device", str]:
     """Return the most suitable torch device for inference.
 
-    The provider order roughly matches the previous onnxruntime providers order
-    (DirectML, CoreML/MPS, CUDA, CPU).
+    Preference order: CUDA, DirectML, CoreML/MPS, CPU.
     """
 
     torch = _lazy_import_torch()
@@ -89,13 +38,20 @@ def get_inference_device(gpu_acceleration: bool = True) -> Tuple["torch.device",
     candidates: Iterable[Tuple[str, "torch.device"]]
 
     if gpu_acceleration:
-        candidates = []
+        candidates_list = []
+
+        # CUDA (Windows/Linux with NVIDIA GPUs)
+        if torch.cuda.is_available():
+            candidates_list.append(("cuda", torch.device("cuda")))
+
         # DirectML (Windows)
         try:
             import importlib
 
             torch_directml = importlib.import_module("torch_directml")
-            candidates.append(("directml", torch_directml.device()))
+            if hasattr(torch_directml, "is_available") and not torch_directml.is_available():
+                raise RuntimeError("DirectML backend reported unavailable")
+            candidates_list.append(("directml", torch_directml.device()))
         except ModuleNotFoundError:
             pass
         except Exception as exc:  # pragma: no cover - best effort logging
@@ -103,14 +59,11 @@ def get_inference_device(gpu_acceleration: bool = True) -> Tuple["torch.device",
 
         # CoreML via PyTorch MPS backend on Apple Silicon
         if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-            candidates.append(("mps", torch.device("mps")))
-
-        # CUDA
-        if torch.cuda.is_available():
-            candidates.append(("cuda", torch.device("cuda")))
+            candidates_list.append(("mps", torch.device("mps")))
 
         # Always fall back to CPU
-        candidates.append(("cpu", torch.device("cpu")))
+        candidates_list.append(("cpu", torch.device("cpu")))
+        candidates = candidates_list
     else:
         candidates = [("cpu", torch.device("cpu"))]
 
@@ -127,43 +80,124 @@ def get_inference_device(gpu_acceleration: bool = True) -> Tuple["torch.device",
     return torch.device("cpu"), "cpu"
 
 
+def _safe_mtime(path: Optional[str]) -> float:
+    if not path:
+        return 0.0
+    try:
+        return os.path.getmtime(path)
+    except OSError:
+        return 0.0
+
+
+def _load_torch_module(torch, ai_path: str):
+    """Load a packaged torch module, preferring TorchScript archives."""
+
+    try:
+        return torch.jit.load(ai_path, map_location="cpu")
+    except (RuntimeError, ValueError) as exc:
+        logging.debug("TorchScript load failed for %s: %s", ai_path, exc)
+
+    package = torch.load(ai_path, map_location="cpu")
+
+    if isinstance(package, torch.nn.Module):
+        return package
+
+    if isinstance(package, dict):
+        module = package.get("module") or package.get("model")
+        if isinstance(module, torch.nn.Module):
+            state_dict = package.get("state_dict")
+            if state_dict is not None:
+                module.load_state_dict(state_dict)
+            return module
+
+    raise TypeError(f"Unsupported torch model package at '{ai_path}'")
+
+
+def _load_metadata(ai_path: str) -> Tuple[Optional[Tuple[str, ...]], Optional[Tuple[str, ...]], Optional[str]]:
+    base_dir = os.path.dirname(ai_path)
+    candidates = [
+        os.path.join(base_dir, "model.json"),
+        os.path.splitext(ai_path)[0] + ".json",
+    ]
+
+    for path in candidates:
+        if not os.path.isfile(path):
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+        except Exception as exc:  # pragma: no cover - best effort logging
+            logging.warning("Failed to load model metadata '%s': %s", path, exc)
+            continue
+
+        inputs = payload.get("inputs") or payload.get("input_names")
+        outputs = payload.get("outputs") or payload.get("output_names")
+
+        input_names = tuple(inputs) if inputs else None
+        output_names = tuple(outputs) if outputs else None
+        return input_names, output_names, path
+
+    return None, None, None
+
+
+def _extract_names_from_module(module) -> Tuple[Optional[Tuple[str, ...]], Optional[Tuple[str, ...]]]:
+    input_names = getattr(module, "input_names", None)
+    output_names = getattr(module, "output_names", None)
+
+    if isinstance(input_names, (list, tuple)):
+        input_tuple: Optional[Tuple[str, ...]] = tuple(str(name) for name in input_names)
+    else:
+        input_tuple = None
+
+    if isinstance(output_names, (list, tuple)):
+        output_tuple: Optional[Tuple[str, ...]] = tuple(str(name) for name in output_names)
+    else:
+        output_tuple = None
+
+    return input_tuple, output_tuple
+
+
 @lru_cache(maxsize=8)
 def _load_model(ai_path: str, device_type: str) -> _ModelCacheEntry:
-    """Load and convert an ONNX model to a torch module for the given device."""
+    """Load a PyTorch model package for the given device."""
 
     torch = _lazy_import_torch()
-    onnx = _lazy_import_onnx()
-    onnx2torch = _lazy_import_onnx2torch()
-
-    _ensure_onnx2torch_patches()
 
     logging.info("Loading AI model '%s' for device '%s'", ai_path, device_type)
 
-    onnx_model = onnx.load(ai_path)
-    module = onnx2torch.convert(onnx_model)
+    module = _load_torch_module(torch, ai_path)
     module.eval()
     module.to(device_type)
 
-    input_names = tuple(inp.name for inp in onnx_model.graph.input)
-    output_names = tuple(out.name for out in onnx_model.graph.output)
+    metadata_inputs, metadata_outputs, metadata_path = _load_metadata(ai_path)
+    module_inputs, module_outputs = _extract_names_from_module(module)
 
-    try:
-        mtime = os.path.getmtime(ai_path)
-    except OSError:
-        mtime = 0.0
+    input_names = metadata_inputs or module_inputs
+    output_names = metadata_outputs or module_outputs
 
-    return _ModelCacheEntry(module=module, input_names=input_names, output_names=output_names, mtime=mtime)
+    model_mtime = _safe_mtime(ai_path)
+    metadata_mtime = _safe_mtime(metadata_path)
+
+    return _ModelCacheEntry(
+        module=module,
+        input_names=input_names,
+        output_names=output_names,
+        model_mtime=model_mtime,
+        metadata_mtime=metadata_mtime,
+        metadata_path=metadata_path,
+    )
 
 
 def _ensure_cache_is_fresh(ai_path: str, device_type: str) -> _ModelCacheEntry:
     cache_entry = _load_model(ai_path, device_type)
 
-    try:
-        current_mtime = os.path.getmtime(ai_path)
-    except OSError:
-        current_mtime = cache_entry.mtime
+    current_model_mtime = _safe_mtime(ai_path)
+    current_metadata_mtime = _safe_mtime(cache_entry.metadata_path)
 
-    if current_mtime != cache_entry.mtime:
+    if (
+        current_model_mtime != cache_entry.model_mtime
+        or current_metadata_mtime != cache_entry.metadata_mtime
+    ):
         _load_model.cache_clear()
         cache_entry = _load_model(ai_path, device_type)
 
@@ -179,11 +213,17 @@ def run_model(ai_path: str, feeds: Dict[str, np.ndarray], device: "torch.device"
     module = cache_entry.module
     module.to(device)
 
+    if cache_entry.input_names:
+        input_sequence = []
+        for name in cache_entry.input_names:
+            if name not in feeds:
+                raise KeyError(f"Missing required model input '{name}'")
+            input_sequence.append((name, feeds[name]))
+    else:
+        input_sequence = list(feeds.items())
+
     tensors = []
-    for name in cache_entry.input_names:
-        if name not in feeds:
-            raise KeyError(f"Missing required model input '{name}'")
-        array = feeds[name]
+    for name, array in input_sequence:
         if not isinstance(array, np.ndarray):
             array = np.asarray(array)
         tensor = torch.from_numpy(array).to(device=device, dtype=torch.float32)
@@ -192,14 +232,25 @@ def run_model(ai_path: str, feeds: Dict[str, np.ndarray], device: "torch.device"
     with torch.no_grad():
         result = module(*tensors)
 
-    if isinstance(result, tuple):
-        outputs = list(result)
+    if isinstance(result, dict):
+        iterable = result.items()
+    elif isinstance(result, (tuple, list)):
+        output_names = cache_entry.output_names
+        if output_names and len(output_names) != len(result):
+            logging.warning(
+                "Model reported %d outputs but metadata lists %d entries", len(result), len(output_names)
+            )
+        if output_names:
+            iterable = zip(output_names, result)
+        else:
+            iterable = ((f"output_{idx}", tensor) for idx, tensor in enumerate(result))
     else:
-        outputs = [result]
+        name = cache_entry.output_names[0] if cache_entry.output_names else "output_0"
+        iterable = [(name, result)]
 
     np_outputs: Dict[str, np.ndarray] = {}
-    for name, tensor in zip(cache_entry.output_names, outputs):
-        np_outputs[name] = tensor.detach().to("cpu").numpy()
+    for name, tensor in iterable:
+        np_outputs[str(name)] = tensor.detach().to("cpu").numpy()
 
     return np_outputs
 

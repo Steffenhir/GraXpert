@@ -10,4 +10,5 @@ opencv-Python
 requests
 scikit-image
 scipy
+torch
 xisf

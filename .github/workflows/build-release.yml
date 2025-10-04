@@ -75,7 +75,6 @@ jobs:
       - name: install dependencies
         run: |
           pip install setuptools wheel cx_freeze==7.2.3 && \
-          pip install onnxruntime-gpu && \
           pip install -r requirements.txt
       - name: patch version
         run: |
@@ -117,7 +116,7 @@ jobs:
       - name: install dependencies
         run: |
           pip install setuptools wheel cx_freeze==7.2.3; `
-          pip install onnxruntime-directml; `
+          pip install torch-directml; `
           pip install -r requirements.txt
       - name: patch version
         run: ./releng/patch_version.ps1
@@ -153,7 +152,6 @@ jobs:
         run: |
           brew install python-tk && \
           pip3 install setuptools wheel pyinstaller --break-system-packages && \
-          pip3 install onnxruntime --break-system-packages && \
           pip3 install -r requirements.txt --break-system-packages
       - name: patch version
         run: |
@@ -213,7 +211,6 @@ jobs:
         run: |
           brew install python-tk && \
           pip3 install setuptools wheel pyinstaller --break-system-packages && \
-          pip3 install onnxruntime --break-system-packages && \
           pip3 install -r requirements.txt --break-system-packages
       - name: patch version
         run: |

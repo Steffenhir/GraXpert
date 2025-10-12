@@ -2,11 +2,26 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run GraXpert",
+            "name": "Run GUI",
             "type": "debugpy",
             "request": "launch",
             "module": "graxpert.main",
             "justMyCode": true,
-        }
+        },
+
+        {
+            "name": "Run backgroundrem",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "graxpert.main",
+            "args": [
+                "-cmd",
+                "background-extraction",
+                "-output",
+                "testout",
+                "tests/test_images/real_crummy.fits",
+            ],
+            "justMyCode": true
+        }        
     ]
 }

@@ -5,12 +5,11 @@ from queue import Empty, Queue
 from threading import Thread
 
 from customtkinter import CTkButton, CTkFont, CTkFrame, CTkImage, CTkLabel, CTkProgressBar, DoubleVar, StringVar, ThemeManager
-from PIL import Image
 
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 from graxpert.localization import _
-from graxpert.resource_utils import resource_path
+from graxpert.resource_utils import resource_image
 
 
 class LoadingFrame(CTkFrame):
@@ -25,7 +24,7 @@ class LoadingFrame(CTkFrame):
         self.text = CTkLabel(
             self,
             text=_("Calculating..."),
-            image=CTkImage(light_image=Image.open(resource_path("img/hourglass.png")), dark_image=Image.open(resource_path("img/hourglass.png")), size=(30, 30)),
+            image=CTkImage(light_image=resource_image("hourglass.png"), dark_image=resource_image("hourglass.png"), size=(30, 30)),
             font=font,
             compound=tk.LEFT,
         )
@@ -42,6 +41,9 @@ class DynamicProgressFrame(CTkFrame):
     def __init__(self, parent, label_lext=_("Progress:"), cancellable=False, **kwargs):
         super().__init__(parent, **kwargs)
 
+        self.inner_frame = CTkFrame(self, fg_color="transparent")
+        self.inner_frame.grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=(5, 10))
+
         self.text = StringVar(self, value=label_lext)
         self.variable = DoubleVar(self, value=0.0)
         self.cancellable = cancellable
@@ -52,13 +54,14 @@ class DynamicProgressFrame(CTkFrame):
 
     def create_children(self):
         self.label = CTkLabel(
-            self,
+            self.inner_frame,
             textvariable=self.text,
             width=280,
         )
-        self.pb = CTkProgressBar(self, variable=self.variable)
+        self.pb = CTkProgressBar(self.inner_frame, variable=self.variable)
+        self.pb.grid(column=0, row=0, sticky=tk.NSEW, pady=10)
         self.cancel_button = CTkButton(
-            self,
+            self.inner_frame,
             text=_("Cancel"),
             command=lambda: eventbus.emit(AppEvents.CANCEL_PROCESSING),
             fg_color=ThemeManager.theme["Accent.CTkButton"]["fg_color"],
@@ -66,8 +69,8 @@ class DynamicProgressFrame(CTkFrame):
         )
 
     def setup_layout(self):
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
+        self.inner_frame.columnconfigure(0, weight=1)
+        self.inner_frame.rowconfigure(0, weight=1)
 
     def place_children(self):
         self.label.grid(column=0, row=0, sticky=tk.NSEW)

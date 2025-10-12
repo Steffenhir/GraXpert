@@ -1,0 +1,31 @@
+// This devcontainer allows testing under Windows in a VM as needed... (even if the host OS is Linux or OS-X)
+// To see windows GUI point your web browser at http://localhost:8008/ or use RDP to localhost:3389 (user: docker, password: docker)
+// You can SSH into this Windows VM (after first enabling the SSH server inside of Windows) by 
+// using: ssh docker@localhost -p 2222 (password: admin)
+//
+// You can install an SSH pubkey for remote access with a command like:
+// cat ~/.ssh/YOURKEY.pub | ssh -p2222 docker@localhost 'powershell -Command "Add-Content -Path c:/ProgramData/ssh/authorized_keys -Value $($input | Out-String)"'
+//
+// You'll need to uncomment the PubkeyAuthentication line in C:\ProgramData\ssh\sshd_config and restart the sshd service
+{
+  "name": "windows",
+  "service": "windows",
+  "forwardPorts": [8008,3390,2222],
+  "dockerComposeFile": "compose.yml",
+
+  // dockur/windows will automount this as Z drive in Windows
+  "workspaceFolder": "/workspace",
+
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind"
+    ],
+
+  // "postCreateCommand": "pip install -r requirements.txt"
+
+  "features": {
+    "ghcr.io/devcontainers/features/git": {
+      "configureUserName": true,
+      "configureUserEmail": true
+    }
+  }
+}

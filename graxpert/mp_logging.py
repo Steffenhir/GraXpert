@@ -87,7 +87,7 @@ def logger_thread(queue):
 
 
 def initialize_logging():
-    logging_thread = threading.Thread(target=logger_thread, args=(get_logging_queue(),))
+    logging_thread = threading.Thread(target=logger_thread, args=(get_logging_queue(),), daemon=True)
     logging_thread.start()
     return logging_thread
 

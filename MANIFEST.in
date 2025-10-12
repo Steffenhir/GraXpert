@@ -1,0 +1,12 @@
+include README.md
+include requirements.txt
+include graxpert/version.py
+include graxpert-dark-blue.json
+recursive-include img *
+recursive-include locales *
+recursive-include graxpert *
+graft graxpert/theme
+graft graxpert/img
+graft graxpert/locales
+
+prune tests

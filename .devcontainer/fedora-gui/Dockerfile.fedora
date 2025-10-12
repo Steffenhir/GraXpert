@@ -1,0 +1,36 @@
+# Run inside a recent Fedora based image with python3, pip, git and sudo installed
+# We are careful to use a python 3.12 version, because the rocm precompiled python native code for onxruntime is only available for a few versions
+FROM fedora:latest
+
+# We use 'user' as the name to match what the zhephyr-build image already created
+ARG USERNAME=vscode
+
+## Setup a user with sudo support
+USER root
+
+# Use dnf for package management and install Fedora-equivalent packages
+# Note: python3.12 and python3-pip must be installed manually on the base Fedora image
+RUN dnf install -y \
+    mesa-libGL \
+    wget \
+    sudo \
+    gcc \
+    git-core \
+    patchelf \
+    python3.12 \
+    python3-devel \
+    python3-pip \
+    python3-setuptools python3-wheel python3-tkinter rpmbuild
+
+# Create a non-root user if one doesn't exist, and give it sudo rights
+# This user creation logic is standard and works on Fedora as well
+RUN if ! id -u ${USERNAME} > /dev/null 2>&1; then \
+        groupadd --gid 1000 ${USERNAME} && \
+        useradd --uid 1000 --gid 1000 --create-home --shell /bin/bash ${USERNAME} && \
+        echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME}-nopasswd; \
+    fi
+
+# RUN dnf install -y rocmcore rocm-device-libs rocm-smi
+
+# Default user for devcontainer
+USER ${USERNAME}

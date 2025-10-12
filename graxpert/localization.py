@@ -1,6 +1,7 @@
 import gettext
 import locale
 import os
+from importlib import resources
 
 from appdirs import user_config_dir
 
@@ -12,7 +13,7 @@ prefs = load_preferences(prefs_file)
 
 lang = None
 if prefs.lang is None:
-    lang, enc = locale.getdefaultlocale()
+    lang, enc = locale.getlocale()
     if lang is None:
         lang = "en_EN"
     elif lang.startswith("de") or lang.startswith("gsw"):
@@ -28,8 +29,10 @@ else:
         lang = "en_EN"
 
 
-lang_gettext = gettext.translation("base", localedir=resource_path("locales"), languages=[lang], fallback=True)
-lang_gettext.install()
+with resources.as_file(resources.files('graxpert').joinpath('locales')) as localedir:
+    global lang_gettext
+    lang_gettext = gettext.translation("base", localedir=localedir, languages=[lang], fallback=True)
+    lang_gettext.install()
 
 
 def _(text):

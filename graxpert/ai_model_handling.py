@@ -1,10 +1,11 @@
 import logging
 import os
+import sys
 import re
 import shutil
 import zipfile
+from multiprocessing import Process, Queue
 
-import onnxruntime as ort
 from appdirs import user_data_dir
 from minio import Minio
 from packaging import version
@@ -171,9 +172,17 @@ def validate_local_version(ai_models_dir, local_version):
 
 
 def get_execution_providers_ordered(gpu_acceleration=True):
-
     if gpu_acceleration:
         supported_providers = [
+            (
+                "OpenVINOExecutionProvider",
+                {
+                    # per https://onnxruntime.ai/docs/execution-providers/OpenVINO-ExecutionProvider.html#summary-of-options
+                    # "device_type": "HETERO:GPU,CPU,NPU AUTO:GPU,CPU,NPU MULTI:GPU,CPU,NPU", # Will prefer dGPU, fallback to iGPU, NPU or CPU with extra Intel specific optimizations
+                    "device_type": "AUTO:GPU,CPU", # Will prefer dGPU, fallback to iGPU, NPU or CPU with extra Intel specific optimizations
+                }
+            ),
+            "ROCMExecutionProvider",
             "DmlExecutionProvider",
             (
                 "CoreMLExecutionProvider",
@@ -188,11 +197,95 @@ def get_execution_providers_ordered(gpu_acceleration=True):
         supported_providers = ["CPUExecutionProvider"]
 
     result = []
-    for provider in supported_providers:
-        if isinstance(provider, tuple):
-            if provider[0] in ort.get_available_providers():
-                result.append(provider)  # Append the entire tuple
-        else:
-            if provider in ort.get_available_providers():
-                result.append(provider)
+    try:
+        import onnxruntime as ort    
+        available = ort.get_available_providers()
+        for provider in supported_providers:
+            if isinstance(provider, tuple):
+                if provider[0] in available:
+                    result.append(provider)  # Append the entire tuple
+            else:
+                if provider in available:
+                    result.append(provider)
+        return result
+    except Exception as e:
+        logging.error("Critical error!  The required ONNX Runtime (AI library) package is misconfigured.\n" \
+        "Please read the README.md to confirm that you've selected the correct build for your hardware.\n" \
+        "If you are using one of our prebuilt executables, please file a bug with the following information:\n"
+        "{}".format(e))
+        sys.exit(1)
+
+
+def run_in_process(fn: callable):
+    """Run a function in a separate process and return the result or raise an exception."""
+
+    q = Queue()
+
+    # Create a closure to call fn and put the result in the queue    
+    def wrapped():
+        try:
+            r = fn()
+        except Exception as e:
+            r = e # return the exception to the main process
+        q.put(r)
+
+    p = Process(target=wrapped, name="ai-worker")
+    p.start()
+    p.join()
+
+    if p.exitcode != 0:
+        raise RuntimeError(f"worker process crashed with exit code {p.exitcode}.")
+
+    result = q.get()
+    if isinstance(result, Exception):
+        raise result
     return result
+
+
+# Provides a mutable session context that can swap out different sessions if needed
+class SessionContext:
+    model_name: str
+    session: any # onnxruntime.InferenceSession
+
+    def __init__(self, model_name: str,  gpu_acceleration: bool = True):
+        """Initialize the ONNX model session with the specified execution provider."""
+
+        providers = get_execution_providers_ordered(gpu_acceleration)
+        logging.info(f"Available inference providers : {providers}")
+
+        import onnxruntime as ort # Must be after get_execution_providers_ordered (so it can check for missing libs)
+        self.session = ort.InferenceSession(model_name, providers=providers)
+        self.model_name = model_name
+
+        logging.info(f"Used inference providers for {model_name}: {self.session.get_providers()}")
+
+
+    def __run_low(self, model_args: dict, gpu_acceleration: bool = True) -> any:
+        """Run the ONNX model using the specified execution provider."""
+
+        # if we are using a GPU the ONNX runtimes might crash due to native bugs (ROCm)
+        # so run in a separate process just in case
+        fn = lambda: self.session.run(None, model_args)
+        if gpu_acceleration:
+            return run_in_process(fn)
+        else:
+            return fn()
+
+    def run(self, model_args: dict) -> any:
+        """Run the ONNX model using the specified execution provider."""
+
+        providers = self.session.get_providers()
+        gpu_acceleration = len(providers) > 1 or providers[0] != "CPUExecutionProvider"
+        try:
+            result = self.__run_low(model_args, gpu_acceleration)
+        except Exception as e:
+            if not gpu_acceleration:
+                raise  # Rethrow, the failure occurred with the regular CPU model also - show error dialog
+
+            logging.warning(f"Error running model, falling back to CPU only: {e}")
+            import onnxruntime as ort
+            self.session = ort.InferenceSession(self.model_name, providers=get_execution_providers_ordered(False))
+            result = self.__run_low(model_args, False)
+
+        # all graxpert results are in the first array index
+        return result[0]

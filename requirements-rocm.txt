@@ -1,0 +1,1 @@
+onnxruntime-rocm==1.22.2.post1

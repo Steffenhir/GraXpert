@@ -7,7 +7,7 @@ from PyInstaller.utils.hooks import copy_metadata
 a = Analysis(['./graxpert/main.py'],
     pathex=[],
     binaries=[],
-    datas=[('./img/*', './img/'), ('./graxpert-dark-blue.json', './')] + copy_metadata('xisf'),
+    datas=[('./img/*', './img/'), ('./graxpert/theme/graxpert-dark-blue.json', './')] + copy_metadata('xisf'),
     hiddenimports=['PIL._tkinter_finder', 'tkinter'],
     hookspath=['./releng'],
     hooksconfig={},
@@ -39,7 +39,8 @@ exe = EXE(pyz,
 coll = COLLECT(
     exe,
     a.binaries,
-    Tree('locales', prefix='locales/'),
+    # I think this should be auto found now as part of the python package
+    # Tree('locales', prefix='locales/'),
     a.zipfiles,
     a.datas,
     strip=False,

@@ -1,0 +1,44 @@
+# Run inside a recent debian based image with python3, pip3, git and sudo installed
+# This is the same as the debian version but used to test against full ubuntu
+FROM mcr.microsoft.com/devcontainers/base:noble
+
+# We use 'user' as the name to match what the zhephyr-build image already created
+ARG USERNAME=vscode
+
+## Setup a user with sudo support
+USER root
+
+RUN apt update
+
+# Add core python packages
+RUN apt-get -y install --no-install-recommends python3 python3-pip python3-venv python-is-python3
+
+# FIXME libgl1-mesa-glx is needed I think
+RUN apt install -y --no-install-recommends python3-setuptools python3-wheel pipx python3-tk rpm alien  wget sudo git patchelf docker.io
+
+# Create a non-root user if one doesn't exist, and give it sudo rights
+RUN if ! id -u ${USERNAME} > /dev/null 2>&1; then \
+        groupadd --gid 1000 ${USERNAME} && \
+        useradd --uid 1000 --gid 1000 --create-home --shell /bin/bash ${USERNAME} && \
+        echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME}-nopasswd; \
+    fi
+
+# extra packages needed for debugging native crashes in python
+# RUN apt install -y python3-venv python3-dbg python3-tk-dbg
+
+# Install and run AMD ROCm GPU support.  Tested and confirmed that 7.0.1 is better than the old 6.x releases
+# per https://rocm.docs.amd.com/projects/radeon/en/latest/docs/install/native_linux/install-onnx.html
+# and https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html
+RUN wget -P /tmp https://repo.radeon.com/amdgpu-install/7.0.1/ubuntu/noble/amdgpu-install_7.0.1.70001-1_all.deb
+RUN apt install -y --allow-downgrades --no-install-recommends /tmp/amdgpu-install_7.0.1.70001-1_all.deb
+RUN apt update
+# sudo usermod -a -G render,video $LOGNAME # Add the current user to the render and video groups
+RUN apt -y install rocm
+
+# try to clean up space so our devcontainer can fit in the 14GB github action limit
+RUN apt-get clean 
+RUN rm -rf /var/lib/apt/lists/*
+
+# Default user for devcontainer
+USER ${USERNAME}
+

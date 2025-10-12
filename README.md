@@ -2,6 +2,10 @@
 <img src="https://github.com/Steffenhir/GraXpert/blob/main/img/GraXpert_LOGO_Hauptvariante.png" width="500"/>
 </p>
 
+# WARNING: This is a test branch/pip build, you probably don't want it yet.
+For the time being you are better off with the install images from the graxpert
+homepage! for questions regarding this test build contact kevinh@geeksville.com.
+
 GraXpert is an astronomical image processing program for extracting and removing
 gradients in the background of your astrophotos.  We provide several methods traditional
 interpolation methods such as Radial Basis Functions (RBF), Splines and Kriging which require
@@ -10,14 +14,45 @@ is an AI method which does not require any user input.
 
 Original                     |  Gradients removed with AI
 :-------------------------:|:-------------------------:
-![Original](https://github.com/Steffenhir/GraXpert/blob/main/img/NGC7000_original.jpg)   |  ![Gradients removed](https://github.com/Steffenhir/GraXpert/blob/main/img/NGC7000_processed.jpg)
-![Original](https://github.com/Steffenhir/GraXpert/blob/main/img/LDN1235_original.jpg)   |  ![Gradients removed](https://github.com/Steffenhir/GraXpert/blob/main/img/LDN1235_processed.jpg)
+![Original](https://raw.githubusercontent.com/Steffenhir/GraXpert/main/img/NGC7000_original.jpg)   |  ![Gradients removed](https://raw.githubusercontent.com/Steffenhir/GraXpert/main/img/NGC7000_processed.jpg)
+![Original](https://raw.githubusercontent.com/Steffenhir/GraXpert/main/img/LDN1235_original.jpg)   |  ![Gradients removed](https://raw.githubusercontent.com/Steffenhir/GraXpert/main/img/LDN1235_processed.jpg)
 
 
 **Homepage:** [https://www.graxpert.com](https://www.graxpert.com)  
 **Download:** [https://github.com/Steffenhir/GraXpert/releases/latest](https://github.com/Steffenhir/GraXpert/releases/latest)
 
-# Installation
+# Cross-Platform Installation
+We are currently testing an optional cross-platform system for installing graxpert - which allows much smaller installation images and automated download/updates.
+
+We do this via the the python [pypi.org](https://pypi.org/project/graxpert/) repository 'app-store.'  This is particularly important if you'd like to have GPU acceleration support for non Nvidia GPUs.  To install via this mechanism:
+
+1. Install [python](https://www.python.org/downloads/) runtime for your OS.  The default install should automatically include the python package manager 'pip'.
+2. At a shell prompt type the correct flavor of graxpert to install for your needs.
+
+* **brew install pipx python-tk@3.13; pipx install --python python3.13 graxpert\\\[cpuonly\\\]** - Use this if you are on OS-X - it is poorly named, but it will still use the CoreML Apple GPU support
+* **pip install graxpert\[cuda\]** - Use this if you have an Nvidia GPU
+* **pip install graxpert\[rocm\]** --pip-args="-f https://repo.radeon.com/rocm/manylinux/rocm-rel-7.0/" - Use this if you have an AMD GPU
+* **pip install graxpert\[openvino\]** - Use this if you don't have an advanced GPU or don't know what you have (provides sizable acceleration on most modern Intel CPUs)
+* **pip install graxpert\[directml\]** - Use this if you want the Windows DirectML acceleration (not as fast as the options above but widely supported and easy to install)
+* **pip install graxpert\[cpuonly\]** - If you encounter bugs with any of our GPU versions, please file a bug and temporarily use this version (which excludes all GPU code)
+
+If you are an advanced python user and know about the 'pipx' tool, we recommend that you use that tool instead of pip for installs.
+
+## AMD GPU library installation
+
+If you are using an AMD GPU and the python packages above, you'll probably need to install the latest AMD GPU software.
+
+For Ubuntu linux the instructions run:
+```
+wget https://repo.radeon.com/amdgpu-install/7.0.1/ubuntu/noble/amdgpu-install_7.0.1.70001-1_all.deb
+sudo apt install ./amdgpu-install_7.0.1.70001-1_all.deb
+sudo apt update
+sudo apt install rocm python3-tk
+sudo usermod -a -G render,video $LOGNAME # Add the current user to the render and video groups
+```
+For other OSes see the instructions [here](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html).
+
+# Legacy Installation
 You can download the latest official release of GraXpert [here](https://github.com/Steffenhir/GraXpert/releases/latest). Select the correct version for your operating system. For macOS, we provide different versions
 for Intel processors (x86_64) and for apple silicon (arm64).
 
@@ -31,7 +66,6 @@ Here are the available command-line arguments and their descriptions:
 
 - -cmd [image_operation]: This flag indicates which AI model to use. Options are "background-extraction" (default) or "denoising".
 - filename: The path of the unprocessed image (required).
-- -cli: This flag always has to be added when using the command line integration of GraXpert. Otherwise, the GUI will start and open the specified file name.
 - -output [output_file_name]: Specify the name of the output image (without file ending). Otherwise the image will be saved with the suffix '_GraXpert' added to the original file name.
 - -preferences_file: Allows GraXpert commandline to run all extraction methods based on a preferences file that contains background grid points.
 - -gpu: Set to 'false' in order to disable gpu acceleration during AI inference, otherwise set to 'true' to enable it.
@@ -56,12 +90,12 @@ The following examples show how GraXpert can be used from the command line in Wi
 
 Basic Usage:
 ```
-GraXpert-win64.exe my_image.fits -cli
+GraXpert-win64.exe my_image.fits
 ```
 
 Specify AI Model Version '1.1', correction type 'Division', smoothing '0.1', and save background model:
 ```
-GraXpert-win64.exe my_image.fits -cli -ai_version 1.1 -correction Division -smoothing 0.1 -bg
+GraXpert-win64.exe my_image.fits -ai_version 1.1 -correction Division -smoothing 0.1 -bg
 ```
 
 # Installation for Developers
@@ -73,8 +107,9 @@ Open your terminal or command prompt and use git to clone the GraXpert repositor
 git clone https://github.com/Steffenhir/GraXpert
 cd GraXpert
 ```
+## Option 1: Manual developer environment setup
 
-## Setting up a Virtual Environment
+### Setup the Virtual Environment
 We recommend using a virtual environment to isolate the project's dependencies. Ensure you have Python>=3.10 installed on your system before proceeding. Here's how to set up a virtual environment with Python:
 Windows:
 ```
@@ -94,7 +129,7 @@ python3 -m venv graxpert-env
 source graxpert-env/bin/activate
 ```
 
-## Install required packages
+### Install required packages
 All the requirements can be found in the requirements.txt file. You can install them with:
 
 Windows and Linux:
@@ -111,11 +146,18 @@ For macOS, we have to install tkinter separately.
 We use the version provided by brew because it is newer
 and solves issues with macOS Sonoma. Please use the version matching with your Python version.
 """
-brew install python-tk@3.10
+brew install python-tk
 ```
 
+## Option 2: Automatic setup with devcontainers
+This project includes an (optional) [devcontainer](https://containers.dev/) configuration.  If you are using any editor with built-in devcontainer support (i.e. VScode or jetbrains etc...), you should get prompted to "Reopen in a devcontainer?"
+
+If you choose to use a devcontainer a docker (or podman) based container environment will be created for your development.  This environment appears to be a Debian machine (regardless of your host-OS).  All windowing/file/network operations are forwarded through your host.
+
+This provides a nice 'guaranteed' repeatable build/debug environment for all developers.
+
 ## Running GraXpert
-Once you have set up the virtual environment and installed the required packages, you can start GraXpert:
+Once you have set up the virtual environment (using either of the options above), you can start GraXpert in your shell:
 
 ```
 python -m graxpert.main

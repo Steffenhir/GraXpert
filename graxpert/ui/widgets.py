@@ -2,10 +2,9 @@ import tkinter as tk
 from tkinter import ttk
 
 from customtkinter import CTkButton, CTkCheckBox, CTkEntry, CTkFont, CTkFrame, CTkImage, CTkLabel, CTkOptionMenu, CTkScrollableFrame, CTkSlider, DoubleVar, StringVar, ThemeManager
-from PIL import Image
 
 from graxpert.localization import _
-from graxpert.resource_utils import resource_path
+from graxpert.resource_utils import resource_image
 from graxpert.ui_scaling import get_scaling_factor
 
 default_button_width = 200
@@ -17,7 +16,7 @@ pady = 5 * get_scaling_factor()
 
 
 def gfx_image(number, indent=1):
-    img = Image.open(resource_path(f"img/gfx_numbers.png")).crop((number * 100, indent * 100, number * 100 + 100, indent * 100 + 100))
+    img = resource_image(f"gfx_numbers.png").crop((number * 100, indent * 100, number * 100 + 100, indent * 100 + 100))
     return img
 
 

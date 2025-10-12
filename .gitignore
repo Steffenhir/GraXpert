@@ -1,9 +1,16 @@
 *-scaled.png
 __pycache__
 graxpert/s3_secrets.py
+graxpert/version.py*
+GraXpert-macos-x86_64.spec*
 build
 dist
 .idea
 .venv
 python-venv
 env_graxpert/
+graxpert.egg-info
+.pypirc
+testimage.fit*
+.DS_Store
+settings.py

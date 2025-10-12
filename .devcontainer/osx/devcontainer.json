@@ -1,0 +1,26 @@
+// This devcontainer allows testing under MacOS in a VM as needed... (even if the host OS is Linux or OS-X)
+// See here for instructions on first time setup once inside the 'mac' https://github.com/dockur/macos?tab=readme-ov-file#how-do-i-use-it
+// To mount the project dir in MacOS see https://github.com/dockur/macos?tab=readme-ov-file#how-do-i-share-files-with-the-host
+// you can access the gui via http://localhost:8007/ webpage or vnc://localhost:5900 (password: docker)
+{
+  "name": "macos",
+  "service": "macos",
+  "forwardPorts": [8007, 5900, 2223],
+  "dockerComposeFile": "compose.yml",
+
+  // dockur/windows will automount this as Z drive in Windows
+  "workspaceFolder": "/workspace",
+
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind"
+    ],
+
+  // "postCreateCommand": "pip install -r requirements.txt"
+
+  "features": {
+    "ghcr.io/devcontainers/features/git": {
+      "configureUserName": true,
+      "configureUserEmail": true
+    }
+  }
+}

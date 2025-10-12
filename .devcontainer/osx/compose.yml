@@ -1,0 +1,38 @@
+services:
+  # per https://github.com/dockur/macos
+  macos:
+    image: docker.io/dockurr/macos
+    container_name: macos
+
+    # Try host mode networking to see if faster
+    network_mode: "host"
+
+    environment:
+      VERSION: "13" # the graxpert build targets 13 for intel
+      
+      GPU: "Y" # make GPU work?
+      # VGA: "virtio-vga" # not supported      
+
+      RAM_SIZE: "8G" # defaults to 4G and 2 CPU
+      CPU_CORES: "4"
+      NETWORK: "user" # use bridge networking to make ssh access work
+      USER_PORTS: "22"
+    devices:
+      - /dev/kvm
+      - /dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 8007:8006
+      - 5900:5900/tcp
+      - 5900:5900/udp
+
+      # SSH access to the macOS VM via port 2223 on the host
+      - 2223:22/tcp
+    volumes:
+      - ./macos-storage:/storage:z
+      - ../..:/shared:z # Mount in macos with sudo -S mount_9p shared
+    # restart: always
+    stop_grace_period: 2m
+    privileged: true # Needed for access to linux kvm
+

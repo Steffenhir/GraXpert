@@ -12,7 +12,7 @@ from graxpert.application.eventbus import eventbus
 from graxpert.AstroImageRepository import ImageTypes
 from graxpert.commands import ADD_POINT_HANDLER, ADD_POINTS_HANDLER, MOVE_POINT_HANDLER, Command
 from graxpert.localization import _
-from graxpert.resource_utils import resource_path
+from graxpert.resource_utils import resource_photoimage
 from graxpert.ui.loadingframe import DynamicProgressFrame, LoadingFrame
 from graxpert.ui.ui_events import UiEvents
 from graxpert.ui.widgets import default_option_menu_height
@@ -248,7 +248,7 @@ class Canvas(CTkFrame):
         self.show_loading_frame(False)
 
     def on_display_start_badge_request(self, event=None):
-        self.start_badge = ImageTk.PhotoImage(file=resource_path("img/graXpert_Startbadge_Umbriel.png"))
+        self.start_badge = resource_photoimage("graXpert_Startbadge_Umbriel.png")
         self.canvas.create_image(self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2, anchor=tk.CENTER, image=self.start_badge, tags="start_badge")
         self.canvas.after(5000, lambda: self.canvas.delete("start_badge"))
 

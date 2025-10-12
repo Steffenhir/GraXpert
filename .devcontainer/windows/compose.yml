@@ -1,0 +1,50 @@
+services:
+  # per https://github.com/dockur/windows README
+  windows:
+    image: docker.io/dockurr/windows
+    container_name: windows
+    environment:
+      VERSION: "11"
+      USER_PORTS: 3390,8008,2222 # Needs to match port nums on the HOST side for podman user networking
+      ARGUMENTS: "-cpu host,arch_capabilities=off" # Needed to let modern windows11 boot
+      RAM_SIZE: "8G" # RAM allocated to the Windows VM. defaults to 4G
+      CPU_CORES: "4" # defaults to 2 CPU cores allocated to the Windows VM.
+      # DISK_SIZE: "64G" # Size of the primary hard disk.
+      # USERNAME: "MyWindowsUser" # Edit here to set a custom Windows username. The default is 'MyWindowsUser'.
+      # PASSWORD: "MyWindowsPassword" # Edit here to set a password for the Windows user. The default is 'MyWindowsPassword'.
+      # HOME: "${HOME}" # Set path to Linux user home folder.
+      # LANGUAGE: "English"
+      # REGION: "en-001"
+      # KEYBOARD: "en-GB"
+
+    privileged: true # Needed for access to linux kvm
+    devices:
+      - /dev/kvm
+      - /dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 8008:8006
+      # 3389 is already taken on my host OS (for its own RDP server)
+      - 3390:3389/tcp
+      - 3390:3389/udp
+
+      # SSH access to the Windows VM via port 2222 on the host
+      - 2222:22/tcp
+    volumes:
+      - ./windows-storage:/storage:z
+      - ../..:/data:z # Make our workspace directory inside of Windows docker as a special network share called \\host.lan\Data
+      # - ./oem:/oem:Z # Enables automatic post-install execution of 'oem/install.bat'
+    # restart: always
+    stop_grace_period: 2m
+    #networks:
+    #  vlan:
+    #    ipv4_address: 192.168.8.193
+  
+    # Supposedly the following might allow running without privileged: true
+    # group_add:      # uncomment this line and the next one for using rootless podman containers
+    # - keep-groups # to make /dev/kvm work with podman. needs "crun" installed, "runc" will not work! Add your user to the 'kvm' group or another that can access /dev/kvm.
+
+#networks:
+#  vlan: # created on the host with the make-network.sh script
+#    external: true

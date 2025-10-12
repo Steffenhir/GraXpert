@@ -8,12 +8,11 @@ from multiprocessing import shared_memory
 
 import cv2
 import numpy as np
-import onnxruntime as ort
 from astropy.stats import sigma_clipped_stats
 from pykrige.ok import OrdinaryKriging
 from scipy import interpolate, linalg
 
-from graxpert.ai_model_handling import get_execution_providers_ordered
+from graxpert.ai_model_handling import SessionContext
 from graxpert.mp_logging import get_logging_queue, worker_configurer
 from graxpert.parallel_processing import executor
 from graxpert.radialbasisinterpolation import RadialBasisInterpolation
@@ -25,7 +24,6 @@ def gaussian_kernel(sigma=1.0, truncate=4.0):  # follow simulate skimage.filters
 
 
 def extract_background(in_imarray, background_points, interpolation_type, smoothing, downscale_factor, sample_size, RBF_kernel, spline_order, corr_type, ai_path, progress=None, ai_gpu_acceleration=True):
-
     num_colors = in_imarray.shape[-1]
 
     shm_imarray = None
@@ -71,13 +69,9 @@ def extract_background(in_imarray, background_points, interpolation_type, smooth
         if progress is not None:
             progress.update(8)
 
-        providers = get_execution_providers_ordered(ai_gpu_acceleration)
-        session = ort.InferenceSession(ai_path, providers=providers)
-
-        logging.info(f"Providers : {providers}")
-        logging.info(f"Used providers : {session.get_providers()}")
-
-        background = session.run(None, {"gen_input_image": np.expand_dims(imarray_shrink, axis=0)})[0][0]
+        # allow persistent changes to gpu_accel in case of failure
+        context = SessionContext(ai_path, gpu_acceleration=ai_gpu_acceleration)
+        background = context.run({"gen_input_image": np.expand_dims(imarray_shrink, axis=0)})[0]
 
         background = background / 0.04 * mad + median
 

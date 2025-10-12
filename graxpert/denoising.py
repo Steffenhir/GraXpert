@@ -3,16 +3,14 @@ import logging
 import time
 
 import numpy as np
-import onnxruntime as ort
 
-from graxpert.ai_model_handling import get_execution_providers_ordered
+from graxpert.ai_model_handling import SessionContext
 from graxpert.application.app_events import AppEvents
 from graxpert.application.eventbus import eventbus
 from graxpert.ui.ui_events import UiEvents
 
 
 def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128, progress=None, ai_gpu_acceleration=True):
-
     logging.info("Starting denoising")
 
     if batch_size < 1:
@@ -66,12 +64,6 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
 
     output = copy.deepcopy(image)
 
-    providers = get_execution_providers_ordered(ai_gpu_acceleration)
-    session = ort.InferenceSession(ai_path, providers=providers)
-
-    logging.info(f"Available inference providers : {providers}")
-    logging.info(f"Used inference providers : {session.get_providers()}")
-
     cancel_flag = False
 
     def cancel_listener(event):
@@ -80,6 +72,8 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
 
     eventbus.add_listener(AppEvents.CANCEL_PROCESSING, cancel_listener)
 
+    # allow persistent changes to gpu_accel in case of failure
+    context = SessionContext(ai_path, gpu_acceleration=ai_gpu_acceleration)
     last_progress = 0
     for b in range(0, ith * itw + batch_size, batch_size):
 
@@ -115,7 +109,7 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
         input_tiles = np.array(input_tiles)
 
         output_tiles = []
-        session_result = session.run(None, {"gen_input_image": input_tiles})[0]
+        session_result = context.run({ "gen_input_image": input_tiles})
         for e in session_result:
             output_tiles.append(e)
 

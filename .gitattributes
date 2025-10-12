@@ -1,0 +1,5 @@
+*.py text 
+*.sh text
+*.ps1 text
+*.in text
+*.md text

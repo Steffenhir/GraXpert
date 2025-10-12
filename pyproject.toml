@@ -1,0 +1,19 @@
+[tool.cibuildwheel]
+# Not currently used - but if we need to build a native/mixed wheel this section will be needed
+# Only build on CPython 3.12
+build = "cp312-*"
+# For now only target 64 bit archs, if someone wants 32 bit it is easy to add, see https://cibuildwheel.pypa.io/en/stable/options/
+archs = ["auto64"]
+
+[build-system]
+# These are the packages needed to build your project.
+# The build tool will install these BEFORE running setup.py
+requires = [
+    "setuptools>=80.9.0",
+    "wheel>=0.45.1",
+    "astropy>=6.0.1",
+    "cx_Freeze>=8.4.0",
+    "imageio>=2.37.0",
+    "scikit-image>=0.24.0"
+]
+build-backend = "setuptools.build_meta"

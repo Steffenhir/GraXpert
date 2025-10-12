@@ -6,7 +6,7 @@ block_cipher = None
 
 
 datas = []
-datas += [('./img/*', './img/'), ('./graxpert-dark-blue.json', './')]
+datas += [('./img/*', './img/'), ('./graxpert/theme/graxpert-dark-blue.json', './')]
 datas += copy_metadata('xisf')
 
 
@@ -45,7 +45,8 @@ exe = EXE(pyz,
 coll = COLLECT(
     exe,
     a.binaries,
-    Tree('locales', prefix='locales/'),
+    # I think this should be auto found now as part of the python package
+    # Tree('locales', prefix='locales/'),
     a.zipfiles,
     a.datas,
     strip=False,

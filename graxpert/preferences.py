@@ -9,6 +9,7 @@ from typing import AnyStr, List
 import numpy as np
 
 from graxpert.app_state import AppState
+from graxpert.fits import FitsKeys
 from graxpert.version import version as graxpert_version
 
 
@@ -103,37 +104,50 @@ def save_preferences(prefs_filename, prefs):
 
 
 def app_state_2_fitsheader(prefs: Prefs, app_state: AppState, fits_header):
-    fits_header["INTP-OPT"] = prefs.interpol_type_option
-    fits_header["SMOOTH"] = prefs.smoothing_option
-    fits_header["CORRTYPE"] = prefs.corr_type
+    fits_header[FitsKeys.GXINTOPT.name] = prefs.interpol_type_option
+    fits_header.comments[FitsKeys.GXINTOPT.name] = FitsKeys.GXINTOPT.value
+
+    fits_header[FitsKeys.GXSMOOTH.name] = prefs.smoothing_option
+    fits_header.comments[FitsKeys.GXSMOOTH.name] = FitsKeys.GXSMOOTH.value
+
+    fits_header[FitsKeys.GXCORRT.name] = prefs.corr_type
+    fits_header.comments[FitsKeys.GXCORRT.name] = FitsKeys.GXCORRT.value
 
     if prefs.interpol_type_option == "AI":
-        fits_header["BGAI_VER"] = prefs.bge_ai_version
+        fits_header[FitsKeys.GXBGAIV.name] = prefs.bge_ai_version
+        fits_header.comments[FitsKeys.GXBGAIV.name] = FitsKeys.GXBGAIV.value
 
     if prefs.interpol_type_option != "AI":
-        fits_header["SAMPSIZE"] = prefs.sample_size
-        fits_header["RBFKRNL"] = prefs.RBF_kernel
-        fits_header["SPLNORDR"] = prefs.spline_order
-        fits_header["BG-PTS"] = str(list(map(lambda e: e.tolist(), app_state.background_points)))
+        fits_header[FitsKeys.GXSAMPSZ.name] = prefs.sample_size
+        fits_header.comments[FitsKeys.GXSAMPSZ.name] = FitsKeys.GXSAMPSZ.value
+
+        fits_header[FitsKeys.GXRBFK.name] = prefs.RBF_kernel
+        fits_header.comments[FitsKeys.GXRBFK.name] = FitsKeys.GXRBFK.value
+
+        fits_header[FitsKeys.GXSPLORD.name] = prefs.spline_order
+        fits_header.comments[FitsKeys.GXSPLORD.name] = FitsKeys.GXSPLORD.value
+
+        fits_header[FitsKeys.GXBGPTS.name] = str(list(map(lambda e: e.tolist(), app_state.background_points)))
+        fits_header.comments[FitsKeys.GXBGPTS.name] = FitsKeys.GXBGPTS.value
 
     return fits_header
 
 
 def fitsheader_2_app_state(prefs: Prefs, app_state: AppState, fits_header):
-    if "BG-PTS" in fits_header.keys():
+    if FitsKeys.GXBGPTS.name in fits_header.keys():
         try:
-            app_state.background_points = [np.array(p) for p in json.loads(fits_header["BG-PTS"])]
+            app_state.background_points = [np.array(p) for p in json.loads(fits_header[FitsKeys.GXBGPTS.name])]
         except:
             logging.warning("Could not transfer background points from fits header to application state", stack_info=True)
 
-    if "INTP-OPT" in fits_header.keys():
-        prefs.interpol_type_option = fits_header["INTP-OPT"]
-        prefs.smoothing_option = fits_header["SMOOTH"]
-        prefs.corr_type = fits_header["CORRTYPE"]
+    if FitsKeys.GXINTOPT.name in fits_header.keys():
+        prefs.interpol_type_option = fits_header[FitsKeys.GXINTOPT.name]
+        prefs.smoothing_option = fits_header[FitsKeys.GXSMOOTH.name]
+        prefs.corr_type = fits_header[FitsKeys.GXCORRT.name]
 
-        if fits_header["INTP-OPT"] != "AI":
-            prefs.sample_size = fits_header["SAMPSIZE"]
-            prefs.RBF_kernel = fits_header["RBFKRNL"]
-            prefs.spline_order = fits_header["SPLNORDR"]
+        if fits_header[FitsKeys.GXINTOPT.name] != "AI":
+            prefs.sample_size = fits_header[FitsKeys.GXSAMPSZ.name]
+            prefs.RBF_kernel = fits_header[FitsKeys.GXRBFK.name]
+            prefs.spline_order = fits_header[FitsKeys.GXSPLORD.name]
 
     return app_state

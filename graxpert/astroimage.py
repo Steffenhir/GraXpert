@@ -10,6 +10,7 @@ from skimage.util import img_as_uint
 from xisf import XISF
 
 from graxpert.app_state import AppState
+from graxpert.fits import FitsKeys
 from graxpert.preferences import Prefs, app_state_2_fitsheader
 from graxpert.stretch import stretch, StretchParameters
 
@@ -136,7 +137,8 @@ class AstroImage:
         else:
             self.fits_header = original_header
 
-        self.fits_header["BG-EXTR"] = "GraXpert"
+        self.fits_header[FitsKeys.BG_EXTR.name] = "GraXpert"
+        self.fits_header.comments[FitsKeys.BG_EXTR.name] = FitsKeys.BG_EXTR.value
         self.fits_header["CBG-1"] = background_mean
         self.fits_header["CBG-2"] = background_mean
         self.fits_header["CBG-3"] = background_mean
@@ -144,6 +146,35 @@ class AstroImage:
 
         if "ROWORDER" in self.fits_header:
             self.roworder = self.fits_header["ROWORDER"]
+
+    # added in GraXpert 3.1 for better fits header compatability
+    def migrate_fits_keys(self):
+
+        migrated_count = 0
+
+        migrated_count += self.migrate_fits_key(self.fits_header, "STRETCH", FitsKeys.GXSTRETCH.name, FitsKeys.GXSTRETCH.value)
+        migrated_count += self.migrate_fits_key(self.fits_header, "INTP-OPT", FitsKeys.GXINTOPT.name, FitsKeys.GXINTOPT.value)
+        migrated_count += self.migrate_fits_key(self.fits_header, "SMOOTHING", FitsKeys.GXSMOOTH.name, FitsKeys.GXSMOOTH.value)
+        migrated_count += self.migrate_fits_key(self.fits_header, "CORR-TYPE", FitsKeys.GXCORRT.name, FitsKeys.GXCORRT.value)
+        migrated_count += self.migrate_fits_key(self.fits_header, "BGE-AI-VER", FitsKeys.GXBGAIV.name, FitsKeys.GXBGAIV.value)
+        migrated_count += self.migrate_fits_key(self.fits_header, "SAMPLE-SIZE", FitsKeys.GXSAMPSZ.name, FitsKeys.GXSAMPSZ.value)
+        migrated_count += self.migrate_fits_key(self.fits_header, "RBF-KERNEL", FitsKeys.GXRBFK.name, FitsKeys.GXRBFK.value)
+        migrated_count += self.migrate_fits_key(self.fits_header, "SPLINE-ORDER", FitsKeys.GXSPLORD.name, FitsKeys.GXSPLORD.value)
+        migrated_count += self.migrate_fits_key(self.fits_header, "BG-PTS", FitsKeys.GXBGPTS.name, FitsKeys.GXBGPTS.value)
+
+        if migrated_count > 0:
+            logging.info(f"Migrated {migrated_count} old fits header keys")
+
+    def migrate_fits_key(self, fits_header, oldkey, newkey, comment):
+        if oldkey in self.fits_header.keys():
+            try:
+                logging.info(f"Migrating fits header key {oldkey} to {newkey}")
+                self.fits_header.rename_keyword(oldkey, newkey)
+                self.fits_header.comments[newkey] = comment
+                return 1
+            except Exception as e:
+                logging.exception(e)
+        return 0
 
     def save(self, dir, saveas_type):
         if self.img_array is None:
@@ -180,7 +211,7 @@ class AstroImage:
             return
 
         if self.fits_header is not None:
-            self.fits_header["STRETCH"] = stretch_params.stretch_option
+            self.fits_header[FitsKeys.GXSTRETCH.name] = stretch_params.stretch_option
 
         stretched_img = self.stretch(stretch_params)
 
@@ -246,12 +277,12 @@ class AstroImage:
         unique_keys = list(dict.fromkeys(self.fits_header.keys()))
 
         for key in unique_keys:
-            if key == "BG-PTS":
+            if key == FitsKeys.GXBGPTS.name:
                 try:
-                    bg_pts = json.loads(self.fits_header["BG-PTS"])
+                    bg_pts = json.loads(self.fits_header[FitsKeys.GXBGPTS.name])
 
                     for i in range(len(bg_pts)):
-                        self.image_metadata["FITSKeywords"]["BG-PTS" + str(i)] = [{"value": bg_pts[i], "comment": ""}]
+                        self.image_metadata["FITSKeywords"][FitsKeys.GXBGPTS.name + str(i)] = [{"value": bg_pts[i], "comment": ""}]
                 except:
                     logging.warning("Could not transfer background points from fits header to xisf image metadata", stack_info=True)
             else:
@@ -281,7 +312,7 @@ class AstroImage:
 
         bg_pts = []
         for key in self.image_metadata["FITSKeywords"].keys():
-            if key.startswith("BG-PTS"):
+            if key.startswith(FitsKeys.GXBGPTS.name):
                 try:
                     bg_pts.append(json.loads(self.image_metadata["FITSKeywords"][key][0]["value"]))
                 except:
@@ -305,4 +336,5 @@ class AstroImage:
                     self.fits_header[key] = (value, comment)
 
         if len(bg_pts) > 0:
-            self.fits_header["BG-PTS"] = str(bg_pts)
+            self.fits_header[FitsKeys.GXBGPTS.name] = str(bg_pts)
+            self.fits_header.comments[FitsKeys.GXBGPTS.name] = FitsKeys.GXBGPTS.value

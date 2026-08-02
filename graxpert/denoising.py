@@ -67,7 +67,20 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
     output = copy.deepcopy(image)
 
     providers = get_execution_providers_ordered(ai_gpu_acceleration)
-    session = ort.InferenceSession(ai_path, providers=providers)
+
+    # Core ML cannot compile the denoising MLProgram efficiently while its
+    # batch dimension is dynamic. Fixing the dimension lets Apple Silicon run
+    # the supported graph partitions on Core ML instead of falling back to CPU.
+    coreml_enabled = any(
+        (provider[0] if isinstance(provider, tuple) else provider) == "CoreMLExecutionProvider"
+        for provider in providers
+    )
+    if coreml_enabled:
+        session_options = ort.SessionOptions()
+        session_options.add_free_dimension_override_by_name("batch_size", batch_size)
+        session = ort.InferenceSession(ai_path, sess_options=session_options, providers=providers)
+    else:
+        session = ort.InferenceSession(ai_path, providers=providers)
 
     logging.info(f"Available inference providers : {providers}")
     logging.info(f"Used inference providers : {session.get_providers()}")
@@ -113,9 +126,21 @@ def denoise(image, ai_path, strength, batch_size=4, window_size=256, stride=128,
             continue
 
         input_tiles = np.array(input_tiles)
+        num_input_tiles = len(input_tiles)
+
+        # The Core ML session has a fixed batch dimension. Duplicate the final
+        # tile to fill a partial batch; the padded results are discarded below.
+        if coreml_enabled and num_input_tiles < batch_size:
+            input_tiles = np.concatenate(
+                (
+                    input_tiles,
+                    np.repeat(input_tiles[-1:], batch_size - num_input_tiles, axis=0),
+                ),
+                axis=0,
+            )
 
         output_tiles = []
-        session_result = session.run(None, {"gen_input_image": input_tiles})[0]
+        session_result = session.run(None, {"gen_input_image": input_tiles})[0][:num_input_tiles]
         for e in session_result:
             output_tiles.append(e)
 

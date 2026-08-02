@@ -170,7 +170,21 @@ def validate_local_version(ai_models_dir, local_version):
     return os.path.isfile(os.path.join(ai_models_dir, local_version, "model.onnx"))
 
 
-def get_execution_providers_ordered(gpu_acceleration=True):
+COREML_MODEL_FORMAT_MLPROGRAM = "MLProgram"
+COREML_MODEL_FORMAT_NEURALNETWORK = "NeuralNetwork"
+COREML_MODEL_FORMATS = {
+    COREML_MODEL_FORMAT_MLPROGRAM,
+    COREML_MODEL_FORMAT_NEURALNETWORK,
+}
+
+
+def get_execution_providers_ordered(
+    gpu_acceleration=True,
+    coreml_model_format=COREML_MODEL_FORMAT_MLPROGRAM,
+):
+
+    if coreml_model_format not in COREML_MODEL_FORMATS:
+        raise ValueError(f"Unsupported Core ML model format: {coreml_model_format}")
 
     if gpu_acceleration:
         supported_providers = [
@@ -178,7 +192,9 @@ def get_execution_providers_ordered(gpu_acceleration=True):
             (
                 "CoreMLExecutionProvider",
                 {
-                    "flags": "COREML_FLAG_CREATE_MLPROGRAM",
+                    "ModelFormat": coreml_model_format,
+                    "MLComputeUnits": "ALL",
+                    "RequireStaticInputShapes": "0",
                 },
             ),
             "CUDAExecutionProvider",
